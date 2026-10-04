@@ -751,7 +751,8 @@ operations:
           name: status
           type: number
 plugin:
+    desc: xAI Grok 系列大模型接入（OpenAI 兼容协议）。
     label: xAI Grok
     name: xai
     org: sokel
-    version: v1.0.1
+    version: v1.0.2

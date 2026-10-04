@@ -1,5 +1,6 @@
 {
   "0 = 没走到 HTTP（网络不通 / 地址解析失败）": "0 = request never reached HTTP (network unreachable / DNS resolution failed)",
+  "Fireworks AI 托管的开源模型接入（OpenAI 兼容协议）：Llama、Qwen、DeepSeek 等开源权重模型的高速推理。": "Integrates open-weight models hosted on Fireworks AI (OpenAI-compatible protocol): fast inference for Llama, Qwen, DeepSeek and more.",
   "Form=inline 时是 data URL；Form=uri 时是地址": "A data URL when Form=inline; a URL when Form=uri",
   "Matryoshka 截断：想要几维（0/留空=模型默认）。1024 维的存储只要 3072 维的三分之一，质量损失很小。不支持的家忽略它——实际维度看出参 dims": "Matryoshka truncation: how many dimensions you want (0/blank = model default). Storing at 1024 dimensions takes a third of the space of 3072, with little quality loss. Vendors that don't support it ignore this — check the dims output for the actual dimension",
   "inline=data URL；uri=上游给的地址": "inline=data URL; uri=the URL given by the upstream",
@@ -89,6 +90,7 @@
   "缓存命中": "Cache hit",
   "视频秒数": "Video seconds",
   "角色": "Role",
+  "该厂商的 OpenAI 兼容地址": "This vendor's OpenAI-compatible address",
   "说明": "Description",
   "请求的推理语义被就近执行时的一句提示（如 GLM-5.3 家族关不掉思考）；空 = 忠实执行": "A note shown when the requested reasoning semantics were approximated (e.g. the GLM-5.3 family can't turn off thinking); empty = executed faithfully",
   "调用 id": "Call id",
@@ -100,6 +102,5 @@
   "重排序": "Rerank",
   "随机性": "Randomness",
   "音频秒数": "Audio seconds",
-  "额外 body": "Extra body",
-  "该厂商的 OpenAI 兼容地址": "This vendor's OpenAI-compatible address"
+  "额外 body": "Extra body"
 }

@@ -642,7 +642,8 @@ implements:
               required: true
               type: array
 plugin:
+    desc: 平台内置的知识库存储引擎：向量检索与关键词检索，随平台运行、不用部署，新建空间已自带。要更大规模或独立运维时换 Elasticsearch / pgvector 插件。
     label: 知识库存储（平台内置）
     name: kbstore
     org: sokel
-    version: v1.0.0
+    version: v1.0.1

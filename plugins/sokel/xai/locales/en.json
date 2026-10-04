@@ -9,6 +9,7 @@
   "query + 候选文本 → 相关度分数（与输入等长同序）": "query + candidate texts -> relevance scores (same length and order as the input)",
   "schema 名": "Schema name",
   "token 计量": "Token usage",
+  "xAI Grok 系列大模型接入（OpenAI 兼容协议）。": "Integrates the xAI Grok model family (OpenAI-compatible protocol).",
   "一批文本 → 一批向量（与输入等长同序）": "A batch of texts -> a batch of vectors (same length and order as the input)",
   "上游模型列表": "Upstream model list",
   "上游模型名": "Upstream model name",
@@ -89,6 +90,7 @@
   "缓存命中": "Cache hit",
   "视频秒数": "Video seconds",
   "角色": "Role",
+  "该厂商的 OpenAI 兼容地址": "This vendor's OpenAI-compatible address",
   "说明": "Description",
   "请求的推理语义被就近执行时的一句提示（如 GLM-5.3 家族关不掉思考）；空 = 忠实执行": "A note for when the requested reasoning semantics were approximated instead of followed exactly (e.g. the GLM-5.3 family cannot turn reasoning off); empty = executed faithfully",
   "调用 id": "Call ID",
@@ -100,6 +102,5 @@
   "重排序": "Rerank",
   "随机性": "Temperature",
   "音频秒数": "Audio seconds",
-  "额外 body": "Extra body",
-  "该厂商的 OpenAI 兼容地址": "This vendor's OpenAI-compatible address"
+  "额外 body": "Extra body"
 }

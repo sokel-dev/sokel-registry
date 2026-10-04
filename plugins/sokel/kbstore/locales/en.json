@@ -16,6 +16,7 @@
   "块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传": "Block-level asset {kind, url, …}; its shape is determined by the upstream parser, and this plugin only passes it through",
   "子块序号": "Sub-chunk index",
   "字段名": "Field name",
+  "平台内置的知识库存储引擎：向量检索与关键词检索，随平台运行、不用部署，新建空间已自带。要更大规模或独立运维时换 Elasticsearch / pgvector 插件。": "The knowledge base storage engine built into the platform: vector and keyword search, runs with the platform with nothing to deploy, and comes with every new workspace. Switch to the Elasticsearch or pgvector plugin for larger scale or separate operations.",
   "摘要": "Summary",
   "文档 id": "Document id",
   "日期串，如 2026-01-01": "Date string, e.g. 2026-01-01",

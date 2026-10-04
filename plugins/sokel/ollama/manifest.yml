@@ -751,7 +751,8 @@ operations:
           name: status
           type: number
 plugin:
+    desc: 接入本机或内网的 Ollama：在自己的机器上跑开源模型，数据不出本地。
     label: Ollama（本机）
     name: ollama
     org: sokel
-    version: v1.0.0
+    version: v1.0.1

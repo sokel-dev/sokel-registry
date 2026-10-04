@@ -751,7 +751,8 @@ operations:
           name: status
           type: number
 plugin:
+    desc: Groq 推理服务接入（OpenAI 兼容协议）：开源模型的低延迟推理，适合对响应速度敏感的场景。
     label: Groq
     name: groq
     org: sokel
-    version: v1.0.1
+    version: v1.0.2

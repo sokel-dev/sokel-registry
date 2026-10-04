@@ -1311,7 +1311,8 @@ operations:
           name: note
           type: string
 plugin:
+    desc: 通义千问系列模型接入（阿里云百炼）：对话、向量化、重排，以及语音合成、语音识别、图像与视频生成。
     label: 通义千问
     name: qwen
     org: sokel
-    version: v1.0.0
+    version: v1.0.1

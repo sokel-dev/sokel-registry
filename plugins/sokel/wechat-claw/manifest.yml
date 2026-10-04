@@ -118,12 +118,12 @@ operations:
           required: true
           type: boolean
 plugin:
-    desc: 把个人微信接进工作流：收消息触发、发文本/图片/文件。
+    desc: 接入微信官方 ClawBot（iLink Bot 接口）：你在微信里给 ClawBot 发消息即触发工作流，工作流可回复文本、图片、文件。只有扫码绑定的本人能与它对话。
     doc: README.md
-    label: 个人微信
+    label: 微信 ClawBot
     name: wechat-claw
     org: sokel
-    version: v1.0.0
+    version: v1.0.1
 deployment:
   targets:
   - kind: container

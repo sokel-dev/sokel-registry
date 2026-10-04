@@ -168,6 +168,7 @@
   "输出模态": "Output modality",
   "这批文本要拿来干什么：retrieval_document（被检索的一方）/ retrieval_query（发起检索的一方）/ similarity / classification；留空=不声明。检索型模型对查询与文档处理不同，用错不报错但召回会变差": "What this batch of texts will be used for: retrieval_document (the side being retrieved) / retrieval_query (the side initiating retrieval) / similarity / classification; empty = not declared. Retrieval models treat queries and documents differently — getting it wrong won't error, but recall will suffer",
   "通义千问": "Qwen",
+  "通义千问系列模型接入（阿里云百炼）：对话、向量化、重排，以及语音合成、语音识别、图像与视频生成。": "Integrates the Qwen model family (Alibaba Cloud Model Studio): chat, embeddings, reranking, plus text-to-speech, speech recognition, and image and video generation.",
   "部署级透传给上游的额外 body 字段，形状由上游 API 决定": "Extra body fields passed through to the upstream at the deployment level; their shape is determined by the upstream API",
   "采样率": "Sample rate",
   "重排序": "Rerank",

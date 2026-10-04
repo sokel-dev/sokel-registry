@@ -1,0 +1,597 @@
+credential:
+    fields:
+        - desc: 你的 HN 账号。它最近发的帖子下有新评论、或有人回复它的评论时触发「有新评论」；留空 = 不监听
+          label: 监听的 HN 用户名
+          name: watch_user
+          type: text
+        - desc: 帖子 id 或地址，多个用逗号分隔。别人替你发的帖子、或你想跟进的讨论放这里
+          label: 额外监听的帖子
+          name: watch_items
+          type: text
+        - desc: 出现这个词的新帖子或新评论触发「关键词命中」，如项目名或 github.com/你的/仓库；留空 = 不监听
+          label: 监听的关键词
+          name: watch_query
+          type: text
+        - default: "14"
+          desc: 默认 14：你两周前发的帖子还会有人评论，再早的基本沉了
+          label: 跟踪多少天内的帖子
+          name: watch_days
+          type: text
+        - default: "120"
+          desc: 默认 120，最短 60。HN 的接口免费，但别把它当实时推送用
+          label: 轮询间隔（秒）
+          name: poll_seconds
+          type: text
+        - desc: 如 http://127.0.0.1:7897；部署环境直连不了 news.ycombinator.com 时必填
+          label: 出站代理
+          name: proxy
+          type: text
+        - desc: 事件源自动维护，勿手填
+          label: 轮询游标
+          name: watch_cursor
+          type: text
+events:
+    - fields:
+        - label: 评论 id
+          name: comment_id
+          required: true
+          type: string
+        - desc: 由 text_html 去掉标签、还原转义得到；链接保留完整地址
+          label: 正文（纯文本）
+          name: text
+          required: true
+          type: string
+        - desc: HN 返回的原样内容
+          label: 正文（HN 原文 HTML）
+          name: text_html
+          required: true
+          type: string
+        - label: 评论人
+          name: author
+          required: true
+          type: string
+        - label: 评论人主页
+          name: author_url
+          required: true
+          type: string
+        - desc: news.ycombinator.com/item?id=…，在那里回复
+          label: 评论地址
+          name: url
+          required: true
+          type: string
+        - label: 所属帖子 id
+          name: story_id
+          required: true
+          type: string
+        - label: 所属帖子标题
+          name: story_title
+          required: true
+          type: string
+        - label: 所属帖子在 HN 上的地址
+          name: story_url
+          required: true
+          type: string
+        - desc: 帖子 id 或上一条评论的 id；与 story_id 相同表示直接回复帖子
+          label: 回复的是哪一条
+          name: parent_id
+          required: true
+          type: string
+        - desc: parent_id 是监听账号写的帖子或评论
+          label: 回复的是我
+          name: is_reply_to_me
+          required: true
+          type: boolean
+        - desc: RFC3339，UTC
+          label: 发布时间
+          name: created_at
+          required: true
+          type: string
+      id: comment_received
+      label: 有新评论
+    - fields:
+        - desc: story（新帖子）/ comment（新评论）
+          label: 类型
+          name: kind
+          required: true
+          type: string
+        - desc: 命中的帖子或评论
+          label: 条目 id
+          name: item_id
+          required: true
+          type: string
+        - desc: 帖子才有
+          label: 标题
+          name: title
+          required: true
+          type: string
+        - desc: 讨论帖与评论有；链接帖为空
+          label: 正文（纯文本）
+          name: text
+          required: true
+          type: string
+        - label: 正文（HN 原文 HTML）
+          name: text_html
+          required: true
+          type: string
+        - desc: 链接帖指向的地址
+          label: 外链
+          name: link
+          required: true
+          type: string
+        - label: 作者
+          name: author
+          required: true
+          type: string
+        - label: 作者主页
+          name: author_url
+          required: true
+          type: string
+        - label: 在 HN 上的地址
+          name: url
+          required: true
+          type: string
+        - desc: 帖子本身为自己的 id
+          label: 所属帖子 id
+          name: story_id
+          required: true
+          type: string
+        - label: 所属帖子标题
+          name: story_title
+          required: true
+          type: string
+        - desc: 帖子才有
+          goType: int
+          label: 得分
+          name: points
+          required: true
+          type: number
+        - desc: RFC3339，UTC
+          label: 发布时间
+          name: created_at
+          required: true
+          type: string
+        - label: 命中的关键词
+          name: matched_query
+          required: true
+          type: string
+      id: keyword_matched
+      label: 关键词命中
+events_common:
+    - text
+    - text_html
+    - author
+    - url
+    - story_id
+    - story_title
+    - created_at
+operations:
+    - desc: HN 不需要凭证；这里检查能不能连上 HN 的两个接口，并核对监听的用户名是否存在
+      id: health_check
+      label: 检查连接
+      outputs:
+        - label: 可用
+          name: ok
+          required: true
+          type: boolean
+        - label: 说明
+          name: message
+          required: true
+          type: string
+    - desc: 按 id 读一条帖子或评论（得分、评论数、正文、作者）
+      id: hn_item_get
+      inputs:
+        - desc: HN 地址里 item?id= 后面那串数字，也可以直接粘整个地址
+          label: 条目 id
+          name: id
+          required: true
+          type: string
+      label: 取条目
+      outputs:
+        - fields:
+            - label: 条目 id
+              name: id
+              required: true
+              type: string
+            - desc: story / comment / job / poll
+              label: 类型
+              name: type
+              required: true
+              type: string
+            - label: 作者
+              name: author
+              required: true
+              type: string
+            - desc: 帖子才有；评论为空
+              label: 标题
+              name: title
+              type: string
+            - desc: 由 text_html 去掉标签、还原转义得到；链接帖通常为空
+              label: 正文（纯文本）
+              name: text
+              type: string
+            - desc: HN 返回的原样内容
+              label: 正文（HN 原文 HTML）
+              name: text_html
+              type: string
+            - desc: 链接帖指向的地址；讨论帖与评论为空
+              label: 外链
+              name: url
+              type: string
+            - desc: https://news.ycombinator.com/item?id=…，回复评论就点这里
+              label: HN 上的地址
+              name: permalink
+              required: true
+              type: string
+            - desc: 帖子的分数；评论没有公开分数，为 0
+              goType: int
+              label: 得分
+              name: score
+              required: true
+              type: number
+            - desc: 帖子的评论总数；评论为 0
+              goType: int
+              label: 评论数
+              name: comments
+              required: true
+              type: number
+            - desc: 评论所在的帖子；帖子本身为自己的 id
+              label: 所属帖子 id
+              name: story_id
+              required: true
+              type: string
+            - label: 所属帖子标题
+              name: story_title
+              type: string
+            - desc: 评论回复的是哪一条（帖子或另一条评论）；帖子为空
+              label: 上一级 id
+              name: parent_id
+              type: string
+            - desc: RFC3339，UTC
+              label: 发布时间
+              name: created_at
+              required: true
+              type: string
+            - desc: 只在「取评论」里有意义：1 = 直接回复帖子，2 = 回复评论，以此类推
+              goType: int
+              label: 层级
+              name: depth
+              required: true
+              type: number
+          goType: Item
+          label: 条目
+          name: item
+          required: true
+          type: json
+    - desc: 首页、最新、Ask HN、Show HN 等榜单的前若干条
+      id: hn_list
+      inputs:
+        - default: top
+          label: 榜单
+          name: list
+          options:
+            - label: 首页（热门）
+              value: top
+            - label: 最新
+              value: new
+            - label: 最佳
+              value: best
+            - label: Ask HN
+              value: ask
+            - label: Show HN
+              value: show
+            - label: 招聘
+              value: job
+          type: enum
+        - default: 30
+          desc: 默认 30，最多 100
+          goType: int
+          label: 条数
+          name: limit
+          type: number
+      label: 取榜单
+      outputs:
+        - desc: 按榜单顺序
+          fields:
+            - label: 条目 id
+              name: id
+              required: true
+              type: string
+            - desc: story / comment / job / poll
+              label: 类型
+              name: type
+              required: true
+              type: string
+            - label: 作者
+              name: author
+              required: true
+              type: string
+            - desc: 帖子才有；评论为空
+              label: 标题
+              name: title
+              type: string
+            - desc: 由 text_html 去掉标签、还原转义得到；链接帖通常为空
+              label: 正文（纯文本）
+              name: text
+              type: string
+            - desc: HN 返回的原样内容
+              label: 正文（HN 原文 HTML）
+              name: text_html
+              type: string
+            - desc: 链接帖指向的地址；讨论帖与评论为空
+              label: 外链
+              name: url
+              type: string
+            - desc: https://news.ycombinator.com/item?id=…，回复评论就点这里
+              label: HN 上的地址
+              name: permalink
+              required: true
+              type: string
+            - desc: 帖子的分数；评论没有公开分数，为 0
+              goType: int
+              label: 得分
+              name: score
+              required: true
+              type: number
+            - desc: 帖子的评论总数；评论为 0
+              goType: int
+              label: 评论数
+              name: comments
+              required: true
+              type: number
+            - desc: 评论所在的帖子；帖子本身为自己的 id
+              label: 所属帖子 id
+              name: story_id
+              required: true
+              type: string
+            - label: 所属帖子标题
+              name: story_title
+              type: string
+            - desc: 评论回复的是哪一条（帖子或另一条评论）；帖子为空
+              label: 上一级 id
+              name: parent_id
+              type: string
+            - desc: RFC3339，UTC
+              label: 发布时间
+              name: created_at
+              required: true
+              type: string
+            - desc: 只在「取评论」里有意义：1 = 直接回复帖子，2 = 回复评论，以此类推
+              goType: int
+              label: 层级
+              name: depth
+              required: true
+              type: number
+          goType: Item
+          label: 条目
+          name: items
+          required: true
+          type: array
+        - goType: int
+          label: 条数
+          name: count
+          required: true
+          type: number
+    - desc: 按关键词搜帖子和评论，最新的在前。看谁在讨论你的项目就用它
+      id: hn_search
+      inputs:
+        - desc: 项目名、域名、仓库地址都行；多个词之间是「且」
+          label: 关键词
+          name: query
+          required: true
+          type: string
+        - default: all
+          label: 范围
+          name: kind
+          options:
+            - label: 帖子和评论
+              value: all
+            - label: 只看帖子
+              value: story
+            - label: 只看评论
+              value: comment
+          type: enum
+        - default: 0
+          desc: 0 = 不限
+          goType: int
+          label: 最近多少小时
+          name: since_hours
+          type: number
+        - default: 20
+          desc: 默认 20，最多 100
+          goType: int
+          label: 条数
+          name: limit
+          type: number
+      label: 搜索
+      outputs:
+        - desc: 按时间倒序
+          fields:
+            - label: 条目 id
+              name: id
+              required: true
+              type: string
+            - desc: story / comment / job / poll
+              label: 类型
+              name: type
+              required: true
+              type: string
+            - label: 作者
+              name: author
+              required: true
+              type: string
+            - desc: 帖子才有；评论为空
+              label: 标题
+              name: title
+              type: string
+            - desc: 由 text_html 去掉标签、还原转义得到；链接帖通常为空
+              label: 正文（纯文本）
+              name: text
+              type: string
+            - desc: HN 返回的原样内容
+              label: 正文（HN 原文 HTML）
+              name: text_html
+              type: string
+            - desc: 链接帖指向的地址；讨论帖与评论为空
+              label: 外链
+              name: url
+              type: string
+            - desc: https://news.ycombinator.com/item?id=…，回复评论就点这里
+              label: HN 上的地址
+              name: permalink
+              required: true
+              type: string
+            - desc: 帖子的分数；评论没有公开分数，为 0
+              goType: int
+              label: 得分
+              name: score
+              required: true
+              type: number
+            - desc: 帖子的评论总数；评论为 0
+              goType: int
+              label: 评论数
+              name: comments
+              required: true
+              type: number
+            - desc: 评论所在的帖子；帖子本身为自己的 id
+              label: 所属帖子 id
+              name: story_id
+              required: true
+              type: string
+            - label: 所属帖子标题
+              name: story_title
+              type: string
+            - desc: 评论回复的是哪一条（帖子或另一条评论）；帖子为空
+              label: 上一级 id
+              name: parent_id
+              type: string
+            - desc: RFC3339，UTC
+              label: 发布时间
+              name: created_at
+              required: true
+              type: string
+            - desc: 只在「取评论」里有意义：1 = 直接回复帖子，2 = 回复评论，以此类推
+              goType: int
+              label: 层级
+              name: depth
+              required: true
+              type: number
+          goType: Item
+          label: 结果
+          name: items
+          required: true
+          type: array
+        - goType: int
+          label: 条数
+          name: count
+          required: true
+          type: number
+    - desc: 取一条帖子下的全部评论，按讨论顺序平铺（带层级）。可只取某个时刻之后的新评论
+      id: hn_thread_comments
+      inputs:
+        - desc: 也可以直接粘 HN 地址
+          label: 帖子 id
+          name: id
+          required: true
+          type: string
+        - desc: RFC3339 时间；留空 = 全部
+          label: 只要这之后的
+          name: since
+          type: string
+      label: 取评论
+      outputs:
+        - desc: 讨论顺序（先父后子），depth 是层级
+          fields:
+            - label: 条目 id
+              name: id
+              required: true
+              type: string
+            - desc: story / comment / job / poll
+              label: 类型
+              name: type
+              required: true
+              type: string
+            - label: 作者
+              name: author
+              required: true
+              type: string
+            - desc: 帖子才有；评论为空
+              label: 标题
+              name: title
+              type: string
+            - desc: 由 text_html 去掉标签、还原转义得到；链接帖通常为空
+              label: 正文（纯文本）
+              name: text
+              type: string
+            - desc: HN 返回的原样内容
+              label: 正文（HN 原文 HTML）
+              name: text_html
+              type: string
+            - desc: 链接帖指向的地址；讨论帖与评论为空
+              label: 外链
+              name: url
+              type: string
+            - desc: https://news.ycombinator.com/item?id=…，回复评论就点这里
+              label: HN 上的地址
+              name: permalink
+              required: true
+              type: string
+            - desc: 帖子的分数；评论没有公开分数，为 0
+              goType: int
+              label: 得分
+              name: score
+              required: true
+              type: number
+            - desc: 帖子的评论总数；评论为 0
+              goType: int
+              label: 评论数
+              name: comments
+              required: true
+              type: number
+            - desc: 评论所在的帖子；帖子本身为自己的 id
+              label: 所属帖子 id
+              name: story_id
+              required: true
+              type: string
+            - label: 所属帖子标题
+              name: story_title
+              type: string
+            - desc: 评论回复的是哪一条（帖子或另一条评论）；帖子为空
+              label: 上一级 id
+              name: parent_id
+              type: string
+            - desc: RFC3339，UTC
+              label: 发布时间
+              name: created_at
+              required: true
+              type: string
+            - desc: 只在「取评论」里有意义：1 = 直接回复帖子，2 = 回复评论，以此类推
+              goType: int
+              label: 层级
+              name: depth
+              required: true
+              type: number
+          goType: Item
+          label: 评论
+          name: items
+          required: true
+          type: array
+        - goType: int
+          label: 条数
+          name: count
+          required: true
+          type: number
+        - label: 帖子标题
+          name: title
+          required: true
+          type: string
+plugin:
+    desc: 读榜单、帖子、评论，按关键词搜索；有人评论你的帖子、或回复你的评论时触发工作流。
+    doc: README.md
+    label: Hacker News
+    name: hackernews
+    org: sokel
+    version: v0.1.0
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-hackernews:latest

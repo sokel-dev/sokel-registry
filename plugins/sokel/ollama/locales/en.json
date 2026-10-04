@@ -65,6 +65,7 @@
   "拿这条凭证问一次上游「有哪些模型」，给部署编辑的模型名下拉用": "Uses this credential to ask upstream once for its model list, for the model-name dropdown in the deployment editor",
   "拿这条凭证问一次上游的模型列表，验证 key 与 base_url 都对": "Uses this credential to fetch upstream's model list once, verifying that both the key and base_url are correct",
   "按 canonical 请求调用上游模型，返回完整回答": "Calls the upstream model with the canonical request and returns the full response",
+  "接入本机或内网的 Ollama：在自己的机器上跑开源模型，数据不出本地。": "Connects to Ollama on your machine or local network: run open-weight models on your own hardware, with data staying local.",
   "推理": "Reasoning",
   "推理注记": "Reasoning note",
   "数据": "Data",

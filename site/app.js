@@ -182,10 +182,11 @@ const GLYPHS = {
   chart: line('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
   pulse: line('<path d="M3 12h4l3-8 4 16 3-8h4"/>'),
   book: line('<path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>'),
+  bell: line('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),
 };
 // What a brandless plugin shows: by name first (a few well-known functional plugins), then by its first capability.
 const NAME_GLYPHS = [[/http-probe/, 'pulse'], [/(^|\/)http$/, 'globe'], [/sandbox/, 'code'], [/registry-tools/, 'box'],
-  [/submail|mail/, 'mail'], [/tushare|xueqiu|umeng|stock|finance/, 'chart'], [/kbstore/, 'book']];
+  [/submail|mail/, 'mail'], [/umeng|push/, 'bell'], [/tushare|xueqiu|stock|finance/, 'chart'], [/kbstore/, 'book']];
 const CAP_GLYPHS = [[/^vectorstore/, 'database'], [/^rowstore/, 'database'], [/^objectstore/, 'box'], [/^memory/, 'history'],
   [/^websearch/, 'search'], [/^llm|^model_catalog/, 'chat'], [/^embedding|^rerank/, 'layers']];
 function iconOf(p) {

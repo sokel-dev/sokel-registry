@@ -751,7 +751,8 @@ operations:
           name: status
           type: number
 plugin:
+    desc: Fireworks AI 托管的开源模型接入（OpenAI 兼容协议）：Llama、Qwen、DeepSeek 等开源权重模型的高速推理。
     label: Fireworks
     name: fireworks
     org: sokel
-    version: v1.0.1
+    version: v1.0.2

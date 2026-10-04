@@ -231,7 +231,8 @@ implements:
               required: true
               type: number
 plugin:
+    desc: 平台内置的对话记忆存储：Agent 节点与对话触发器的多轮会话记忆，随平台运行、不用部署。
     label: 记忆存储（平台内置）
     name: memory
     org: sokel
-    version: v1.0.0
+    version: v1.0.1
