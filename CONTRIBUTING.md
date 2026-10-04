@@ -14,10 +14,17 @@ Everything here changes through pull requests. CI checks the mechanics; a code o
 3. **Add the entry.** Create `plugins/<org>/<name>/manifest.yml` (`sokel-gen` can export it from your plugin), with
    `plugin.org` and `plugin.name` matching the directory and a `plugin.version`. Optional: `locales/<lang>.json`,
    `README.md`.
-4. **First plugin of a new org:** in the same pull request, add `/plugins/<org>/ @your-handle` to
+4. **Give it an icon** (optional, recommended): set `plugin.icon` in the manifest to
+   - `icon.svg` / `icon.png` — a file in the entry directory, or
+   - `brand:<id>` — one of the built-in brand marks listed in `site/brands.js` (e.g. `brand:gitlab`).
+
+   The file is checked by CI: SVG with no scripts, event handlers or external references, at most 32 KB; PNG at least
+   128×128 and at most 64 KB; about square. Platforms serve it themselves, so it never loads from anyone else's server.
+   Without an icon the plugin shows a letter.
+5. **First plugin of a new org:** in the same pull request, add `/plugins/<org>/ @your-handle` to
    `.github/CODEOWNERS`. From then on, changes under your org need your approval.
-5. **Check locally:** `go run ./cmd/build-index -site _site .` must pass.
-6. **Open the pull request** and fill in the template.
+6. **Check locally:** `go run ./cmd/build-index -site _site .` must pass.
+7. **Open the pull request** and fill in the template.
 
 What reviewers look at, beyond CI:
 

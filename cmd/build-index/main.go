@@ -215,6 +215,17 @@ func one(root, dir, org, name string) (*entry, *sokelgen.Manifest, error) {
 	if _, rerr := os.Stat(filepath.Join(dir, "README.md")); rerr == nil {
 		files = append(files, "README.md")
 	}
+	// The icon file (plugin.icon: icon.svg) travels with the entry like the manifest does; the SDK has already
+	// checked it while loading. A brand mark must be one the page and the platforms can draw.
+	if icon := ie.Icon; icon != "" {
+		if sokelgen.IconIsBrand(icon) {
+			if err := checkBrand(root, icon); err != nil {
+				return nil, nil, fmt.Errorf("%s/%s: %w", org, name, err)
+			}
+		} else {
+			files = append(files, filepath.ToSlash(filepath.Clean(icon)))
+		}
+	}
 	ie.Manifest, ie.Files = filepath.ToSlash(rel), files
 	return ie, m, nil
 }

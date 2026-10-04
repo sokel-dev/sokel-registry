@@ -101,6 +101,7 @@ a { color: inherit; text-decoration: none; }
 /* Some marks arrive wrapped in a span (icon-font style); size the wrapper, and let its svg fill it. */
 .ico > span { display: grid; place-items: center; width: 55%; height: 55%; }
 .ico > span svg { width: 100%; height: 100%; }
+.ico img { width: 62%; height: 62%; object-fit: contain; }
 .ico i { font-style: normal; font-weight: 700; font-size: calc(var(--s) * .44); color: var(--c); }
 .ico:has(i) { background: color-mix(in srgb, var(--c) 10%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 16%, transparent); }
 .ico.lg { --s: 64px; border-radius: 18px; box-shadow: inset 0 0 0 1px var(--border), var(--sh-2); }

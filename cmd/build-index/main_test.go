@@ -152,3 +152,48 @@ func TestSiteTree(t *testing.T) {
 		t.Errorf("details carry the manifest: %v %s", err, raw)
 	}
 }
+
+// An icon file travels with the entry (listed in files, copied into the published tree); a brand mark must exist in
+// the page's brand table; an unsafe icon never gets in.
+func TestIcons(t *testing.T) {
+	setIcon := func(t *testing.T, root, icon string) {
+		p := filepath.Join(root, "plugins/acme/foo/manifest.yml")
+		raw, _ := os.ReadFile(p)
+		mustWrite(t, p, strings.Replace(string(raw), "desc: test", "desc: test, icon: "+icon, 1))
+	}
+	root := fixture(t, map[string]string{"acme/foo": "1.0.0"}, "")
+	setIcon(t, root, "icon.svg")
+	mustWrite(t, filepath.Join(root, "plugins/acme/foo/icon.svg"), `<svg viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></svg>`)
+	out := filepath.Join(t.TempDir(), "out")
+	if err := runSite(root, out); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(filepath.Join(out, "index.json"))
+	var idx index
+	_ = json.Unmarshal(raw, &idx)
+	e := idx.Plugins[0]
+	if e.Icon != "icon.svg" || !strings.Contains(strings.Join(e.Files, ","), "icon.svg") {
+		t.Errorf("the icon is on the entry and in its files: %+v", e)
+	}
+	if _, err := os.Stat(filepath.Join(out, "plugins/acme/foo/icon.svg")); err != nil {
+		t.Error("the icon is published with the entry")
+	}
+
+	mustWrite(t, filepath.Join(root, "plugins/acme/foo/icon.svg"), `<svg viewBox="0 0 24 24" onload="alert(1)"/>`)
+	if err := runSite(root, filepath.Join(t.TempDir(), "out")); err == nil {
+		t.Error("an unsafe icon must not be published")
+	}
+
+	root = fixture(t, map[string]string{"acme/foo": "1.0.0"}, "")
+	mustWrite(t, filepath.Join(root, brandsFile), "window.SOKEL_BRANDS = {\n \"gitlab\": {\"label\": \"GitLab\"}\n};\n")
+	setIcon(t, root, "brand:gitlab")
+	if err := runSite(root, filepath.Join(t.TempDir(), "out")); err != nil {
+		t.Errorf("a known brand: %v", err)
+	}
+	root = fixture(t, map[string]string{"acme/foo": "1.0.0"}, "")
+	mustWrite(t, filepath.Join(root, brandsFile), "window.SOKEL_BRANDS = {\n \"gitlab\": {\"label\": \"GitLab\"}\n};\n")
+	setIcon(t, root, "brand:gitlabb")
+	if err := runSite(root, filepath.Join(t.TempDir(), "out")); err == nil || !strings.Contains(err.Error(), "not a known brand") {
+		t.Errorf("a misspelled brand must be refused: %v", err)
+	}
+}

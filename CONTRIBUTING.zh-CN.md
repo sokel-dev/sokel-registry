@@ -12,10 +12,16 @@
 2. **定好 org。** `org` 是发布者：你的 GitHub 用户名或组织名，小写。不能用 `sokel`（那是 Sokel 项目自己维护的插件）。
 3. **新增条目。** 创建 `plugins/<org>/<name>/manifest.yml`（`sokel-gen` 可以从插件导出），`plugin.org` 与
    `plugin.name` 要和目录一致，并写上 `plugin.version`。可选：`locales/<lang>.json`、`README.md`。
-4. **新 org 的第一个插件：** 在同一个 PR 里往 `.github/CODEOWNERS` 加一行 `/plugins/<org>/ @你的账号`。
+4. **配一个图标**（可选，建议）：manifest 里写 `plugin.icon`，取值二选一：
+   - `icon.svg` / `icon.png`：放在条目目录里的文件；
+   - `brand:<id>`：`site/brands.js` 里已有的品牌图标（如 `brand:gitlab`）。
+
+   CI 会检查文件：SVG 不能含脚本、事件属性或外部引用，最大 32 KB；PNG 至少 128×128、最大 64 KB；接近正方形。
+   平台自己提供这份文件，不会去别人的服务器加载。不配图标时显示首字母。
+5. **新 org 的第一个插件：** 在同一个 PR 里往 `.github/CODEOWNERS` 加一行 `/plugins/<org>/ @你的账号`。
    之后这个 org 下的改动都需要你批准。
-5. **本地检查：** `go run ./cmd/build-index -site _site .` 必须通过。
-6. **提 PR**，按模板填写。
+6. **本地检查：** `go run ./cmd/build-index -site _site .` 必须通过。
+7. **提 PR**，按模板填写。
 
 CI 之外，审核会看：
 

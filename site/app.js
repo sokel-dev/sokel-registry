@@ -172,9 +172,19 @@ const NAME_GLYPHS = [[/http-probe/, 'pulse'], [/(^|\/)http$/, 'globe'], [/sandbo
 const CAP_GLYPHS = [[/^vectorstore/, 'database'], [/^rowstore/, 'database'], [/^objectstore/, 'box'], [/^memory/, 'history'],
   [/^websearch/, 'search'], [/^llm|^model_catalog/, 'chat'], [/^embedding|^rerank/, 'layers']];
 function iconOf(p) {
+  // A declared icon wins: brand:<id> draws that mark; a file (icon.svg / icon.png) is published with the entry and
+  // drawn as an image (never inlined, so nothing in it can run).
+  const declared = String(p.icon || '');
+  if (declared.startsWith('brand:') && BRANDS[declared.slice(6)]) {
+    const b = BRANDS[declared.slice(6)];
+    return { svg: b.svg, color: b.color, branded: true };
+  }
+  if (declared && !declared.startsWith('brand:')) {
+    return { img: at(`plugins/${p.ref}/${declared}`), color: colorOf(p.ref), branded: true };
+  }
   const hay = `${p.ref} ${p.name} ${p.label || ''}`;
   const brand = BRAND_RULES.find(([re]) => re.test(hay));
-  if (brand && BRANDS[brand[1]]) return { svg: BRANDS[brand[1]].svg, color: BRANDS[brand[1]].color };
+  if (brand && BRANDS[brand[1]]) return { svg: BRANDS[brand[1]].svg, color: BRANDS[brand[1]].color, branded: true };
   const color = colorOf(p.ref);
   const byName = NAME_GLYPHS.find(([re]) => re.test(p.ref));
   if (byName) return { svg: GLYPHS[byName[1]], color };
@@ -184,7 +194,8 @@ function iconOf(p) {
 }
 const iconHTML = (p, cls = '') => {
   const ic = iconOf(p);
-  return `<span class="ico ${cls}" style="--c:${ic.color}">${ic.svg || `<i>${esc(ic.letter)}</i>`}</span>`;
+  const inner = ic.img ? `<img src="${esc(ic.img)}" alt="" loading="lazy">` : (ic.svg || `<i>${esc(ic.letter)}</i>`);
+  return `<span class="ico ${cls}" style="--c:${ic.color}">${inner}</span>`;
 };
 
 // --- versions and advisories (same rules as the platform: build-index / ADVISORIES.md) ---------------------
@@ -345,9 +356,9 @@ function renderStats() {
 
 // renderCloud: the hero's right side, a loose grid of real plugin marks (branded ones first), linking to each.
 function renderCloud() {
-  const branded = ALL.filter((p) => iconOf(p).svg && BRAND_RULES.some(([re]) => re.test(`${p.ref} ${p.name} ${p.label || ''}`)));
+  const branded = ALL.filter((p) => iconOf(p).branded);
   const seen = new Set();
-  const picks = branded.filter((p) => { const k = iconOf(p).svg; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 20);
+  const picks = branded.filter((p) => { const ic = iconOf(p); const k = ic.svg || ic.img; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 20);
   document.getElementById('cloud').innerHTML = picks.map((p, i) =>
     `<a href="#/${esc(p.ref)}" tabindex="-1" style="--i:${i}" title="${esc(cardText(p, 'label') || p.name)}">${iconHTML(p, 'lg')}</a>`).join('');
 }
