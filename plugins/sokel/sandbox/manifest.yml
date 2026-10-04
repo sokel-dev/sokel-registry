@@ -7,7 +7,7 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-sandbox:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-sandbox:latest
   env:
   - name: SOKEL_SANDBOX_CONCURRENCY
     desc: 并发上限（缺省 CPU 数）；超出的排队

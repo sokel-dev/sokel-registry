@@ -12,7 +12,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-kbstore-pgvector:0.1.0
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-kbstore-pgvector:0.1.5
 implements:
 - capability: vectorstore
   operations:
@@ -666,4 +666,4 @@ plugin:
   label: kbstore-pgvector
   name: kbstore-pgvector
   org: sokel
-  version: 0.1.0
+  version: 0.1.5

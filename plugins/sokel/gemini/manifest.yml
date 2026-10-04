@@ -17,7 +17,7 @@ deployment:
     note: 平台部署套件已内置同款容器承接本插件，通常无需部署；此命令用于在别的机器上再起一个出站副本（横向扩容/就近出网）。
     targets:
         - kind: container
-          ref: ghcr.io/sokel-dev/sokel/sokel-base-plugins:latest
+          ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-base-plugins:latest
 implements:
     - capability: llm/chat
       operations:

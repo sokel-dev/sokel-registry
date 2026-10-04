@@ -178,5 +178,5 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-youtube-transcript:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-youtube-transcript:latest
   note: 部署在机房/云主机上时基本必须在凭证里配住宅代理，否则会被 YouTube 当机器人挡下。

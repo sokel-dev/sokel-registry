@@ -8,7 +8,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-telegram-bot:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-telegram-bot:latest
 events:
 - fields:
   - goType: int

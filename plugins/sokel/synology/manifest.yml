@@ -22,7 +22,7 @@ deployment:
   note: 必须部署在能访问该 NAS 的机器上。
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-synology:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-synology:latest
 events:
 - fields:
   - label: 完整路径

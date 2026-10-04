@@ -151,7 +151,7 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel/sokel-base-plugins:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-base-plugins:latest
   env:
   - name: SOKEL_BASE_PLUGINS
     desc: 只启用本插件这一个成员（基础容器是全量基础插件合一镜像；token 是单插件身份凭据）

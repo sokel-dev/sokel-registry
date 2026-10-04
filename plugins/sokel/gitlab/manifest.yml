@@ -1482,4 +1482,4 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-gitlab:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-gitlab:latest

@@ -20,7 +20,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-gmail:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-gmail:latest
 events:
 - fields:
   - label: 邮件 ID

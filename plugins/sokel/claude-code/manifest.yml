@@ -421,5 +421,5 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-claude-code:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-claude-code:latest
   note: 必须部署在装了 claude 且能访问目标 GitLab 的机器上。

@@ -35,7 +35,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-notion:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-notion:latest
 events:
 - fields:
   - label: 页面 id
@@ -847,4 +847,4 @@ plugin:
   label: Notion
   name: notion
   org: sokel
-  version: v1.0.0
+  version: v1.0.1

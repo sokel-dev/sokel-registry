@@ -148,4 +148,4 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-wechat-mp:latest
+    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-wechat-mp:latest
