@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- Sokel 标识：品牌底 + 上扬信号折线(投研预兆脉冲),顶点为征兆节点。
+       几何与站内标识同款(shared/components/BrandMark,圆角同为边长的 0.26),只是折线撑满整块——
+       16px 的 tab 里按站内 57% 的比例画,笔画不足 1px 会糊成一团。
+       颜色跟随系统明暗,与主题变量 brand / surface 两套配色一致(玫粉底白线 / 香槟金底近黑线)。
+       注意：XML 注释体内不得出现连写的减号,写 CSS 变量名会让整个文件变成非良构 XML。 -->
+  <style>
+    .tile { fill: #ec4899 }
+    .line { stroke: #ffffff }
+    .dot  { fill: #ffffff }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #d4a988 }
+      .line { stroke: #16171a }
+      .dot  { fill: #16171a }
+    }
+  </style>
+  <rect class="tile" width="24" height="24" rx="6.2" />
+  <!-- 折线坐标与站内标识逐字相同,只按自身包围盒中心(12, 11.85)整体收 14% 留白:
+       原尺寸下线端会顶到圆角上,看着像要撑出方块。 -->
+  <g transform="translate(12 11.85) scale(0.86) translate(-12 -11.85)">
+    <path class="line" d="M3 16.5 L7.5 13 L10.5 18 L15 6.5 L21 12" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    <circle class="dot" cx="15" cy="6.5" r="2" />
+  </g>
+</svg>
