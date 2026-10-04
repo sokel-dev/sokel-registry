@@ -25,7 +25,7 @@ plugins/<org>/<name>/
   locales/<lang>.json   # 可选翻译：原文 -> 译文
   README.md             # 可选使用说明，显示在详情页
 advisories.json         # 安全通告，语法见 ADVISORIES.zh-CN.md
-site/                   # 页面（无构建步骤）
+site/                   # 页面（无构建步骤）；site/brands.js 由平台的品牌图标表生成
 cmd/build-index/        # 准入检查与发布目录
 ```
 

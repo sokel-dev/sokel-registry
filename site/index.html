@@ -8,36 +8,54 @@
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div class="wrap">
-  <nav class="nav">
-    <a class="brand" href="#">SOKEL <span data-t="插件目录"></span></a>
+<nav class="nav">
+  <div class="navin">
+    <a class="brand" href="#"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13.5 9.5 18 19 7"/></svg></span><b>Sokel</b><span class="brandsub" data-t="插件目录"></span></a>
     <span class="navlinks">
       <a href="#" data-nav="list" data-t="插件"></a>
       <a href="#/advisories" data-nav="advisories" data-t="安全通告"></a>
-      <a id="contribute" target="_blank" rel="noopener" data-t="提交插件"></a>
-      <button id="lang" class="seg" type="button"></button>
+      <a id="contribute" class="gh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-t="提交插件"></span></a>
+      <button id="lang" class="langbtn" type="button"></button>
     </span>
-  </nav>
-  <!-- The masthead belongs to the list view only: on a detail view the plugin itself is the subject. -->
-  <div id="masthead">
-    <h1 data-t="插件目录"></h1>
-    <p class="lede" id="lede"></p>
   </div>
-  <div id="err"></div>
-  <div id="list">
-    <div class="tools">
-      <input id="q" class="search" type="search" autocomplete="off">
-      <div id="caps" class="segs"></div>
+</nav>
+
+<!-- The hero belongs to the list view only: on a detail view the plugin itself is the subject. -->
+<header id="masthead" class="hero">
+  <div class="wrap herogrid">
+    <div class="herotext">
+      <div class="eyebrow" data-t="Sokel 插件目录"></div>
+      <h1 id="headline"></h1>
+      <p class="lede" id="lede"></p>
+      <label class="herosearch">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" autocomplete="off">
+        <kbd>/</kbd>
+      </label>
+      <dl class="stats" id="stats"></dl>
     </div>
-    <div id="grid" class="grid"></div>
+    <!-- A cloud of real plugin marks: decoration, so it is hidden from assistive tech and on narrow screens. -->
+    <div class="cloud" id="cloud" aria-hidden="true"></div>
+  </div>
+</header>
+
+<div class="wrap page">
+  <div id="err"></div>
+  <div id="list" class="layout">
+    <aside class="side" id="side"></aside>
+    <main class="main">
+      <div class="resulthead" id="resulthead"></div>
+      <div id="grid"></div>
+    </main>
   </div>
   <!-- Detail and advisories views: switched by the hash, so refresh and shared links work. -->
   <div id="view" hidden></div>
-  <p class="note" id="note"></p>
+  <footer class="foot" id="note"></footer>
 </div>
 <!-- Markdown parser for plugin docs (they are full of tables). If it fails to load, docs fall back to plain text:
      a CDN never decides whether this page is readable, so it loads before app.js and without defer. -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="./brands.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

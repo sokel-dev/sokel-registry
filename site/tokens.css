@@ -1,39 +1,41 @@
-/* Design tokens: the same design language as the platform frontend.
+/* Design tokens: the Sokel landing page's palette (warm light surface, one brand pink, a dark ink scale).
  *
- * The values are copied from the platform's :root tokens (web/src/index.css in the main repository) rather than
- * defining a separate palette; when the platform changes a token, change it here too.
+ * The values follow the platform's outward-facing pages (the landing page tokens in the main repository's
+ * web/src/features/marketing/landing.css); when those change, change these too.
  *
  * Three rules shared with the platform:
  *   1. One token set: never write a separate hex value for --brand / --surface / --text-*;
- *   2. The brand color has a budget (<=2% of a screen); it is not a decoration color;
+ *   2. The brand color has a budget; it marks the one thing to look at, not decoration;
  *   3. No emoji as icons.
  */
 :root {
-  --bg: #f5f5f7;
+  --bg: #f7f6f3;
   --surface: #ffffff;
-  --surface-2: #fafafb;
-  --surface-3: #f2f2f5;
-  --border: #eaeaee;
-  --border-strong: #e0e0e5;
-  --text-1: #16161a;
-  --text-2: #5c5c66;
-  --text-3: #9c9ca6;
-  --text-4: #c4c4cc;
+  --surface-2: #f1f0ec;
+  --surface-3: #e9e8e3;
+  --border: rgba(20, 20, 32, 0.08);
+  --border-strong: rgba(20, 20, 32, 0.14);
+  --text-1: #15151a;
+  --text-2: #55534e;
+  --text-3: #86837c;
+  --text-4: #b8b5ae;
   --brand: #ec4899;
   --brand-soft: rgba(236, 72, 153, 0.09);
-  --brand-border: rgba(236, 72, 153, 0.26);
-  --action: #ec4899;
-  --action-hi: #f0559f;
-  --shadow-card: 0 1px 2px rgba(20, 20, 32, 0.05), 0 1px 3px rgba(20, 20, 32, 0.05);
-  --shadow-md: 0 4px 14px rgba(20, 20, 32, 0.07), 0 1px 3px rgba(20, 20, 32, 0.05);
+  --brand-border: rgba(236, 72, 153, 0.3);
   --success: #0fa478;
-  --success-soft: color-mix(in srgb, var(--success) 12%, transparent);
+  --success-soft: rgba(15, 164, 120, 0.12);
   --warning: #d98a23;
   --warning-text: #a8620c;
   --warning-soft: color-mix(in srgb, var(--warning) 14%, transparent);
   --danger: #dc2626;
   --danger-soft: color-mix(in srgb, var(--danger) 12%, transparent);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+  --sh-1: 0 1px 2px rgba(20, 20, 32, 0.05), 0 1px 3px rgba(20, 20, 32, 0.05);
+  --sh-2: 0 4px 14px rgba(20, 20, 32, 0.07), 0 1px 3px rgba(20, 20, 32, 0.05);
+  --sh-3: 0 18px 50px rgba(20, 20, 32, 0.13), 0 4px 12px rgba(20, 20, 32, 0.06);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --maxw: 1200px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --font-sans: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }

@@ -29,7 +29,7 @@ plugins/<org>/<name>/
   locales/<lang>.json   # optional translations: source string -> translation
   README.md             # optional usage doc shown on the detail page
 advisories.json         # security advisories, syntax in ADVISORIES.md
-site/                   # the page (no build step)
+site/                   # the page (no build step); site/brands.js is generated from the platform's brand registry
 cmd/build-index/        # admission checks and the published tree
 ```
 
