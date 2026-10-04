@@ -295,3 +295,74 @@ a { color: inherit; text-decoration: none; }
 .yk { color: #0e7490; }
 .yd { color: var(--text-3); }
 .yc { color: var(--text-3); font-style: italic; }
+
+/* ---------- loading skeletons ---------- */
+.sk {
+  display: block; max-width: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 45%, var(--surface-2) 65%);
+  background-size: 300% 100%; animation: sk 1.3s ease-in-out infinite;
+}
+.skcard { pointer-events: none; }
+.skcard:hover { transform: none; box-shadow: none; border-color: var(--border); }
+.side .sideitem .sk { margin-block: 4px; }
+@keyframes sk { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* ---------- empty / retry ---------- */
+.emptybox {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 56px 24px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 16px; margin-top: 14px;
+}
+.emptybox svg { width: 28px; height: 28px; color: var(--text-4); margin-bottom: 4px; }
+.emptybox b { font-size: 15px; }
+.emptybox span { font-size: 13px; color: var(--text-3); }
+.emptybox .cbtn { margin-top: 8px; }
+.retry { margin-top: 10px; }
+
+/* ---------- install dialog ---------- */
+body.modal { overflow: hidden; }
+.dlgwrap {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
+  background: rgba(21, 21, 26, .38); backdrop-filter: blur(3px); animation: fade .16s ease-out;
+}
+.dlg {
+  position: relative; width: min(480px, 100%); background: var(--surface); border-radius: 20px;
+  box-shadow: var(--sh-3), 0 0 0 1px var(--border); padding: 24px 24px 20px; animation: pop .22s var(--ease);
+}
+.dlgx {
+  position: absolute; top: 14px; inset-inline-end: 14px; width: 30px; height: 30px; display: grid; place-items: center;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-3); cursor: pointer;
+}
+.dlgx:hover { background: var(--surface-2); color: var(--text-1); }
+.dlgx svg { width: 16px; height: 16px; }
+.dlghead { display: flex; align-items: center; gap: 12px; padding-inline-end: 28px; }
+.dlghead h2 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; margin: 0; }
+.dlgsub { font-size: 13px; color: var(--text-2); }
+.dlgsub .mono { font-size: 11px; color: var(--text-3); margin-inline-start: 4px; }
+.dlgtext { font-size: 13px; color: var(--text-2); line-height: 1.65; margin: 14px 0 16px; }
+.dlglabel { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.dlginput {
+  width: 100%; height: 42px; padding: 0 14px; font: 14px var(--font-mono); color: var(--text-1);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; outline: 0;
+  transition: border-color .2s, box-shadow .2s;
+}
+.dlginput:focus { border-color: var(--brand-border); box-shadow: 0 0 0 4px var(--brand-soft); }
+.dlginput[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 4px var(--danger-soft); }
+.dlgerr { min-height: 0; font-size: 12px; color: var(--danger); margin-top: 6px; }
+.dlgerr:empty { display: none; }
+.dlgpreview { font-size: 11.5px; color: var(--text-3); margin-top: 8px; word-break: break-all; line-height: 1.5; }
+.dlgpreview span { color: var(--text-2); }
+.dlgpreview:empty { display: none; }
+.dlgcheck { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-2); margin-top: 14px; cursor: pointer; }
+.dlgcheck input { accent-color: var(--brand); width: 15px; height: 15px; margin: 0; }
+.dlgacts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.dlgacts .cbtn { padding: 9px 18px; font-size: 13px; }
+.dlgacts .install { padding: 9px 20px; font-size: 13px; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .dlgwrap, .dlg { animation: none; } }
+@media (max-width: 640px) {
+  .dlgwrap { place-items: end center; padding: 0; }
+  .dlg { border-radius: 20px 20px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .dlgacts .cbtn, .dlgacts .install { flex: 1; }
+}

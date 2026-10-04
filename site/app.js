@@ -51,7 +51,6 @@ const EN = {
   '操作': 'Operations',
   '事件': 'Events',
   '安装到我的平台': 'Install to my platform',
-  '安装（先填平台地址）': 'Install (enter your platform address)',
   '没有匹配的插件': 'No matching plugins',
   '← 返回插件目录': '← All plugins',
   '读取中…': 'Loading…',
@@ -128,6 +127,18 @@ const EN = {
   "部署": "Deployment",
   "暂无": "None",
   "复制": "Copy",
+  "安装到你的平台": "Install to your platform",
+  "这个页面不会连接你的平台：「前往安装」会打开你平台的插件市场，在那边选择空间并确认。": "This page never talks to your platform: “Continue” opens your platform’s marketplace, where you pick the workspace and confirm.",
+  "平台地址": "Platform address",
+  "记住这个地址（只保存在这个浏览器里）": "Remember this address (stored only in this browser)",
+  "将打开": "Opens",
+  "前往安装": "Continue",
+  "取消": "Cancel",
+  "请填写平台地址": "Enter your platform address",
+  "地址格式不对，例如 https://sokel.example.com": "That is not an address, e.g. https://sokel.example.com",
+  "重试": "Retry",
+  "换个关键词，或清除筛选看全部插件。": "Try another search, or clear the filters to see every plugin.",
+  "关闭": "Close",
   "已复制": "Copied",
   "复制失败，请手动选择": "Copy failed; select it by hand",
   "下载": "Download",
@@ -317,7 +328,12 @@ function render() {
   const label = !filter ? t('全部插件') : (GROUPS.find((g) => g.key === filter) ? t(GROUPS.find((g) => g.key === filter).name) : capName(filter));
   head.innerHTML = `<h2>${esc(label)}</h2><span class="count mono">${list.length}</span>
     ${filter || kw ? `<button class="clear" data-filter="">${esc(t('清除筛选'))}</button>` : ''}`;
-  if (!list.length) { grid.innerHTML = `<div class="empty">${esc(t('没有匹配的插件'))}</div>`; return; }
+  if (!list.length) {
+    grid.innerHTML = `<div class="emptybox">${GLYPHS.search}<b>${esc(t('没有匹配的插件'))}</b>
+      <span>${esc(t('换个关键词，或清除筛选看全部插件。'))}</span>
+      <button class="cbtn" data-filter="" data-clearall="1">${esc(t('清除筛选'))}</button></div>`;
+    return;
+  }
   // No filter: one section per group, so 60 cards read as three shelves instead of one wall.
   if (!filter && !kw) {
     grid.innerHTML = GROUPS.map((g) => {
@@ -368,6 +384,28 @@ function renderCloud() {
   document.getElementById('cloud').innerHTML = picks.map((p, i) =>
     `<a href="#/${esc(p.ref)}" tabindex="-1" style="--i:${i}" title="${esc(cardText(p, 'label') || p.name)}">${iconHTML(p, 'lg')}</a>`).join('');
 }
+
+// --- skeletons ------------------------------------------------------------------------------------------
+// Placeholders shaped like what is coming, so the page does not jump when it arrives.
+const sk = (w, h = 12, extra = '') => `<span class="sk" style="width:${w};height:${h}px;${extra}"></span>`;
+const skCard = () => `<div class="card skcard" aria-hidden="true"><div class="chead">${sk('38px', 38, 'border-radius:10px')}
+  <div class="hmain">${sk('55%', 13)}${sk('38%', 10, 'margin-top:6px')}</div></div>
+  <div>${sk('100%', 11)}${sk('80%', 11, 'margin-top:7px')}</div><div class="cfoot">${sk('64px', 18, 'border-radius:999px')}${sk('48px', 10, 'margin-inline-start:auto')}</div></div>`;
+function skList() {
+  document.getElementById('grid').innerHTML = `<div class="grid">${Array.from({ length: 9 }, skCard).join('')}</div>`;
+  document.getElementById('side').innerHTML = Array.from({ length: 8 }, (_, i) =>
+    `<div class="sideitem${i % 3 ? ' sub' : ''}" aria-hidden="true">${sk(i % 3 ? '60%' : '75%', 11)}</div>`).join('');
+  document.getElementById('stats').innerHTML = Array.from({ length: 4 }, () =>
+    `<div aria-hidden="true">${sk('44px', 24)}${sk('64px', 10, 'margin-top:8px')}</div>`).join('');
+}
+const skDetail = () => `<div aria-busy="true"><div class="dhead">${sk('64px', 64, 'border-radius:18px;flex:0 0 64px')}
+  <div style="flex:1;min-width:0">${sk('38%', 26)}${sk('24%', 11, 'margin-top:10px')}${sk('70%', 12, 'margin-top:18px')}${sk('55%', 12, 'margin-top:8px')}</div>
+  ${sk('150px', 42, 'border-radius:999px')}</div>
+  <div class="panel">${sk('90px', 12)}${sk('80%', 12, 'margin-top:12px')}</div>
+  <div class="dtabs">${sk('320px', 36, 'border-radius:999px')}</div>
+  <div class="panel">${Array.from({ length: 6 }, (_, i) => sk(`${[92, 76, 84, 60, 88, 40][i]}%`, 12, i ? 'margin-top:12px' : '')).join('')}</div></div>`;
+const skCode = () => `<div class="code" aria-busy="true"><div class="codebar">${sk('90px', 11)}<span class="codeacts">${sk('58px', 26, 'border-radius:999px')}${sk('58px', 26, 'border-radius:999px')}</span></div>
+  <div style="padding:16px 20px">${Array.from({ length: 12 }, (_, i) => sk(`${[30, 46, 62, 40, 52, 34, 58, 44, 28, 50, 38, 24][i]}%`, 11, `margin:0 0 10px ${[0, 1, 2, 2, 2, 2, 1, 2, 2, 0, 1, 2][i] * 18}px`)).join('')}</div></div>`;
 
 // --- detail -----------------------------------------------------------------------------------------------
 // md: plugin docs are Markdown with many tables; a parser is loaded, and if it failed the doc shows as plain text.
@@ -443,7 +481,7 @@ function yamlLines(text) {
 }
 function manifestBody(entry) {
   const m = MANIFESTS[entry.ref];
-  if (!m) { void loadManifest(entry); return `<div class="empty">${esc(t('读取中…'))}</div>`; }
+  if (!m) { void loadManifest(entry); return skCode(); }
   if (m.error) return `<div class="err"><b>${esc(t('Manifest 读不到'))}</b>：${esc(m.error)}</div>`;
   const file = `${entry.name}-${String(entry.version || '').replace(/^v/, '') || 'manifest'}.yml`;
   return `<p class="mnote">${esc(t('这就是平台读的那份 manifest：装进自己的平台可以用「导入 manifest」，写新插件可以拿它当模板。'))}</p>
@@ -511,7 +549,6 @@ function advPanel(a) {
 
 function renderDetail(entry, c) {
   const title = tr(c.label) || cardText(entry, 'label') || entry.name;
-  const plat = platformURL();
   const tabs = TABS.filter((x) => !x.when || x.when(c));
   if (!tabs.some((x) => x.key === tab)) tab = 'doc';
   document.getElementById('view').innerHTML = `
@@ -528,9 +565,7 @@ function renderDetail(entry, c) {
           .map((x) => `<span class="pill">${esc(capName(x))}</span>`).join('')}</div>` : ''}
         ${c.desc ? `<p class="ddesc">${esc(tr(c.desc))}</p>` : ''}
       </div>
-      <button class="install${plat ? '' : ' ghost'}" data-ref="${esc(entry.ref)}">
-        ${esc(t(plat ? '安装到我的平台' : '安装（先填平台地址）'))}
-      </button>
+      <button class="install" data-ref="${esc(entry.ref)}">${esc(t('安装到我的平台'))}</button>
     </div>
     ${advPanel(advisoryFor(entry))}
     ${howToRun(entry)}
@@ -542,6 +577,7 @@ function renderDetail(entry, c) {
 // The list only downloads the index; one plugin's full manifest is fetched when it is opened (some have hundreds
 // of operations).
 let CUR = null;
+let LIST_Y = 0;
 async function showDetail(ref) {
   const view = document.getElementById('view');
   const back = `<a class="back" href="#">${esc(t('← 返回插件目录'))}</a>`;
@@ -550,18 +586,20 @@ async function showDetail(ref) {
     view.innerHTML = `${back}<div class="err"><b>${esc(t('目录里没有这个插件'))}</b>：${esc(ref)}</div>`;
     return;
   }
-  view.innerHTML = `${back}<div class="empty">${esc(t('读取中…'))}</div>`;
+  view.innerHTML = `${back}${skDetail()}`;
   try {
     const res = await fetch(at(`details/${ref}.json`));
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const c = await res.json();
     LOC = (c.locales && c.locales.en) || {};
     CUR = { entry, c };
+    document.title = `${tr(c.label) || cardText(entry, 'label') || entry.name} · ${t('插件目录')}`;
     renderDetail(entry, c);
   } catch (e) {
     CUR = null;
     view.innerHTML = `${back}<div class="err"><b>${esc(t('插件详情读不到'))}</b>：${esc(e.message)}
-       <div style="margin-top:6px;color:var(--text-3)">${esc(t('条目在索引里，但它的详情文件拉不到。'))}</div></div>`;
+       <div style="margin-top:6px;color:var(--text-3)">${esc(t('条目在索引里，但它的详情文件拉不到。'))}</div>
+       <button class="cbtn retry" data-retry="detail">${esc(t('重试'))}</button></div>`;
   }
 }
 
@@ -594,6 +632,9 @@ function route() {
   const view = document.getElementById('view');
   const mast = document.getElementById('masthead');
   const where = h === 'advisories' ? 'advisories' : (h.includes('/') ? 'detail' : 'list');
+  // Back from a plugin returns to where the list was, not to the top of the page.
+  if (!list.hidden && where !== 'list') LIST_Y = window.scrollY;
+  const wasList = !list.hidden;
   document.querySelectorAll('[data-nav]').forEach((a) => {
     if (a.dataset.nav === (where === 'detail' ? 'list' : where)) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
@@ -604,7 +645,8 @@ function route() {
   CUR = null;
   if (where === 'detail') { tab = 'doc'; void showDetail(h); }
   if (where === 'advisories') showAdvisories();
-  window.scrollTo(0, 0);
+  if (where !== 'detail') document.title = LANG === 'zh' ? 'Sokel 插件目录' : 'Sokel Plugin Registry';
+  window.scrollTo(0, where === 'list' && !wasList ? LIST_Y : 0);
 }
 
 function chrome() {
@@ -623,15 +665,67 @@ function chrome() {
 }
 
 // One-click install: send the visitor to their platform's marketplace with the ref; whether and where to install is
-// decided over there. This page never talks to the platform.
-function install(ref) {
-  let base = platformURL();
-  if (!base) {
-    base = (prompt(t('你的平台地址（例如 https://sokel.example.com）')) || '').trim();
-    if (!base) return;
-    try { localStorage.setItem(PLATFORM_KEY, base); } catch { /* private browsing */ }
+// decided over there. This page never talks to the platform; the address is kept only in this browser (if asked to).
+let DLG_RETURN = null; // the element that had focus before the dialog, to give it back
+function normalizePlatform(raw) {
+  let v = String(raw || '').trim();
+  if (!v) return { error: t('请填写平台地址') };
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  try {
+    const u = new URL(v);
+    if (!/^https?:$/.test(u.protocol) || !u.hostname || (!u.hostname.includes('.') && u.hostname !== 'localhost')) throw new Error();
+    return { url: (u.origin + u.pathname).replace(/\/+$/, '') };
+  } catch {
+    return { error: t('地址格式不对，例如 https://sokel.example.com') };
   }
-  location.href = base.replace(/\/+$/, '') + '/plugins/market?install=' + encodeURIComponent(ref);
+}
+const installTarget = (base, ref) => `${base}/plugins/market?install=${encodeURIComponent(ref)}`;
+function install(ref) {
+  const p = ALL.find((x) => x.ref === ref);
+  const dlg = document.getElementById('dlg');
+  DLG_RETURN = document.activeElement;
+  dlg.innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgtitle">
+    <button class="dlgx" data-dlg="close" aria-label="${esc(t('关闭'))}">${line('<path d="M6 6l12 12M18 6 6 18"/>')}</button>
+    <div class="dlghead">${p ? iconHTML(p) : ''}<div><h2 id="dlgtitle">${esc(t('安装到你的平台'))}</h2>
+      <div class="dlgsub">${esc(p ? (cardText(p, 'label') || p.name) : ref)} <span class="mono">${esc(ref)}</span></div></div></div>
+    <p class="dlgtext">${esc(t('这个页面不会连接你的平台：「前往安装」会打开你平台的插件市场，在那边选择空间并确认。'))}</p>
+    <form id="dlgform" novalidate>
+      <label class="dlglabel" for="dlgurl">${esc(t('平台地址'))}</label>
+      <input id="dlgurl" class="dlginput" type="url" inputmode="url" autocomplete="url" spellcheck="false"
+        placeholder="https://sokel.example.com" value="${esc(platformURL())}">
+      <div class="dlgerr" id="dlgerr" role="alert"></div>
+      <div class="dlgpreview mono" id="dlgpreview"></div>
+      <label class="dlgcheck"><input type="checkbox" id="dlgremember" checked> ${esc(t('记住这个地址（只保存在这个浏览器里）'))}</label>
+      <div class="dlgacts"><button type="button" class="cbtn" data-dlg="close">${esc(t('取消'))}</button>
+        <button type="submit" class="install">${esc(t('前往安装'))}</button></div>
+    </form></div>`;
+  dlg.hidden = false;
+  document.body.classList.add('modal');
+  const input = document.getElementById('dlgurl');
+  const preview = () => {
+    const n = normalizePlatform(input.value);
+    document.getElementById('dlgpreview').innerHTML = n.url ? `${esc(t('将打开'))} <span>${esc(installTarget(n.url, ref))}</span>` : '';
+  };
+  input.addEventListener('input', () => { document.getElementById('dlgerr').textContent = ''; input.removeAttribute('aria-invalid'); preview(); });
+  document.getElementById('dlgform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const n = normalizePlatform(input.value);
+    if (n.error) { document.getElementById('dlgerr').textContent = n.error; input.setAttribute('aria-invalid', 'true'); input.focus(); return; }
+    try {
+      if (document.getElementById('dlgremember').checked) localStorage.setItem(PLATFORM_KEY, n.url);
+      else localStorage.removeItem(PLATFORM_KEY);
+    } catch { /* private browsing */ }
+    location.href = installTarget(n.url, ref);
+  });
+  preview();
+  requestAnimationFrame(() => { input.focus(); input.select(); });
+}
+function closeDialog() {
+  const dlg = document.getElementById('dlg');
+  if (dlg.hidden) return;
+  dlg.hidden = true; dlg.innerHTML = '';
+  document.body.classList.remove('modal');
+  if (DLG_RETURN && DLG_RETURN.focus) DLG_RETURN.focus();
 }
 
 async function loadAdvisories() {
@@ -647,6 +741,7 @@ async function loadAdvisories() {
 
 async function boot() {
   chrome();
+  skList();
   try {
     const [res] = await Promise.all([fetch(at('index.json')), loadAdvisories()]);
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -665,13 +760,19 @@ async function boot() {
     document.getElementById('err').innerHTML =
       `<div class="err"><b>${esc(t('插件索引读不到'))}</b>：${esc(e.message)}
        <div style="margin-top:6px;color:var(--text-3)">${esc(t('这不代表目录里没有插件——索引没配好或拉取失败时也会这样。'))}</div></div>`;
-    document.getElementById('grid').innerHTML = `<div class="empty">${esc(t('索引不可用'))}</div>`;
+    document.getElementById('grid').innerHTML = `<div class="emptybox"><b>${esc(t('索引不可用'))}</b>
+      <button class="cbtn" data-retry="index">${esc(t('重试'))}</button></div>`;
+    document.getElementById('side').innerHTML = '';
+    document.getElementById('stats').innerHTML = '';
   }
 }
 
 window.addEventListener('hashchange', route);
 window.addEventListener('scroll', () => document.querySelector('.nav').classList.toggle('scrolled', window.scrollY > 8), { passive: true });
 document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-dlg="close"]') || e.target.id === 'dlg') { closeDialog(); return; }
+  const rt = e.target.closest('[data-retry]');
+  if (rt) { if (rt.dataset.retry === 'index') location.reload(); else route(); return; }
   if (e.target.closest('#lang')) {
     LANG = LANG === 'zh' ? 'en' : 'zh';
     try { localStorage.setItem(LANG_KEY, LANG); } catch { /* ignore */ }
@@ -692,13 +793,27 @@ document.addEventListener('click', (e) => {
   const f = e.target.closest('[data-filter]');
   if (f) {
     filter = f.dataset.filter;
-    if (f.classList.contains('clear')) { kw = ''; document.getElementById('q').value = ''; }
+    if (f.classList.contains('clear') || f.dataset.clearall) { kw = ''; document.getElementById('q').value = ''; }
     renderFilters(); render(); return;
   }
-  const btn = e.target.closest('.install');
+  // Only the plugin's own install buttons (the dialog's submit button shares the look, not the job).
+  const btn = e.target.closest('.install[data-ref]');
   if (btn) install(btn.dataset.ref);
 });
 document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('dlg').hidden) {
+    if (e.key === 'Escape') { e.preventDefault(); closeDialog(); return; }
+    // Keep Tab inside the dialog.
+    if (e.key === 'Tab') {
+      const f = [...document.querySelectorAll('#dlg button, #dlg input')].filter((x) => !x.disabled);
+      if (f.length) {
+        const i = f.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+      }
+    }
+    return;
+  }
   if (e.key === '/' && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || '') && !document.getElementById('list').hidden) {
     e.preventDefault(); document.getElementById('q').focus();
   }
