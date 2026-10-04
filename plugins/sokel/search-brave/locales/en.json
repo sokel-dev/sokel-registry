@@ -1,0 +1,23 @@
+{
+  "Brave 搜索": "Brave Search",
+  "Brave 独立索引（不是 Google/Bing 的转售），按次计费，免费档对个人与小团队够用。": "Brave's own independent index (not a resale of Google/Bing results), billed per call; the free tier is enough for individuals and small teams.",
+  "出站代理": "Outbound proxy",
+  "发一次最小搜索验证凭证是否可用（会消耗 1 次搜索配额）": "Runs one minimal search to verify the credential works (consumes 1 search quota)",
+  "可用": "Available",
+  "地区": "Region",
+  "如 cn / us；留空用上游默认": "e.g. cn / us; leave empty to use the upstream default",
+  "如 zh-CN / en；留空用上游默认": "e.g. zh-CN / en; leave empty to use the upstream default",
+  "安全搜索": "Safe search",
+  "按关键词搜索网页，返回标题/链接/摘要的列表": "Search the web by keyword and return a list of titles/links/snippets",
+  "搜索结果": "Search results",
+  "搜索网页": "Search the web",
+  "搜索词": "Search query",
+  "检查凭证": "Check credential",
+  "直接答案": "Direct answer",
+  "结果条数": "Number of results",
+  "要搜索的关键词或问题": "The keyword or question to search for",
+  "语言": "Language",
+  "说明": "Description",
+  "部分上游会给一段现成答案（Tavily / DuckDuckGo 摘要）；没有则为空——不拿第一条结果冒充": "Some upstreams return a ready-made answer (Tavily / DuckDuckGo summary); otherwise this is empty — the first result is never used as a stand-in",
+  "默认 8，上限 20（Google 单次最多 10 条）": "Default 8, maximum 20 (Google returns at most 10 per call)"
+}

@@ -1,0 +1,8 @@
+{
+  "GET {端点}/healthz —— 端点填平台地址（如 http://server:8088）即可零部署调通；换成任何返回 JSON 的服务同理": "GET {endpoint}/healthz — set endpoint to the platform's own address (e.g. http://server:8088) and it works with zero deployment; the same approach works for any service that returns JSON",
+  "HTTP 直连探针": "Direct HTTP probe",
+  "存活": "Alive",
+  "探活": "Liveness check",
+  "版本": "Version",
+  "零部署的 HTTP 直连参考件：按操作映射直调上游 JSON API（默认演示打平台自身 /healthz）": "A zero-deployment reference plugin for direct HTTP access: calls an upstream JSON API directly per operation mapping (the default demo hits the platform's own /healthz)"
+}

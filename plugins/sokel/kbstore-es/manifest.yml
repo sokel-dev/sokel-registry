@@ -1,0 +1,688 @@
+# Generated from the plugin source: the contract comes from kbstore-es/schema (the plugin's own declaration),
+# the display name and summary from docs/kbstore-es.md in the plugin. Change the plugin source and regenerate; do not edit here.
+credential:
+  fields:
+  - label: Elasticsearch 地址
+    name: es_url
+    required: true
+    type: text
+  - label: API Key
+    name: api_key
+    type: secret
+  - default: sokel
+    label: 索引命名空间
+    name: namespace
+    type: text
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugins/sokel-plugin-kbstore-es:0.1.0
+implements:
+- capability: vectorstore
+  operations:
+  - id: kb_create
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - default: 1024
+      goType: int
+      name: dims
+      type: number
+    - fields:
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - desc: keyword / text / number / date；留空按 keyword
+        label: 类型
+        name: type
+        type: string
+      goType: MetaField
+      label: 元数据字段声明
+      name: fields
+      type: array
+    outputs:
+    - name: ok
+      required: true
+      type: boolean
+  - id: kb_drop
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - default: 1024
+      goType: int
+      name: dims
+      type: number
+    - fields:
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - desc: keyword / text / number / date；留空按 keyword
+        label: 类型
+        name: type
+        type: string
+      goType: MetaField
+      label: 元数据字段声明
+      name: fields
+      type: array
+    outputs:
+    - name: ok
+      required: true
+      type: boolean
+  - id: chunks_upsert
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - name: doc_id
+      required: true
+      type: string
+    - fields:
+      - label: 分块 id
+        name: id
+        required: true
+        type: string
+      - label: 正文
+        name: content
+        type: string
+      - label: 标题
+        name: title
+        type: string
+      - label: 摘要
+        name: summary
+        type: string
+      - label: 内容时间
+        name: datetime
+        type: string
+      - label: 文档 id
+        name: doc_id
+        type: string
+      - desc: parent / child
+        label: 角色
+        name: role
+        type: string
+      - label: 父块 id
+        name: parent_id
+        type: string
+      - goType: int
+        label: 父块序号
+        name: parent_no
+        type: number
+      - goType: int
+        label: 子块序号
+        name: child_no
+        type: number
+      - goType: int
+        label: 页码
+        name: page_no
+        type: number
+      - label: 正文 HTML
+        name: content_html
+        type: string
+      - label: 边界
+        name: boundary
+        type: string
+      - desc: 召回单位(子块)的稠密向量;仅写入时携带
+        itemType: number
+        label: 向量
+        name: embedding
+        type: array
+      - desc: 键与值类型由本库声明的元数据字段决定，运行期才确定
+        label: 元数据
+        name: fields
+        opaque: true
+        type: json
+      - itemType: string
+        label: 图片
+        name: images
+        type: array
+      - desc: 块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传
+        label: 资产
+        name: assets
+        opaque: true
+        type: array
+      - desc: 溯源引用 {块 id,type,bbox,页码}，形状由上游解析器决定，本插件只透传
+        label: 溯源块
+        name: source_blocks
+        opaque: true
+        type: array
+      goType: Chunk
+      name: chunks
+      required: true
+      type: array
+    - name: append
+      type: boolean
+    outputs:
+    - name: ok
+      required: true
+      type: boolean
+    - goType: int
+      name: count
+      required: true
+      type: number
+  - id: doc_delete
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - name: doc_id
+      required: true
+      type: string
+    outputs:
+    - name: ok
+      required: true
+      type: boolean
+  - id: chunks_browse
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - default: 20
+      goType: int
+      name: k
+      type: number
+    - goType: int
+      name: offset
+      type: number
+    - fields:
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - itemType: string
+        label: 取值（任一命中）
+        name: values
+        type: array
+      - desc: 为真时忽略 values
+        label: 取「该字段不存在」
+        name: missing
+        type: boolean
+      - desc: 命中的排除掉
+        label: 反选
+        name: exclude
+        type: boolean
+      goType: Filter
+      name: filters
+      type: array
+    - fields:
+      - desc: 日期串，如 2026-01-01
+        label: 起（含）
+        name: from
+        type: string
+      - label: 止（含）
+        name: to
+        type: string
+      goType: TimeRange
+      name: time_range
+      type: json
+    outputs:
+    - fields:
+      - label: 分块 id
+        name: id
+        required: true
+        type: string
+      - label: 正文
+        name: content
+        type: string
+      - label: 标题
+        name: title
+        type: string
+      - label: 摘要
+        name: summary
+        type: string
+      - label: 内容时间
+        name: datetime
+        type: string
+      - label: 文档 id
+        name: doc_id
+        type: string
+      - desc: parent / child
+        label: 角色
+        name: role
+        type: string
+      - label: 父块 id
+        name: parent_id
+        type: string
+      - goType: int
+        label: 父块序号
+        name: parent_no
+        type: number
+      - goType: int
+        label: 子块序号
+        name: child_no
+        type: number
+      - goType: int
+        label: 页码
+        name: page_no
+        type: number
+      - label: 正文 HTML
+        name: content_html
+        type: string
+      - label: 边界
+        name: boundary
+        type: string
+      - desc: 召回单位(子块)的稠密向量;仅写入时携带
+        itemType: number
+        label: 向量
+        name: embedding
+        type: array
+      - desc: 键与值类型由本库声明的元数据字段决定，运行期才确定
+        label: 元数据
+        name: fields
+        opaque: true
+        type: json
+      - itemType: string
+        label: 图片
+        name: images
+        type: array
+      - desc: 块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传
+        label: 资产
+        name: assets
+        opaque: true
+        type: array
+      - desc: 溯源引用 {块 id,type,bbox,页码}，形状由上游解析器决定，本插件只透传
+        label: 溯源块
+        name: source_blocks
+        opaque: true
+        type: array
+      goType: Chunk
+      name: chunks
+      required: true
+      type: array
+  - id: mget
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - itemType: string
+      name: ids
+      required: true
+      type: array
+    outputs:
+    - fields:
+      - label: 分块 id
+        name: id
+        required: true
+        type: string
+      - label: 正文
+        name: content
+        type: string
+      - label: 标题
+        name: title
+        type: string
+      - label: 摘要
+        name: summary
+        type: string
+      - label: 内容时间
+        name: datetime
+        type: string
+      - label: 文档 id
+        name: doc_id
+        type: string
+      - desc: parent / child
+        label: 角色
+        name: role
+        type: string
+      - label: 父块 id
+        name: parent_id
+        type: string
+      - goType: int
+        label: 父块序号
+        name: parent_no
+        type: number
+      - goType: int
+        label: 子块序号
+        name: child_no
+        type: number
+      - goType: int
+        label: 页码
+        name: page_no
+        type: number
+      - label: 正文 HTML
+        name: content_html
+        type: string
+      - label: 边界
+        name: boundary
+        type: string
+      - desc: 召回单位(子块)的稠密向量;仅写入时携带
+        itemType: number
+        label: 向量
+        name: embedding
+        type: array
+      - desc: 键与值类型由本库声明的元数据字段决定，运行期才确定
+        label: 元数据
+        name: fields
+        opaque: true
+        type: json
+      - itemType: string
+        label: 图片
+        name: images
+        type: array
+      - desc: 块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传
+        label: 资产
+        name: assets
+        opaque: true
+        type: array
+      - desc: 溯源引用 {块 id,type,bbox,页码}，形状由上游解析器决定，本插件只透传
+        label: 溯源块
+        name: source_blocks
+        opaque: true
+        type: array
+      goType: Chunk
+      name: chunks
+      required: true
+      type: array
+  - id: vector_query
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - itemType: number
+      name: embedding
+      required: true
+      type: array
+    - default: 50
+      goType: int
+      name: k
+      type: number
+    - fields:
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - itemType: string
+        label: 取值（任一命中）
+        name: values
+        type: array
+      - desc: 为真时忽略 values
+        label: 取「该字段不存在」
+        name: missing
+        type: boolean
+      - desc: 命中的排除掉
+        label: 反选
+        name: exclude
+        type: boolean
+      goType: Filter
+      name: filters
+      type: array
+    - fields:
+      - desc: 日期串，如 2026-01-01
+        label: 起（含）
+        name: from
+        type: string
+      - label: 止（含）
+        name: to
+        type: string
+      goType: TimeRange
+      name: time_range
+      type: json
+    outputs:
+    - fields:
+      - label: 分块 id
+        name: id
+        required: true
+        type: string
+      - label: 相关度
+        name: score
+        required: true
+        type: number
+      - fields:
+        - label: 分块 id
+          name: id
+          required: true
+          type: string
+        - label: 正文
+          name: content
+          type: string
+        - label: 标题
+          name: title
+          type: string
+        - label: 摘要
+          name: summary
+          type: string
+        - label: 内容时间
+          name: datetime
+          type: string
+        - label: 文档 id
+          name: doc_id
+          type: string
+        - desc: parent / child
+          label: 角色
+          name: role
+          type: string
+        - label: 父块 id
+          name: parent_id
+          type: string
+        - goType: int
+          label: 父块序号
+          name: parent_no
+          type: number
+        - goType: int
+          label: 子块序号
+          name: child_no
+          type: number
+        - goType: int
+          label: 页码
+          name: page_no
+          type: number
+        - label: 正文 HTML
+          name: content_html
+          type: string
+        - label: 边界
+          name: boundary
+          type: string
+        - desc: 召回单位(子块)的稠密向量;仅写入时携带
+          itemType: number
+          label: 向量
+          name: embedding
+          type: array
+        - desc: 键与值类型由本库声明的元数据字段决定，运行期才确定
+          label: 元数据
+          name: fields
+          opaque: true
+          type: json
+        - itemType: string
+          label: 图片
+          name: images
+          type: array
+        - desc: 块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传
+          label: 资产
+          name: assets
+          opaque: true
+          type: array
+        - desc: 溯源引用 {块 id,type,bbox,页码}，形状由上游解析器决定，本插件只透传
+          label: 溯源块
+          name: source_blocks
+          opaque: true
+          type: array
+        label: 分块内容
+        name: chunk
+        required: true
+        type: json
+      goType: Hit
+      name: hits
+      required: true
+      type: array
+- capability: vectorstore/keyword_bm25
+  operations:
+  - id: keyword_query
+    inputs:
+    - name: kb_id
+      required: true
+      type: string
+    - name: query
+      required: true
+      type: string
+    - default: 50
+      goType: int
+      name: k
+      type: number
+    - fields:
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - itemType: string
+        label: 取值（任一命中）
+        name: values
+        type: array
+      - desc: 为真时忽略 values
+        label: 取「该字段不存在」
+        name: missing
+        type: boolean
+      - desc: 命中的排除掉
+        label: 反选
+        name: exclude
+        type: boolean
+      goType: Filter
+      name: filters
+      type: array
+    - fields:
+      - desc: 日期串，如 2026-01-01
+        label: 起（含）
+        name: from
+        type: string
+      - label: 止（含）
+        name: to
+        type: string
+      goType: TimeRange
+      name: time_range
+      type: json
+    - name: field_boosts
+      type: json
+      valueType:
+        goType: float64
+        name: ''
+        type: number
+    - fields:
+      - desc: 如 2026-07-01
+        label: 基准时间
+        name: pivot
+        required: true
+        type: string
+      - label: 权重
+        name: boost
+        type: number
+      goType: Recency
+      name: recency
+      type: json
+    outputs:
+    - fields:
+      - label: 分块 id
+        name: id
+        required: true
+        type: string
+      - label: 相关度
+        name: score
+        required: true
+        type: number
+      - fields:
+        - label: 分块 id
+          name: id
+          required: true
+          type: string
+        - label: 正文
+          name: content
+          type: string
+        - label: 标题
+          name: title
+          type: string
+        - label: 摘要
+          name: summary
+          type: string
+        - label: 内容时间
+          name: datetime
+          type: string
+        - label: 文档 id
+          name: doc_id
+          type: string
+        - desc: parent / child
+          label: 角色
+          name: role
+          type: string
+        - label: 父块 id
+          name: parent_id
+          type: string
+        - goType: int
+          label: 父块序号
+          name: parent_no
+          type: number
+        - goType: int
+          label: 子块序号
+          name: child_no
+          type: number
+        - goType: int
+          label: 页码
+          name: page_no
+          type: number
+        - label: 正文 HTML
+          name: content_html
+          type: string
+        - label: 边界
+          name: boundary
+          type: string
+        - desc: 召回单位(子块)的稠密向量;仅写入时携带
+          itemType: number
+          label: 向量
+          name: embedding
+          type: array
+        - desc: 键与值类型由本库声明的元数据字段决定，运行期才确定
+          label: 元数据
+          name: fields
+          opaque: true
+          type: json
+        - itemType: string
+          label: 图片
+          name: images
+          type: array
+        - desc: 块级资产 {kind,url,…}，形状由上游解析器决定，本插件只透传
+          label: 资产
+          name: assets
+          opaque: true
+          type: array
+        - desc: 溯源引用 {块 id,type,bbox,页码}，形状由上游解析器决定，本插件只透传
+          label: 溯源块
+          name: source_blocks
+          opaque: true
+          type: array
+        label: 分块内容
+        name: chunk
+        required: true
+        type: json
+      goType: Hit
+      name: hits
+      required: true
+      type: array
+operations:
+- desc: 连一下 Elasticsearch 并报版本、集群名与健康状态
+  id: health_check
+  label: 检查凭证
+  outputs:
+  - label: 可用
+    name: ok
+    required: true
+    type: boolean
+  - label: 版本
+    name: version
+    type: string
+  - label: 集群名
+    name: cluster_name
+    type: string
+  - desc: green / yellow / red
+    label: 集群状态
+    name: status
+    type: string
+  - label: 说明
+    name: message
+    required: true
+    type: string
+plugin:
+  desc: 知识库的存储与检索后端：写入分块、向量检索、BM25、混合检索（RRF 融合）。
+  doc: README.md
+  label: 知识库存储（Elasticsearch）
+  name: kbstore-es
+  org: sokel
+  version: v1.0.0

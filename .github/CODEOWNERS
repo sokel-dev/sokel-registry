@@ -1,0 +1,8 @@
+# Who reviews what. Branch protection requires a code owner's approval, so a line here is the permission to change
+# that directory. Every plugins/<org>/ needs its own line (build-index refuses an org without one).
+#
+# Adding a new org: in the same pull request as its first plugin, add `/plugins/<org>/ @your-handle`.
+
+*                     @importcjj
+/advisories.json      @importcjj
+/plugins/sokel/       @importcjj

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sokel Plugin Registry</title>
+<meta name="description" content="Plugins for the Sokel workflow platform: what each one does, which credentials it needs, and how to run it.">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a class="brand" href="#">SOKEL <span data-t="插件目录"></span></a>
+    <span class="navlinks">
+      <a href="#" data-nav="list" data-t="插件"></a>
+      <a href="#/advisories" data-nav="advisories" data-t="安全通告"></a>
+      <a id="contribute" target="_blank" rel="noopener" data-t="提交插件"></a>
+      <button id="lang" class="seg" type="button"></button>
+    </span>
+  </nav>
+  <!-- The masthead belongs to the list view only: on a detail view the plugin itself is the subject. -->
+  <div id="masthead">
+    <h1 data-t="插件目录"></h1>
+    <p class="lede" id="lede"></p>
+  </div>
+  <div id="err"></div>
+  <div id="list">
+    <div class="tools">
+      <input id="q" class="search" type="search" autocomplete="off">
+      <div id="caps" class="segs"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+  </div>
+  <!-- Detail and advisories views: switched by the hash, so refresh and shared links work. -->
+  <div id="view" hidden></div>
+  <p class="note" id="note"></p>
+</div>
+<!-- Markdown parser for plugin docs (they are full of tables). If it fails to load, docs fall back to plain text:
+     a CDN never decides whether this page is readable, so it loads before app.js and without defer. -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>

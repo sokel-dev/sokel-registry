@@ -1,0 +1,39 @@
+# 合并进 main 后重建索引并发布到 GitHub Pages：页面、index.json、advisories.json、各条目文件与详情。
+# index.json 不进仓库，是这里的构建产物——两个 PR 不会在它上面冲突，发布的永远是已合并条目的结果。
+# 平台「插件索引源」填这个站点地址即可（它读 <base>/index.json 与 <base>/advisories.json）。
+name: Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.25', cache-dependency-path: go.sum }
+      - run: go run ./cmd/build-index -site _site .
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

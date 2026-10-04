@@ -1,0 +1,41 @@
+# 每个 PR 的准入：全部条目过分发门（manifest 能导出契约、版本合法、目录即身份）、安全通告指向真实条目、
+# 每个 org 都有 CODEOWNERS 行；再对比 base 分支，改过的条目必须升版本——否则平台的「可更新」与按版本
+# 命中的安全通告都看不见这次改动。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.25', cache-dependency-path: go.sum }
+
+      - name: gofmt / vet / test
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then echo "::error::以下文件未格式化："; echo "$out"; exit 1; fi
+          go vet ./...
+          go test -race ./...
+
+      - name: 准入并生成发布目录
+        run: go run ./cmd/build-index -site _site .
+
+      - name: 对比 base 分支：改过的条目必须升版本
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          git worktree add ../base FETCH_HEAD
+          go run ./cmd/build-index -base ../base .

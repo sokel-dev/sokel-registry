@@ -1,0 +1,36 @@
+# HTTP direct-connect reference plugin (zero deployment): demonstrates the `transports: http` form. The platform
+# sends requests straight to the upstream according to the operation mapping; there is no process to start. The
+# access group's endpoint is the upstream base URL; by default this plugin targets the platform's own /healthz, so
+# once installed it can be called for real from the debug panel (no external dependencies).
+#
+# When to write a plugin in this form: the upstream is an existing JSON API, each operation is a plain one-request
+# pass-through, and auth is simple header injection. Plugins with pagination / aggregation / signing logic still
+# need the process form.
+#
+# File responses are supported too: when the upstream returns binary (Content-Type not JSON/text), the platform
+# stores it in the object store and outputs {file, content_type, size}. Declare the outputs in the contract as three
+# fields, file (type: file) / content_type / size, and the canvas can reference them. The file belongs to the
+# caller's workspace and enters the platform file layer (reference reconcile protection, GC after the grace period
+# when unreferenced, same tracking as other files).
+plugin:
+  org: sokel
+  name: http-probe
+  label: HTTP 直连探针
+  version: 1.0.0
+  desc: 零部署的 HTTP 直连参考件：按操作映射直调上游 JSON API（默认演示打平台自身 /healthz）
+transports:
+  - kind: http
+operations:
+  - id: get_health
+    label: 探活
+    desc: GET {端点}/healthz —— 端点填平台地址（如 http://server:8088）即可零部署调通；换成任何返回 JSON 的服务同理
+    http:
+      method: GET
+      path: /healthz
+    outputs:
+      - name: ok
+        label: 存活
+        type: boolean
+      - name: version
+        label: 版本
+        type: string
