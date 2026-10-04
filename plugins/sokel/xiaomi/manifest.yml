@@ -1,6 +1,3 @@
-# Xiaomi MiMo (added 2026-09-26): OpenAI-compatible wire format; speech synthesis / recognition use a chat/completions variant (see plugin-builtin/llm/xiaomi).
-# The implements/operations contract section is re-embedded from sokel-gen export yaml plugin-core/llmcore/plugin;
-# after changing the shell schema, rerun registry/cmd/reembed-llm plus build-index. Hand-editing the contract section will drift.
 credential:
     fields:
         - label: API Key

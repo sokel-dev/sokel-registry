@@ -1,5 +1,3 @@
-# Generated from the plugin source: the contract comes from kbstore-pgvector/schema (the plugin's own declaration),
-# the display name and summary from docs/kbstore-pgvector.md in the plugin. Change the plugin source and regenerate; do not edit here.
 credential:
   fields:
   - desc: postgres://user:pass@host:5432/db?sslmode=disable；需已装 vector 与 pg_trgm 扩展

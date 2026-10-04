@@ -1,17 +1,3 @@
-# HTTP direct-connect reference plugin (zero deployment): demonstrates the `transports: http` form. The platform
-# sends requests straight to the upstream according to the operation mapping; there is no process to start. The
-# access group's endpoint is the upstream base URL; by default this plugin targets the platform's own /healthz, so
-# once installed it can be called for real from the debug panel (no external dependencies).
-#
-# When to write a plugin in this form: the upstream is an existing JSON API, each operation is a plain one-request
-# pass-through, and auth is simple header injection. Plugins with pagination / aggregation / signing logic still
-# need the process form.
-#
-# File responses are supported too: when the upstream returns binary (Content-Type not JSON/text), the platform
-# stores it in the object store and outputs {file, content_type, size}. Declare the outputs in the contract as three
-# fields, file (type: file) / content_type / size, and the canvas can reference them. The file belongs to the
-# caller's workspace and enters the platform file layer (reference reconcile protection, GC after the grace period
-# when unreferenced, same tracking as other files).
 plugin:
   org: sokel
   name: http-probe
