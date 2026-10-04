@@ -41,7 +41,8 @@ A platform ships a built-in snapshot of this catalog, which works offline. An ad
 refresh source (**Platform settings → Plugin index source**, address `https://sokel-dev.github.io/sokel-registry`):
 the platform then fetches `index.json` and `advisories.json` every 12 hours, shows new plugins in its marketplace
 and installs them from the same origin, and flags installed versions that an advisory names. It is off by default —
-nothing is fetched until someone turns it on.
+nothing is fetched until someone turns it on. Advisories also ship with every platform release (each image carries
+the advisories current at build time), so offline deployments get them by upgrading.
 
 ## Run it locally
 

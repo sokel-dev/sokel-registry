@@ -102,13 +102,21 @@ func TestBaseGate(t *testing.T) {
 		{"new entry", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0", "acme/new": "0.1.0"}, "", ""},
 		// Comments do not change what a manifest declares: no version bump for a comment-only edit.
 		{"comment-only change", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, "comment:plugins/acme/foo/manifest.yml", ""},
+		// Where the image is pulled from is not part of what the plugin declares: moving registries is no new version.
+		{"image moved", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, "image:plugins/acme/foo/manifest.yml", ""},
 		{"removed entry", map[string]string{"acme/foo": "1.0.0"}, "", ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			base := fixture(t, map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, owners)
 			head := fixture(t, c.head, owners)
-			if f, ok := strings.CutPrefix(c.edit, "comment:"); ok {
+			if f, ok := strings.CutPrefix(c.edit, "image:"); ok {
+				for _, root := range []string{base, head} {
+					tag := map[string]string{base: "old.example/img:1", head: "new.example/img:1"}[root]
+					raw, _ := os.ReadFile(filepath.Join(root, f))
+					mustWrite(t, filepath.Join(root, f), string(raw)+"deployment:\n  targets:\n    - {kind: container, ref: "+tag+"}\n")
+				}
+			} else if f, ok := strings.CutPrefix(c.edit, "comment:"); ok {
 				raw, _ := os.ReadFile(filepath.Join(head, f))
 				mustWrite(t, filepath.Join(head, f), "# a note for maintainers\n"+string(raw)+"  # trailing note\n")
 			} else if c.edit != "" {

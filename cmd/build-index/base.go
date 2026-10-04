@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -10,6 +11,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // runBase is the pull request gate: the head tree passes admission, and every entry whose files changed against the
@@ -95,7 +98,7 @@ func treeHash(dir string) (string, error) {
 			return err
 		}
 		if isManifestFile(rel) {
-			b = withoutCommentLines(b)
+			b = comparableManifest(b)
 		}
 		fmt.Fprintf(h, "%s\x00%d\x00", filepath.ToSlash(rel), len(b))
 		h.Write(b)
@@ -173,6 +176,32 @@ func isManifestFile(rel string) bool {
 		return true
 	}
 	return false
+}
+
+// comparableManifest is what a manifest declares, for the version check: parsed (so comments and formatting do not
+// count) and without the deployment targets' image references — where an image is pulled from (a registry move, a
+// mirror) is not a new version of the plugin. Falls back to dropping comment lines if it does not parse.
+func comparableManifest(b []byte) []byte {
+	var doc any
+	if err := yaml.Unmarshal(b, &doc); err != nil {
+		return withoutCommentLines(b)
+	}
+	if m, ok := doc.(map[string]any); ok {
+		if d, ok := m["deployment"].(map[string]any); ok {
+			if ts, ok := d["targets"].([]any); ok {
+				for _, tg := range ts {
+					if tm, ok := tg.(map[string]any); ok {
+						delete(tm, "ref")
+					}
+				}
+			}
+		}
+	}
+	out, err := json.Marshal(doc)
+	if err != nil {
+		return withoutCommentLines(b)
+	}
+	return out
 }
 
 // withoutCommentLines drops whole-line YAML comments: they do not change what the manifest declares, so editing

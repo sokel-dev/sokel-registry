@@ -52,6 +52,9 @@ without a bump would be invisible to them. Your org's code owner approves it.
 - **Not public yet:** use GitHub's private vulnerability reporting (Security → Report a vulnerability) so it can be
   fixed before it is announced.
 
+Once merged, an advisory reaches platforms that use this site as a refresh source at their next refresh, and every
+platform release after that carries it in its built-in snapshot.
+
 Fix it with a new version, and list the affected range (for example `["<v1.2.0"]`) in the advisory.
 
 ## Delist a plugin
