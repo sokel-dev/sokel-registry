@@ -94,6 +94,9 @@ func treeHash(dir string) (string, error) {
 		if err != nil {
 			return err
 		}
+		if isManifestFile(rel) {
+			b = withoutCommentLines(b)
+		}
 		fmt.Fprintf(h, "%s\x00%d\x00", filepath.ToSlash(rel), len(b))
 		h.Write(b)
 		return nil
@@ -162,4 +165,25 @@ func splitVersion(v string) ([3]int, string) {
 		n[i], _ = strconv.Atoi(part)
 	}
 	return n, pre
+}
+
+func isManifestFile(rel string) bool {
+	switch filepath.ToSlash(rel) {
+	case "manifest.yml", "manifest.yaml":
+		return true
+	}
+	return false
+}
+
+// withoutCommentLines drops whole-line YAML comments: they do not change what the manifest declares, so editing
+// them is not a new version. End-of-line comments stay (a # inside a value is not always a comment).
+func withoutCommentLines(b []byte) []byte {
+	var out []string
+	for _, line := range strings.Split(string(b), "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "#") {
+			continue
+		}
+		out = append(out, line)
+	}
+	return []byte(strings.Join(out, "\n"))
 }

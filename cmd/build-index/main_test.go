@@ -100,13 +100,18 @@ func TestBaseGate(t *testing.T) {
 		{"changed, version kept", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, "plugins/acme/foo/locales/en.json", "acme/foo changed but its version did not go up"},
 		{"version went down", map[string]string{"acme/foo": "0.9.0", "acme/bar": "2.0.0"}, "", "acme/foo"},
 		{"new entry", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0", "acme/new": "0.1.0"}, "", ""},
+		// Comments do not change what a manifest declares: no version bump for a comment-only edit.
+		{"comment-only change", map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, "comment:plugins/acme/foo/manifest.yml", ""},
 		{"removed entry", map[string]string{"acme/foo": "1.0.0"}, "", ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			base := fixture(t, map[string]string{"acme/foo": "1.0.0", "acme/bar": "2.0.0"}, owners)
 			head := fixture(t, c.head, owners)
-			if c.edit != "" {
+			if f, ok := strings.CutPrefix(c.edit, "comment:"); ok {
+				raw, _ := os.ReadFile(filepath.Join(head, f))
+				mustWrite(t, filepath.Join(head, f), "# a note for maintainers\n"+string(raw)+"  # trailing note\n")
+			} else if c.edit != "" {
 				mustWrite(t, filepath.Join(head, c.edit), "{\"Ping\": \"Ping it\"}\n")
 			}
 			err := runBase(head, base)

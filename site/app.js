@@ -127,6 +127,12 @@ const EN = {
   "能力": "Capabilities",
   "部署": "Deployment",
   "暂无": "None",
+  "复制": "Copy",
+  "已复制": "Copied",
+  "复制失败，请手动选择": "Copy failed; select it by hand",
+  "下载": "Download",
+  "Manifest 读不到": "Could not load the manifest",
+  "这就是平台读的那份 manifest：装进自己的平台可以用「导入 manifest」，写新插件可以拿它当模板。": "This is the manifest platforms read: install it into your own platform with “Import manifest”, or start a new plugin from it.",
 };
 const t = (s) => (LANG === 'en' && EN[s]) || s;
 
@@ -405,10 +411,57 @@ const TABS = [
   { key: 'ops', label: (c) => `${t('操作')} (${(c.operations || []).filter((o) => !o.internal).length})` },
   { key: 'events', label: (c) => `${t('事件')} (${(c.events || []).length})`, when: (c) => (c.events || []).length },
   { key: 'cred', label: () => t('凭证'), when: (c) => (c.credential_schema || []).length },
+  { key: 'manifest', label: () => 'Manifest' },
 ];
+
+// --- manifest ---------------------------------------------------------------------------------------------
+// The entry's manifest as published (the file platforms read), fetched when the tab opens: read, copy, download.
+const MANIFESTS = {}; // ref -> { text } | { error }
+async function loadManifest(entry) {
+  if (MANIFESTS[entry.ref]) return;
+  try {
+    const res = await fetch(at(entry.manifest));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    MANIFESTS[entry.ref] = { text: await res.text() };
+  } catch (e) {
+    MANIFESTS[entry.ref] = { error: e.message };
+  }
+  if (CUR && CUR.entry.ref === entry.ref && tab === 'manifest') renderDetail(CUR.entry, CUR.c);
+}
+// yamlLines: a light YAML colouring (keys, comments, list dashes) over escaped text, one numbered line each.
+function yamlLines(text) {
+  return text.replace(/\n$/, '').split('\n').map((raw) => {
+    let h = esc(raw);
+    const hash = h.search(/(^|\s)#/);
+    let comment = '';
+    if (hash >= 0) { comment = `<span class="yc">${h.slice(hash)}</span>`; h = h.slice(0, hash); }
+    h = h.replace(/^(\s*)(- )?([\w.\-"']+)(:)(?=\s|$)/, (_, sp, dash, key, colon) =>
+      `${sp}${dash ? '<span class="yd">- </span>' : ''}<span class="yk">${key}</span>${colon}`);
+    h = h.replace(/^(\s*)- /, '$1<span class="yd">- </span>');
+    return `<span class="ln">${h}${comment}</span>`;
+  }).join(''); // each line is its own block: joining with a newline would double the spacing
+}
+function manifestBody(entry) {
+  const m = MANIFESTS[entry.ref];
+  if (!m) { void loadManifest(entry); return `<div class="empty">${esc(t('读取中…'))}</div>`; }
+  if (m.error) return `<div class="err"><b>${esc(t('Manifest 读不到'))}</b>：${esc(m.error)}</div>`;
+  const file = `${entry.name}-${String(entry.version || '').replace(/^v/, '') || 'manifest'}.yml`;
+  return `<p class="mnote">${esc(t('这就是平台读的那份 manifest：装进自己的平台可以用「导入 manifest」，写新插件可以拿它当模板。'))}</p>
+    <div class="code">
+      <div class="codebar">
+        <span class="mono">${esc(entry.manifest.split('/').pop())}</span>
+        <span class="codeacts">
+          <button class="cbtn" data-copy="${esc(entry.ref)}">${esc(t('复制'))}</button>
+          <a class="cbtn" href="${esc(at(entry.manifest))}" download="${esc(file)}">${esc(t('下载'))}</a>
+        </span>
+      </div>
+      <pre class="yaml"><code>${yamlLines(m.text)}</code></pre>
+    </div>`;
+}
 let tab = 'doc';
 
 function tabBody(c) {
+  if (tab === 'manifest') return manifestBody(CUR.entry);
   if (tab === 'doc') {
     return c.doc ? `<div class="panel doc">${md(c.doc)}</div>`
       : `<div class="empty">${esc(t('该插件没有提供使用说明。'))}</div>`;
@@ -624,6 +677,14 @@ document.addEventListener('click', (e) => {
     try { localStorage.setItem(LANG_KEY, LANG); } catch { /* ignore */ }
     chrome(); renderStats(); renderCloud(); renderFilters(); render();
     if (CUR) renderDetail(CUR.entry, CUR.c); else if (!document.getElementById('view').hidden) route();
+    return;
+  }
+  const cp = e.target.closest('[data-copy]');
+  if (cp) {
+    const m = MANIFESTS[cp.dataset.copy];
+    const done = (ok) => { cp.textContent = t(ok ? '已复制' : '复制失败，请手动选择'); setTimeout(() => { cp.textContent = t('复制'); }, 1600); };
+    if (m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(() => done(true), () => done(false));
+    else done(false);
     return;
   }
   const tb = e.target.closest('[data-tab]');
