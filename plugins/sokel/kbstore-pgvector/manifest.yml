@@ -12,7 +12,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-kbstore-pgvector:0.1.5
+    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-pgvector:latest
 implements:
 - capability: vectorstore
   operations:
@@ -663,7 +663,7 @@ operations:
 plugin:
   desc: 知识库存储引擎插件（Postgres + pgvector），与 kbstore-es 实现同一份存储契约。
   doc: README.md
-  label: kbstore-pgvector
+  label: 知识库存储（pgvector）
   name: kbstore-pgvector
   org: sokel
-  version: 0.1.5
+  version: 0.1.6

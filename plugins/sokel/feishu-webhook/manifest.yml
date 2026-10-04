@@ -63,4 +63,4 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-feishu-webhook:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-feishu-webhook:latest

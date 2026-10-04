@@ -1280,4 +1280,4 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-x:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-x:latest

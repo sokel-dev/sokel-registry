@@ -100,5 +100,6 @@
   "重排序": "Rerank",
   "随机性": "Temperature",
   "音频秒数": "Audio seconds",
-  "额外 body": "Extra body"
+  "额外 body": "Extra body",
+  "该厂商的 OpenAI 兼容地址": "This vendor's OpenAI-compatible address"
 }

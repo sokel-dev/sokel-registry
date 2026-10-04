@@ -137,4 +137,4 @@ plugin:
 deployment:
   targets:
   - kind: container
-    ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-plugin-umeng:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-umeng:latest
