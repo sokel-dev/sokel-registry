@@ -35,9 +35,12 @@ What reviewers look at, beyond CI:
 
 ## Official entries (`plugins/sokel/`)
 
-The `sokel` org's entries are generated from the [main repository](https://github.com/sokel-dev/sokel), where the
-plugins themselves are maintained, and arrive here as pull requests. To change one, open an issue or a pull request
-in the main repository; an edit made only here would be overwritten by the next sync.
+The `sokel` org's entries are maintained here, like everyone else's: change them by pull request with a version bump,
+and the Sokel maintainers review them. Some sections are generated, so edit them with the tool rather than by hand:
+the contract sections of model vendors and other shell-backed plugins come from the platform's shell schemas (the
+`reembed-llm` / `reembed-shell` tools in the platform repository), and `site/brands.js` from the platform's brand
+registry. The platform ships a snapshot of this repository at a pinned commit; a merged change reaches its built-in
+catalog when that pin moves, and platforms that use this site as a refresh source sooner.
 
 ## Publish a new version
 

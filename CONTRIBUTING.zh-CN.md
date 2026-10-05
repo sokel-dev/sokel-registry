@@ -32,8 +32,10 @@ CI 之外，审核会看：
 
 ## 官方条目（`plugins/sokel/`）
 
-`sokel` org 的条目由[主仓库](https://github.com/sokel-dev/sokel)生成（插件本身在那里维护），以 PR 的形式同步过来。
-要改它们，请在主仓库提 issue 或 PR；只改这里的话，下一次同步会把改动覆盖掉。
+`sokel` org 的条目和其他人的一样在这里维护：提 PR、升版本号，由 Sokel 维护者审核。有几处是生成的，请用工具改、别手改：
+模型厂商等由 shell 承接的插件，契约段来自平台的 shell schema（平台仓库里的 `reembed-llm` / `reembed-shell`）；
+`site/brands.js` 来自平台的品牌图标表。平台内置的是本仓某个固定提交的快照：合并的改动在平台挪动这个提交后进入内置目录，
+把本站设为刷新源的平台会更早拿到。
 
 ## 发布新版本
 
