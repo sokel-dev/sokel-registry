@@ -1,425 +1,427 @@
-credential:
-    fields:
-        - desc: '**留空也能跑**：那样就用插件那台机器上 CC 自己的登录态（订阅制常见）。填了则这次调用走这把 key 的额度——多个空间/团队各自分账、要审计时用它。两种都是合法部署，插件不替你选'
-          label: Anthropic API Key
-          name: api_key
-          type: secret
-operations:
-    - desc: 删工作树回收磁盘。可以点名一个分支，也可以按闲置天数批量清。仓库缓存、已推送的分支、CC 的会话记录都不受影响
-      id: cleanup
-      inputs:
-        - desc: 留空 = 所有项目（配合闲置天数用）
-          label: 项目
-          name: project
-          type: string
-        - desc: 点名删这一个；留空则按闲置天数批量
-          label: 工作分支
-          name: branch
-          type: string
-        - desc: 批量清理用。**没给分支时必须给它**——否则等于要删光所有工作树，插件会拒绝
-          goType: int
-          label: 只删闲置超过几天的
-          name: idle_days
-          type: number
-        - desc: 默认关 = **保护有改动的工作树**（删掉就没了）。刻意写成「连脏的一起删」而不是「跳过脏的」：布尔留空就是 false，这样「没填」天然等于「保护」，不必去猜作者有没有填过
-          label: 连有未提交改动的一起删
-          name: include_dirty
-          type: boolean
-        - desc: 先跑一次看会删掉哪些，再决定
-          label: 只看不删
-          name: dry_run
-          type: boolean
-      label: 清理工作树
-      outputs:
-        - goType: int
-          label: 删除个数
-          name: removed
-          required: true
-          type: number
-        - fields:
-            - label: 项目
-              name: project
-              required: true
-              type: string
-            - label: 分支
-              name: branch
-              required: true
-              type: string
-            - desc: 人要接管就 cd 到这儿
-              label: 路径
-              name: path
-              required: true
-              type: string
-            - goType: int
-              label: 占用(MB)
-              name: size_mb
-              required: true
-              type: number
-            - label: 最后活动
-              name: last_active
-              required: true
-              type: string
-            - goType: int
-              label: 闲置天数
-              name: idle_days
-              required: true
-              type: number
-            - desc: true = 删掉就没了,先确认
-              label: 有未提交改动
-              name: dirty
-              required: true
-              type: boolean
-            - goType: int
-              label: 会话数
-              name: sessions
-              required: true
-              type: number
-            - desc: claude --resume 用它
-              label: 最近会话 ID
-              name: last_session
-              required: true
-              type: string
-          goType: WorktreeInfo
-          label: 删掉的（dry_run 时是「将要删的」）
-          name: items
-          required: true
-          type: array
-        - goType: int
-          label: 回收(MB)
-          name: freed_mb
-          required: true
-          type: number
-        - goType: int
-          label: 因有改动跳过的个数
-          name: skipped_dirty
-          required: true
-          type: number
-    - desc: 查 claude 装没装、版本、工作区可写、GitLab 通不通
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: Claude Code 版本
-          name: claude_version
-          required: true
-          type: string
-        - label: 工作区
-          name: workspace_dir
-          required: true
-          type: string
-        - label: GitLab 可达
-          name: gitlab_ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 这台机器上有哪些工作树:占多大、多久没动、有没有未提交的改动、能接管的会话是哪个。清理之前先看这个
-      id: list_worktrees
-      inputs:
-        - desc: 留空 = 全部
-          label: 只看这个项目
-          name: project
-          type: string
-      label: 列出工作树
-      outputs:
-        - fields:
-            - label: 项目
-              name: project
-              required: true
-              type: string
-            - label: 分支
-              name: branch
-              required: true
-              type: string
-            - desc: 人要接管就 cd 到这儿
-              label: 路径
-              name: path
-              required: true
-              type: string
-            - goType: int
-              label: 占用(MB)
-              name: size_mb
-              required: true
-              type: number
-            - label: 最后活动
-              name: last_active
-              required: true
-              type: string
-            - goType: int
-              label: 闲置天数
-              name: idle_days
-              required: true
-              type: number
-            - desc: true = 删掉就没了,先确认
-              label: 有未提交改动
-              name: dirty
-              required: true
-              type: boolean
-            - goType: int
-              label: 会话数
-              name: sessions
-              required: true
-              type: number
-            - desc: claude --resume 用它
-              label: 最近会话 ID
-              name: last_session
-              required: true
-              type: string
-          goType: WorktreeInfo
-          label: 工作树
-          name: items
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-        - goType: int
-          label: 合计占用(MB)
-          name: total_mb
-          required: true
-          type: number
-        - label: 工作区目录
-          name: workspace
-          required: true
-          type: string
-    - desc: 在上一次的会话里追加一句指令（它记得之前做过什么），在同一个工作树上接着改
-      id: resume_task
-      inputs:
-        - desc: 要接管的会话。可以是本插件「执行任务」的出参，**也可以是人在这台机器上自己跑出来的**——CC 按 id 在整机范围内找，不限目录
-          label: 会话 ID
-          name: session_id
-          required: true
-          type: string
-        - desc: 如「测试没跑通，修一下」「把日志加上」
-          label: 追加指令
-          name: task
-          required: true
-          type: text
-        - desc: 绝对路径。**接管插件之外的会话时填这里**（如人在 /home/me/repo 里起的），填了就不再按项目/分支找工作树。需要凭证里先开「允许外部目录」
-          label: 直接指定工作目录
-          name: worktree
-          type: string
-        - desc: 走插件自己的工作树时要给；填了「直接指定工作目录」就不用
-          label: 项目
-          name: project
-          type: string
-        - desc: 同上——上一次那个分支，工作树按它找
-          label: 工作分支
-          name: branch
-          type: string
-        - label: 推送分支
-          name: push
-          type: boolean
-        - label: 成本上限(美元)
-          name: max_budget_usd
-          type: number
-      label: 继续任务
-      outputs:
-        - label: 成功
-          name: ok
-          required: true
-          type: boolean
-        - desc: CC 的最终答复——「它做了什么、结果如何」
-          label: 结论
-          name: conclusion
-          required: true
-          type: text
-        - desc: 整段执行过程（与流式推的是同一份内容）
-          label: 过程
-          name: log
-          required: true
-          type: text
-        - itemType: string
-          label: 改动文件
-          name: changed_files
-          required: true
-          type: array
-        - desc: git diff（超长会截断，完整改动在工作树/分支里）
-          label: 改动内容
-          name: diff
-          required: true
-          type: text
-        - label: 分支
-          name: branch
-          required: true
-          type: string
-        - label: 已推送
-          name: pushed
-          required: true
-          type: boolean
-        - label: 花费(美元)
-          name: cost_usd
-          required: true
-          type: number
-        - goType: int
-          label: 轮数
-          name: turns
-          required: true
-          type: number
-        - desc: 给「继续任务」用：同一会话追加指令，CC 记得上下文
-          label: 会话 ID
-          name: session_id
-          required: true
-          type: string
-        - desc: 代码改在这个目录里。**人要接管就 cd 到这儿**再 claude --resume <会话 ID>——前提是同一台机器、同一个系统用户（会话文件是 0600）
-          label: 工作树路径
-          name: worktree
-          required: true
-          type: string
-        - desc: 非空说明它想做但没被允许的事——任务没完成时先看这里，多半是权限配窄了
-          itemType: string
-          label: 被权限拦下的工具
-          name: denied_tools
-          required: true
-          type: array
-      stream: true
-    - desc: 在项目工作树里让 Claude Code 干一件事：改代码、查问题、写测试。过程实时回传，结论与改动清单进下游节点
-      id: run_task
-      inputs:
-        - desc: GitLab 项目路径（group/name）或数字 ID——与 gitlab 插件同一形态
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - desc: 要它做什么，越具体越好。把验收标准也写进去（「跑通 go test ./internal/api」）比只说「修一下」有效得多
-          label: 任务
-          name: task
-          required: true
-          type: text
-        - desc: 从哪个分支开工；留空 = 仓库默认分支
-          label: 基线分支
-          name: base_branch
-          type: string
-        - desc: 在这个分支上改。留空 = 自动生成 cc/<时间戳>。**同名分支复用同一个工作树**（增量更快）
-          label: 工作分支
-          name: branch
-          type: string
-        - desc: 默认关：只回 diff 与结论，代码留在工作树里。打开才 git push——之后可以接 gitlab 插件的「建 MR」
-          label: 推送分支
-          name: push
-          type: boolean
-        - desc: 超了就停（CC 原生支持）。留空 = 不限，**不建议**：agent 跑飞时这是唯一的刹车
-          label: 成本上限(美元)
-          name: max_budget_usd
-          type: number
-        - desc: 如 opus / sonnet，或完整模型名。留空用 CC 默认
-          label: 模型
-          name: model
-          type: string
-        - desc: 留空用 CC 默认
-          label: 思考力度
-          name: effort
-          options:
-            - label: 低
-              value: low
-            - label: 中
-              value: medium
-            - label: 高
-              value: high
-          type: enum
-        - desc: 留空 = 用权限模式决定。形态如 Read、Edit、Bash(git:*)——注意是冒号不是空格
-          itemType: string
-          label: 只允许这些工具
-          name: allowed_tools
-          type: array
-        - desc: 同上形态，优先于允许清单
-          itemType: string
-          label: 禁用这些工具
-          name: disallowed_tools
-          type: array
-        - desc: 默认 acceptEdits：能改文件、常规文件命令放行。**bypassPermissions 等于把这台机器交出去**，只在隔离容器里用
-          label: 权限模式
-          name: permission_mode
-          options:
-            - label: 自动接受改文件（默认）
-              value: acceptEdits
-            - label: 只允许清单内的工具
-              value: dontAsk
-            - label: 只出方案不动手
-              value: plan
-            - label: 跳过全部权限检查（危险）
-              value: bypassPermissions
-          type: enum
-        - desc: 附加在 CC 默认系统提示之后（团队规范、禁改目录…）
-          label: 追加系统提示
-          name: system_prompt
-          type: text
-      label: 执行任务
-      outputs:
-        - label: 成功
-          name: ok
-          required: true
-          type: boolean
-        - desc: CC 的最终答复——「它做了什么、结果如何」
-          label: 结论
-          name: conclusion
-          required: true
-          type: text
-        - desc: 整段执行过程（与流式推的是同一份内容）
-          label: 过程
-          name: log
-          required: true
-          type: text
-        - itemType: string
-          label: 改动文件
-          name: changed_files
-          required: true
-          type: array
-        - desc: git diff（超长会截断，完整改动在工作树/分支里）
-          label: 改动内容
-          name: diff
-          required: true
-          type: text
-        - label: 分支
-          name: branch
-          required: true
-          type: string
-        - label: 已推送
-          name: pushed
-          required: true
-          type: boolean
-        - label: 花费(美元)
-          name: cost_usd
-          required: true
-          type: number
-        - goType: int
-          label: 轮数
-          name: turns
-          required: true
-          type: number
-        - desc: 给「继续任务」用：同一会话追加指令，CC 记得上下文
-          label: 会话 ID
-          name: session_id
-          required: true
-          type: string
-        - desc: 代码改在这个目录里。**人要接管就 cd 到这儿**再 claude --resume <会话 ID>——前提是同一台机器、同一个系统用户（会话文件是 0600）
-          label: 工作树路径
-          name: worktree
-          required: true
-          type: string
-        - desc: 非空说明它想做但没被允许的事——任务没完成时先看这里，多半是权限配窄了
-          itemType: string
-          label: 被权限拦下的工具
-          name: denied_tools
-          required: true
-          type: array
-      stream: true
 plugin:
-    desc: 把本机装的 Claude Code 接进工作流：给它一个 GitLab 项目和一句任务，
-    doc: README.md
-    label: Claude Code
-    name: claude-code
-    org: sokel
-    version: v1.0.0
+  desc: 把本机装的 Claude Code 接进工作流：给它一个 GitLab 项目和一句任务，
+  doc: README.md
+  label: Claude Code
+  name: claude-code
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: '**留空也能跑**：那样就用插件那台机器上 CC 自己的登录态（订阅制常见）。填了则这次调用走这把 key 的额度——多个空间/团队各自分账、要审计时用它。两种都是合法部署，插件不替你选'
+      label: Anthropic API Key
+      name: api_key
+      type: secret
+
+operations:
+  - desc: 删工作树回收磁盘。可以点名一个分支，也可以按闲置天数批量清。仓库缓存、已推送的分支、CC 的会话记录都不受影响
+    id: cleanup
+    inputs:
+      - desc: 留空 = 所有项目（配合闲置天数用）
+        label: 项目
+        name: project
+        type: string
+      - desc: 点名删这一个；留空则按闲置天数批量
+        label: 工作分支
+        name: branch
+        type: string
+      - desc: 批量清理用。**没给分支时必须给它**——否则等于要删光所有工作树，插件会拒绝
+        goType: int
+        label: 只删闲置超过几天的
+        name: idle_days
+        type: number
+      - desc: 默认关 = **保护有改动的工作树**（删掉就没了）。刻意写成「连脏的一起删」而不是「跳过脏的」：布尔留空就是 false，这样「没填」天然等于「保护」，不必去猜作者有没有填过
+        label: 连有未提交改动的一起删
+        name: include_dirty
+        type: boolean
+      - desc: 先跑一次看会删掉哪些，再决定
+        label: 只看不删
+        name: dry_run
+        type: boolean
+    label: 清理工作树
+    outputs:
+      - goType: int
+        label: 删除个数
+        name: removed
+        required: true
+        type: number
+      - fields:
+          - label: 项目
+            name: project
+            required: true
+            type: string
+          - label: 分支
+            name: branch
+            required: true
+            type: string
+          - desc: 人要接管就 cd 到这儿
+            label: 路径
+            name: path
+            required: true
+            type: string
+          - goType: int
+            label: 占用(MB)
+            name: size_mb
+            required: true
+            type: number
+          - label: 最后活动
+            name: last_active
+            required: true
+            type: string
+          - goType: int
+            label: 闲置天数
+            name: idle_days
+            required: true
+            type: number
+          - desc: true = 删掉就没了,先确认
+            label: 有未提交改动
+            name: dirty
+            required: true
+            type: boolean
+          - goType: int
+            label: 会话数
+            name: sessions
+            required: true
+            type: number
+          - desc: claude --resume 用它
+            label: 最近会话 ID
+            name: last_session
+            required: true
+            type: string
+        goType: WorktreeInfo
+        label: 删掉的（dry_run 时是「将要删的」）
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 回收(MB)
+        name: freed_mb
+        required: true
+        type: number
+      - goType: int
+        label: 因有改动跳过的个数
+        name: skipped_dirty
+        required: true
+        type: number
+  - desc: 查 claude 装没装、版本、工作区可写、GitLab 通不通
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: Claude Code 版本
+        name: claude_version
+        required: true
+        type: string
+      - label: 工作区
+        name: workspace_dir
+        required: true
+        type: string
+      - label: GitLab 可达
+        name: gitlab_ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 这台机器上有哪些工作树:占多大、多久没动、有没有未提交的改动、能接管的会话是哪个。清理之前先看这个
+    id: list_worktrees
+    inputs:
+      - desc: 留空 = 全部
+        label: 只看这个项目
+        name: project
+        type: string
+    label: 列出工作树
+    outputs:
+      - fields:
+          - label: 项目
+            name: project
+            required: true
+            type: string
+          - label: 分支
+            name: branch
+            required: true
+            type: string
+          - desc: 人要接管就 cd 到这儿
+            label: 路径
+            name: path
+            required: true
+            type: string
+          - goType: int
+            label: 占用(MB)
+            name: size_mb
+            required: true
+            type: number
+          - label: 最后活动
+            name: last_active
+            required: true
+            type: string
+          - goType: int
+            label: 闲置天数
+            name: idle_days
+            required: true
+            type: number
+          - desc: true = 删掉就没了,先确认
+            label: 有未提交改动
+            name: dirty
+            required: true
+            type: boolean
+          - goType: int
+            label: 会话数
+            name: sessions
+            required: true
+            type: number
+          - desc: claude --resume 用它
+            label: 最近会话 ID
+            name: last_session
+            required: true
+            type: string
+        goType: WorktreeInfo
+        label: 工作树
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+      - goType: int
+        label: 合计占用(MB)
+        name: total_mb
+        required: true
+        type: number
+      - label: 工作区目录
+        name: workspace
+        required: true
+        type: string
+  - desc: 在上一次的会话里追加一句指令（它记得之前做过什么），在同一个工作树上接着改
+    id: resume_task
+    inputs:
+      - desc: 要接管的会话。可以是本插件「执行任务」的出参，**也可以是人在这台机器上自己跑出来的**——CC 按 id 在整机范围内找，不限目录
+        label: 会话 ID
+        name: session_id
+        required: true
+        type: string
+      - desc: 如「测试没跑通，修一下」「把日志加上」
+        label: 追加指令
+        name: task
+        required: true
+        type: text
+      - desc: 绝对路径。**接管插件之外的会话时填这里**（如人在 /home/me/repo 里起的），填了就不再按项目/分支找工作树。需要凭证里先开「允许外部目录」
+        label: 直接指定工作目录
+        name: worktree
+        type: string
+      - desc: 走插件自己的工作树时要给；填了「直接指定工作目录」就不用
+        label: 项目
+        name: project
+        type: string
+      - desc: 同上——上一次那个分支，工作树按它找
+        label: 工作分支
+        name: branch
+        type: string
+      - label: 推送分支
+        name: push
+        type: boolean
+      - label: 成本上限(美元)
+        name: max_budget_usd
+        type: number
+    label: 继续任务
+    outputs:
+      - label: 成功
+        name: ok
+        required: true
+        type: boolean
+      - desc: CC 的最终答复——「它做了什么、结果如何」
+        label: 结论
+        name: conclusion
+        required: true
+        type: text
+      - desc: 整段执行过程（与流式推的是同一份内容）
+        label: 过程
+        name: log
+        required: true
+        type: text
+      - itemType: string
+        label: 改动文件
+        name: changed_files
+        required: true
+        type: array
+      - desc: git diff（超长会截断，完整改动在工作树/分支里）
+        label: 改动内容
+        name: diff
+        required: true
+        type: text
+      - label: 分支
+        name: branch
+        required: true
+        type: string
+      - label: 已推送
+        name: pushed
+        required: true
+        type: boolean
+      - label: 花费(美元)
+        name: cost_usd
+        required: true
+        type: number
+      - goType: int
+        label: 轮数
+        name: turns
+        required: true
+        type: number
+      - desc: 给「继续任务」用：同一会话追加指令，CC 记得上下文
+        label: 会话 ID
+        name: session_id
+        required: true
+        type: string
+      - desc: 代码改在这个目录里。**人要接管就 cd 到这儿**再 claude --resume <会话 ID>——前提是同一台机器、同一个系统用户（会话文件是 0600）
+        label: 工作树路径
+        name: worktree
+        required: true
+        type: string
+      - desc: 非空说明它想做但没被允许的事——任务没完成时先看这里，多半是权限配窄了
+        itemType: string
+        label: 被权限拦下的工具
+        name: denied_tools
+        required: true
+        type: array
+    stream: true
+  - desc: 在项目工作树里让 Claude Code 干一件事：改代码、查问题、写测试。过程实时回传，结论与改动清单进下游节点
+    id: run_task
+    inputs:
+      - desc: GitLab 项目路径（group/name）或数字 ID——与 gitlab 插件同一形态
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - desc: 要它做什么，越具体越好。把验收标准也写进去（「跑通 go test ./internal/api」）比只说「修一下」有效得多
+        label: 任务
+        name: task
+        required: true
+        type: text
+      - desc: 从哪个分支开工；留空 = 仓库默认分支
+        label: 基线分支
+        name: base_branch
+        type: string
+      - desc: 在这个分支上改。留空 = 自动生成 cc/<时间戳>。**同名分支复用同一个工作树**（增量更快）
+        label: 工作分支
+        name: branch
+        type: string
+      - desc: 默认关：只回 diff 与结论，代码留在工作树里。打开才 git push——之后可以接 gitlab 插件的「建 MR」
+        label: 推送分支
+        name: push
+        type: boolean
+      - desc: 超了就停（CC 原生支持）。留空 = 不限，**不建议**：agent 跑飞时这是唯一的刹车
+        label: 成本上限(美元)
+        name: max_budget_usd
+        type: number
+      - desc: 如 opus / sonnet，或完整模型名。留空用 CC 默认
+        label: 模型
+        name: model
+        type: string
+      - desc: 留空用 CC 默认
+        label: 思考力度
+        name: effort
+        options:
+          - label: 低
+            value: low
+          - label: 中
+            value: medium
+          - label: 高
+            value: high
+        type: enum
+      - desc: 留空 = 用权限模式决定。形态如 Read、Edit、Bash(git:*)——注意是冒号不是空格
+        itemType: string
+        label: 只允许这些工具
+        name: allowed_tools
+        type: array
+      - desc: 同上形态，优先于允许清单
+        itemType: string
+        label: 禁用这些工具
+        name: disallowed_tools
+        type: array
+      - desc: 默认 acceptEdits：能改文件、常规文件命令放行。**bypassPermissions 等于把这台机器交出去**，只在隔离容器里用
+        label: 权限模式
+        name: permission_mode
+        options:
+          - label: 自动接受改文件（默认）
+            value: acceptEdits
+          - label: 只允许清单内的工具
+            value: dontAsk
+          - label: 只出方案不动手
+            value: plan
+          - label: 跳过全部权限检查（危险）
+            value: bypassPermissions
+        type: enum
+      - desc: 附加在 CC 默认系统提示之后（团队规范、禁改目录…）
+        label: 追加系统提示
+        name: system_prompt
+        type: text
+    label: 执行任务
+    outputs:
+      - label: 成功
+        name: ok
+        required: true
+        type: boolean
+      - desc: CC 的最终答复——「它做了什么、结果如何」
+        label: 结论
+        name: conclusion
+        required: true
+        type: text
+      - desc: 整段执行过程（与流式推的是同一份内容）
+        label: 过程
+        name: log
+        required: true
+        type: text
+      - itemType: string
+        label: 改动文件
+        name: changed_files
+        required: true
+        type: array
+      - desc: git diff（超长会截断，完整改动在工作树/分支里）
+        label: 改动内容
+        name: diff
+        required: true
+        type: text
+      - label: 分支
+        name: branch
+        required: true
+        type: string
+      - label: 已推送
+        name: pushed
+        required: true
+        type: boolean
+      - label: 花费(美元)
+        name: cost_usd
+        required: true
+        type: number
+      - goType: int
+        label: 轮数
+        name: turns
+        required: true
+        type: number
+      - desc: 给「继续任务」用：同一会话追加指令，CC 记得上下文
+        label: 会话 ID
+        name: session_id
+        required: true
+        type: string
+      - desc: 代码改在这个目录里。**人要接管就 cd 到这儿**再 claude --resume <会话 ID>——前提是同一台机器、同一个系统用户（会话文件是 0600）
+        label: 工作树路径
+        name: worktree
+        required: true
+        type: string
+      - desc: 非空说明它想做但没被允许的事——任务没完成时先看这里，多半是权限配窄了
+        itemType: string
+        label: 被权限拦下的工具
+        name: denied_tools
+        required: true
+        type: array
+    stream: true
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-claude-code:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-claude-code:1.0.1@sha256:f2c8bcc718f2c1fb9c078997b4c294645451d7e79e9cb71879091b62880c8400
   note: 必须部署在装了 claude 且能访问目标 GitLab 的机器上。
