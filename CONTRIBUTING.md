@@ -12,8 +12,11 @@ Everything here changes through pull requests. CI checks the mechanics; a code o
 2. **Pick your org.** `org` is the publisher: your GitHub user or organization name, lowercase. It cannot be `sokel`
    (that org is for plugins maintained in the Sokel project).
 3. **Add the entry.** Create `plugins/<org>/<name>/manifest.yml` (`sokel-gen` can export it from your plugin), with
-   `plugin.org` and `plugin.name` matching the directory and a `plugin.version`. Optional: `locales/<lang>.json`,
-   `README.md`.
+   `plugin.org` and `plugin.name` matching the directory and a `plugin.version`. Write the manifest's display text
+   (`label`, `desc`, `help`, `placeholder`) in **Chinese** and translate every string in **`locales/en.json`**
+   (Chinese source string → English): platforms and this page show the manifest as written in Chinese and look strings
+   up in that table in English, falling back to Chinese. `README.md` (optional) is one file shown as is in both, so
+   write it in Chinese, or Chinese then English.
 4. **Give it an icon** (optional, recommended): set `plugin.icon` in the manifest to
    - `icon.svg` / `icon.png` — a file in the entry directory, or
    - `brand:<id>` — one of the built-in brand marks listed in `site/brands.js` (e.g. `brand:gitlab`).

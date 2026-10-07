@@ -11,7 +11,9 @@
    源码保持公开。
 2. **定好 org。** `org` 是发布者：你的 GitHub 用户名或组织名，小写。不能用 `sokel`（那是 Sokel 项目自己维护的插件）。
 3. **新增条目。** 创建 `plugins/<org>/<name>/manifest.yml`（`sokel-gen` 可以从插件导出），`plugin.org` 与
-   `plugin.name` 要和目录一致，并写上 `plugin.version`。可选：`locales/<lang>.json`、`README.md`。
+   `plugin.name` 要和目录一致，并写上 `plugin.version`。manifest 里的显示文字（`label`、`desc`、`help`、`placeholder`）用**中文**写，并在 **`locales/en.json`** 里逐条翻成英文
+（中文原文 → 英文）：平台和本页中文界面原样显示 manifest，英文界面按这张表查，查不到就显示中文。`README.md`（可选）只有一份、两种界面原样显示，
+用中文写，或先中文后英文。
 4. **配一个图标**（可选，建议）：manifest 里写 `plugin.icon`，取值二选一：
    - `icon.svg` / `icon.png`：放在条目目录里的文件；
    - `brand:<id>`：`site/brands.js` 里已有的品牌图标（如 `brand:gitlab`）。
