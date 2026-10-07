@@ -1,3 +1,11 @@
+plugin:
+  desc: 读产品、评论和每日榜单；你的产品下有新评论或新回复时触发工作流。发布和回复在网页上做。
+  doc: README.md
+  label: Product Hunt
+  name: producthunt
+  org: sokel
+  version: v0.1.1
+
 credential:
   fields:
     - desc: api.producthunt.com/v2/oauth/applications 建一个应用，页面下方的 Developer Token（不会过期，代表你自己的账号）
@@ -337,15 +345,7 @@ operations:
         required: true
         type: json
     timeoutSec: 30
-
-plugin:
-    desc: 读产品、评论和每日榜单；你的产品下有新评论或新回复时触发工作流。发布和回复在网页上做。
-    doc: README.md
-    label: Product Hunt
-    name: producthunt
-    org: sokel
-    version: v0.1.0
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-producthunt:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-producthunt:0.1.1@sha256:31b0e5bf40c7745d2f4ba467344cc16d6b5f8edd6ad69d5cf585d61efecb9c2c
