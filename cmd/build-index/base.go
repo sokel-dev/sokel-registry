@@ -18,10 +18,10 @@ import (
 // runBase is the pull request gate: the head tree passes admission, and every entry whose files changed against the
 // base branch raises its version. Without the bump the platform's "update available" badge and version-matched
 // advisories never see the change: installs keep the old contract while the catalog quietly serves a new one.
-// A removed entry is a delisting (installed copies keep working, no more updates or advisories); it is reported, not
-// refused — review decides.
+// A changed or new entry also has its container image pinned (imageProblems). A removed entry is a delisting
+// (installed copies keep working, no more updates or advisories); it is reported, not refused — review decides.
 func runBase(root, baseRoot string) error {
-	head, _, err := admit(root)
+	head, mans, err := admit(root)
 	if err != nil {
 		return err
 	}
@@ -39,6 +39,8 @@ func runBase(root, baseRoot string) error {
 		delete(baseVer, e.Ref)
 		if !existed {
 			notes = append(notes, fmt.Sprintf("new entry %s %s", e.Ref, e.Version))
+			p, n := imageProblems(e.Ref, mans[e.Ref])
+			problems, notes = append(problems, p...), append(notes, n...)
 			continue
 		}
 		same, err := sameTree(entryDir(root, e.Ref), entryDir(baseRoot, e.Ref))
@@ -53,6 +55,8 @@ func runBase(root, baseRoot string) error {
 			continue
 		}
 		notes = append(notes, fmt.Sprintf("updated %s %s -> %s", e.Ref, old, e.Version))
+		p, n := imageProblems(e.Ref, mans[e.Ref])
+		problems, notes = append(problems, p...), append(notes, n...)
 	}
 	for ref := range baseVer {
 		notes = append(notes, "delisted "+ref)
@@ -63,7 +67,7 @@ func runBase(root, baseRoot string) error {
 	}
 	if len(problems) > 0 {
 		sort.Strings(problems)
-		return fmt.Errorf("%d entries need a version bump:\n  - %s", len(problems), strings.Join(problems, "\n  - "))
+		return fmt.Errorf("%d problems with the changed entries:\n  - %s", len(problems), strings.Join(problems, "\n  - "))
 	}
 	fmt.Printf("build-index: %d entries pass against the base branch\n", len(head.Plugins))
 	return nil

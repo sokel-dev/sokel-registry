@@ -210,3 +210,48 @@ func TestIcons(t *testing.T) {
 		t.Errorf("a misspelled brand must be refused: %v", err)
 	}
 }
+
+// The image gate rides on the version gate: only entries that change are checked, so nothing already published goes
+// red, and every new version has to pin its image. "latest" and untagged images are refused for every org; the
+// sokel org must carry a digest; other orgs without one only get a note.
+func TestImageGate(t *testing.T) {
+	owners := "* @a\n/plugins/acme/ @a\n/plugins/sokel/ @a\n"
+	cases := []struct {
+		name, ref, baseImage, headImage, wantErr string
+	}{
+		{"third party, tag only", "acme/foo", "", "ghcr.io/acme/foo:1.0.1", ""},
+		{"third party, digest", "acme/foo", "", "ghcr.io/acme/foo:1.0.1@sha256:" + strings.Repeat("ab", 32), ""},
+		{"third party, latest", "acme/foo", "", "ghcr.io/acme/foo:latest", "uses the latest tag"},
+		{"third party, no tag", "acme/foo", "", "ghcr.io/acme/foo", "has no tag"},
+		{"registry port is not a tag", "acme/foo", "", "registry.example:5000/acme/foo", "has no tag"},
+		{"official, tag only", "sokel/foo", "", "ghcr.io/sokel-dev/sokel-plugin-foo:1.0.1", "official entries pin the image by digest"},
+		{"official, digest", "sokel/foo", "", "ghcr.io/sokel-dev/sokel-plugin-foo:1.0.1@sha256:" + strings.Repeat("ab", 32), ""},
+		{"official, digest only", "sokel/foo", "", "ghcr.io/sokel-dev/sokel-plugin-foo@sha256:" + strings.Repeat("ab", 32), ""},
+		// The ratchet: an entry that does not change is not checked, however it is pinned.
+		{"official, unchanged latest", "sokel/foo", "ghcr.io/sokel-dev/sokel-plugin-foo:latest", "ghcr.io/sokel-dev/sokel-plugin-foo:latest", ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			withImage := func(root, img string) {
+				f := filepath.Join(root, "plugins", filepath.FromSlash(c.ref), "manifest.yml")
+				raw, _ := os.ReadFile(f)
+				mustWrite(t, f, string(raw)+"deployment:\n  targets:\n    - {kind: container, ref: "+img+"}\n")
+			}
+			base := fixture(t, map[string]string{c.ref: "1.0.0"}, owners)
+			headVersion := "1.0.1"
+			if c.baseImage != "" {
+				withImage(base, c.baseImage)
+				headVersion = "1.0.0"
+			}
+			head := fixture(t, map[string]string{c.ref: headVersion}, owners)
+			withImage(head, c.headImage)
+			err := runBase(head, base)
+			if c.wantErr == "" && err != nil {
+				t.Fatalf("unexpected: %v", err)
+			}
+			if c.wantErr != "" && (err == nil || !strings.Contains(err.Error(), c.wantErr)) {
+				t.Fatalf("want an error containing %q, got %v", c.wantErr, err)
+			}
+		})
+	}
+}

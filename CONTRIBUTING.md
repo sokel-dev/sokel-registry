@@ -31,6 +31,10 @@ What reviewers look at, beyond CI:
 - the org really is yours, and the name does not impersonate another product or publisher;
 - the credentials it asks for are what it needs, and the docs say where they go;
 - the image or binary in `deployment` comes from the source you link, and that source is public;
+- the container image is pinned: a tag that is not `latest`, best with its digest (`image:1.2.0@sha256:…`). CI refuses
+  `latest` and untagged images for every entry that changes; `sokel/*` entries must carry the digest, other orgs are
+  reminded. A digest is the only reference a registry cannot repoint, and the catalog's versions and advisories are
+  only meaningful if the image stays what was reviewed;
 - the usage doc tells a stranger how to get it running.
 
 ## Official entries (`plugins/sokel/`)
@@ -49,7 +53,8 @@ platforms that use this site as a refresh source sooner.
 
 Change the files under your entry and **raise `plugin.version`**. CI compares against `main` and refuses a change
 that keeps or lowers the version: platforms decide "update available" and match advisories by version, so a change
-without a bump would be invisible to them. Your org's code owner approves it.
+without a bump would be invisible to them. Point `deployment.targets[].ref` at the new image (pinned, see above).
+Your org's code owner approves it.
 
 ## Report a problem with a published version (security advisory)
 
