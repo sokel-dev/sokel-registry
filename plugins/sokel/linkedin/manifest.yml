@@ -1,101 +1,103 @@
-credential:
-    auth:
-        kind: oauth
-        provider: linkedin
-        scopes:
-            - openid
-            - profile
-            - w_member_social
-    fields:
-        - desc: 点「授权」后由平台写入，勿手填。**LinkedIn 的令牌 60 天到期**，且多数自助应用没有刷新令牌——到期后重新点一次「授权」即可
-          label: 访问令牌（授权注入）
-          name: access_token
-          type: secret
-        - desc: 只有申请过 Marketing Developer Platform 的应用才会有；没有是正常的
-          label: 刷新令牌（授权注入）
-          name: refresh_token
-          type: secret
-        - desc: 如 http://127.0.0.1:7897；部署环境直连不了 linkedin.com 时必填
-          label: 出站代理
-          name: proxy
-          type: text
-operations:
-    - desc: 查一次授权账号。ok=false 多半是令牌到期了（LinkedIn 的令牌 60 天）
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 凭证可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-        - label: 账号姓名
-          name: name
-          type: string
-    - desc: 以授权账号的个人身份发一条 LinkedIn 动态，可带图
-      id: li_post_create
-      inputs:
-        - desc: 纯文本 + 换行（**不认 Markdown 也不认 HTML**）；上限 3000 字符。正文里的链接由 LinkedIn 自动识别并生成卡片，不用自己拼
-          label: 正文
-          name: text
-          required: true
-          type: text
-        - desc: 最多 9 张；每张 ≤10MB
-          itemType: file
-          label: 图片
-          name: images
-          type: array
-        - desc: 按顺序对应
-          itemType: string
-          label: 图片替代文本
-          name: image_alts
-          type: array
-        - default: PUBLIC
-          label: 可见性
-          name: visibility
-          options:
-            - label: 所有人可见
-              value: PUBLIC
-            - label: 仅一度人脉
-              value: CONNECTIONS
-          type: enum
-      label: 发动态
-      outputs:
-        - desc: 形如 urn:li:share:7xxxxxx，删除要用它
-          label: 动态 URN
-          name: id
-          required: true
-          type: string
-        - desc: https://www.linkedin.com/feed/update/... 可直接点开
-          label: 链接
-          name: url
-          required: true
-          type: string
-    - desc: 只能删授权账号自己发的
-      id: li_post_delete
-      inputs:
-        - desc: 来自「发动态」的 id，或动态链接
-          label: 动态 URN
-          name: post_id
-          required: true
-          type: string
-      label: 删动态
-      outputs:
-        - label: 已删除
-          name: deleted
-          required: true
-          type: boolean
 plugin:
-    desc: 以授权账号的个人身份发动态。自助接入、无需合作伙伴审批，适合投研观点触达专业受众。
-    doc: README.md
-    label: LinkedIn
-    name: linkedin
-    org: sokel
-    version: v1.0.0
+  desc: 以授权账号的个人身份发动态。自助接入、无需合作伙伴审批，适合投研观点触达专业受众。
+  doc: README.md
+  label: LinkedIn
+  name: linkedin
+  org: sokel
+  version: v1.0.1
+
+credential:
+  auth:
+    kind: oauth
+    provider: linkedin
+    scopes:
+      - openid
+      - profile
+      - w_member_social
+  fields:
+    - desc: 点「授权」后由平台写入，勿手填。**LinkedIn 的令牌 60 天到期**，且多数自助应用没有刷新令牌——到期后重新点一次「授权」即可
+      label: 访问令牌（授权注入）
+      name: access_token
+      type: secret
+    - desc: 只有申请过 Marketing Developer Platform 的应用才会有；没有是正常的
+      label: 刷新令牌（授权注入）
+      name: refresh_token
+      type: secret
+    - desc: 如 http://127.0.0.1:7897；部署环境直连不了 linkedin.com 时必填
+      label: 出站代理
+      name: proxy
+      type: text
+
+operations:
+  - desc: 查一次授权账号。ok=false 多半是令牌到期了（LinkedIn 的令牌 60 天）
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 凭证可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+      - label: 账号姓名
+        name: name
+        type: string
+  - desc: 以授权账号的个人身份发一条 LinkedIn 动态，可带图
+    id: li_post_create
+    inputs:
+      - desc: 纯文本 + 换行（**不认 Markdown 也不认 HTML**）；上限 3000 字符。正文里的链接由 LinkedIn 自动识别并生成卡片，不用自己拼
+        label: 正文
+        name: text
+        required: true
+        type: text
+      - desc: 最多 9 张；每张 ≤10MB
+        itemType: file
+        label: 图片
+        name: images
+        type: array
+      - desc: 按顺序对应
+        itemType: string
+        label: 图片替代文本
+        name: image_alts
+        type: array
+      - default: PUBLIC
+        label: 可见性
+        name: visibility
+        options:
+          - label: 所有人可见
+            value: PUBLIC
+          - label: 仅一度人脉
+            value: CONNECTIONS
+        type: enum
+    label: 发动态
+    outputs:
+      - desc: 形如 urn:li:share:7xxxxxx，删除要用它
+        label: 动态 URN
+        name: id
+        required: true
+        type: string
+      - desc: https://www.linkedin.com/feed/update/... 可直接点开
+        label: 链接
+        name: url
+        required: true
+        type: string
+  - desc: 只能删授权账号自己发的
+    id: li_post_delete
+    inputs:
+      - desc: 来自「发动态」的 id，或动态链接
+        label: 动态 URN
+        name: post_id
+        required: true
+        type: string
+    label: 删动态
+    outputs:
+      - label: 已删除
+        name: deleted
+        required: true
+        type: boolean
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-linkedin:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-linkedin:1.0.1@sha256:7cd6ca4a77de8f65638ac2d337be815f520cbb4d7e1aa905cec817a11d2212ef
