@@ -1,0 +1,351 @@
+credential:
+  fields:
+    - desc: api.producthunt.com/v2/oauth/applications 建一个应用，页面下方的 Developer Token（不会过期，代表你自己的账号）
+      label: Developer token
+      name: developer_token
+      required: true
+      type: secret
+    - desc: 如 http://127.0.0.1:7897；部署环境连不上 producthunt.com 时必填
+      label: 出站代理
+      name: proxy
+      type: text
+    - desc: slug 或产品页地址，多个用逗号分隔：这些产品下有新评论或新回复时触发「有新评论」
+      label: 监听的产品
+      name: watch_posts
+      type: text
+    - default: "on"
+      desc: on = token 所属账号作为制作者的最近 10 个产品也一起监听
+      label: 监听我做的产品
+      name: watch_my_posts
+      options:
+        - label: "on"
+          value: "on"
+        - label: "off"
+          value: "off"
+      type: select
+    - default: "180"
+      desc: 默认 180，最短 60（PH 按查询复杂度限流，15 分钟一个额度）
+      label: 轮询间隔（秒）
+      name: poll_seconds
+      type: text
+    - desc: 事件源自动维护，勿手填
+      label: 轮询游标
+      name: watch_cursor
+      type: text
+
+events_common:
+  - comment_id
+  - body
+  - url
+  - post_name
+  - created_at
+
+events:
+  - fields:
+      - label: 评论 id
+        name: comment_id
+        required: true
+        type: string
+      - label: 正文
+        name: body
+        required: true
+        type: string
+      - desc: 在那里回复（PH 的接口不能回复）
+        label: 评论地址
+        name: url
+        required: true
+        type: string
+      - goType: int
+        label: 得票
+        name: votes_count
+        required: true
+        type: number
+      - desc: 顶层评论为空
+        label: 回复的是哪条评论
+        name: parent_id
+        required: true
+        type: string
+      - desc: 它回复的那条评论是 token 所属账号写的
+        label: 回复的是我
+        name: is_reply_to_me
+        required: true
+        type: boolean
+      - desc: Product Hunt 对接口隐藏评论人身份，通常为空；点 url 到网页上看是谁
+        label: 评论人
+        name: username
+        required: true
+        type: string
+      - label: 产品 id
+        name: post_id
+        required: true
+        type: string
+      - label: 产品名称
+        name: post_name
+        required: true
+        type: string
+      - label: 产品页
+        name: post_url
+        required: true
+        type: string
+      - label: 时间
+        name: created_at
+        required: true
+        type: string
+    id: comment_received
+    label: 有新评论
+
+operations:
+  - desc: 一个产品的评论和回复，最新在前（每条评论带最近 5 条回复）
+    id: ph_comments
+    inputs:
+      - desc: slug 或产品页地址
+        label: 产品
+        name: post
+        required: true
+        type: string
+      - default: 20
+        desc: 默认 20，最多 50（Product Hunt 每页 20 条，多的分页取）
+        goType: int
+        label: 顶层评论条数
+        name: limit
+        type: number
+    label: 取评论
+    outputs:
+      - desc: 顶层评论在前、它的回复紧跟其后
+        fields:
+          - label: 评论 id
+            name: id
+            required: true
+            type: string
+          - label: 正文
+            name: body
+            required: true
+            type: string
+          - desc: 在那里回复
+            label: 评论地址
+            name: url
+            required: true
+            type: string
+          - goType: int
+            label: 得票
+            name: votes_count
+            required: true
+            type: number
+          - desc: 顶层评论为空
+            label: 回复的是哪条评论
+            name: parent_id
+            type: string
+          - desc: token 所属账号写的
+            label: 是我写的
+            name: is_mine
+            required: true
+            type: boolean
+          - desc: Product Hunt 对接口隐藏评论人身份，通常为空；点 url 到网页上看
+            label: 评论人
+            name: username
+            type: string
+          - desc: RFC3339
+            label: 时间
+            name: created_at
+            required: true
+            type: string
+        goType: Comment
+        label: 评论
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+      - goType: int
+        label: 评论总数
+        name: total
+        required: true
+        type: number
+    timeoutSec: 60
+  - desc: 用 token 读一次当前用户
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+      - label: 账号
+        name: username
+        required: true
+        type: string
+    timeoutSec: 30
+  - desc: 某一天（太平洋时间）发布的产品，按排名
+    id: ph_leaderboard
+    inputs:
+      - desc: YYYY-MM-DD，按太平洋时间算一天（PH 的日榜就是这么切的）；留空 = 今天
+        label: 日期
+        name: date
+        type: string
+      - default: RANKING
+        label: 排序
+        name: order
+        options:
+          - label: 排名
+            value: RANKING
+          - label: 得票
+            value: VOTES
+          - label: 最新
+            value: NEWEST
+        type: enum
+      - default: 20
+        desc: 默认 20，最多 50（每页 20 条，多的分页取）
+        goType: int
+        label: 条数
+        name: limit
+        type: number
+    label: 取榜单
+    outputs:
+      - fields:
+          - label: 产品 id
+            name: id
+            required: true
+            type: string
+          - desc: 产品页地址 producthunt.com/posts/ 后面那段
+            label: slug
+            name: slug
+            required: true
+            type: string
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 一句话介绍
+            name: tagline
+            required: true
+            type: string
+          - label: 介绍
+            name: description
+            type: string
+          - label: 产品页
+            name: url
+            required: true
+            type: string
+          - label: 官网
+            name: website
+            type: string
+          - goType: int
+            label: 得票
+            name: votes_count
+            required: true
+            type: number
+          - goType: int
+            label: 评论数
+            name: comments_count
+            required: true
+            type: number
+          - desc: RFC3339
+            label: 发布时间
+            name: created_at
+            required: true
+            type: string
+          - desc: 没上首页为空
+            label: 上首页时间
+            name: featured_at
+            type: string
+          - desc: 用户名，逗号分隔
+            label: 制作者
+            name: makers
+            type: string
+        goType: Post
+        label: 产品
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+    timeoutSec: 60
+  - desc: 得票、评论数、上首页时间等
+    id: ph_post_get
+    inputs:
+      - desc: slug 或产品页地址（producthunt.com/posts/…）
+        label: 产品
+        name: post
+        required: true
+        type: string
+    label: 取产品
+    outputs:
+      - fields:
+          - label: 产品 id
+            name: id
+            required: true
+            type: string
+          - desc: 产品页地址 producthunt.com/posts/ 后面那段
+            label: slug
+            name: slug
+            required: true
+            type: string
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 一句话介绍
+            name: tagline
+            required: true
+            type: string
+          - label: 介绍
+            name: description
+            type: string
+          - label: 产品页
+            name: url
+            required: true
+            type: string
+          - label: 官网
+            name: website
+            type: string
+          - goType: int
+            label: 得票
+            name: votes_count
+            required: true
+            type: number
+          - goType: int
+            label: 评论数
+            name: comments_count
+            required: true
+            type: number
+          - desc: RFC3339
+            label: 发布时间
+            name: created_at
+            required: true
+            type: string
+          - desc: 没上首页为空
+            label: 上首页时间
+            name: featured_at
+            type: string
+          - desc: 用户名，逗号分隔
+            label: 制作者
+            name: makers
+            type: string
+        goType: Post
+        label: 产品
+        name: post
+        required: true
+        type: json
+    timeoutSec: 30
+
+plugin:
+    desc: 读产品、评论和每日榜单；你的产品下有新评论或新回复时触发工作流。发布和回复在网页上做。
+    doc: README.md
+    label: Product Hunt
+    name: producthunt
+    org: sokel
+    version: v0.1.0
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-producthunt:latest
