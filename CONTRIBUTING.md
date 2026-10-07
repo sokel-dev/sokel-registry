@@ -39,8 +39,11 @@ The `sokel` org's entries are maintained here, like everyone else's: change them
 and the Sokel maintainers review them. Some sections are generated, so edit them with the tool rather than by hand:
 the contract sections of model vendors and other shell-backed plugins come from the platform's shell schemas (the
 `reembed-llm` / `reembed-shell` tools in the platform repository), and `site/brands.js` from the platform's brand
-registry. The platform ships a snapshot of this repository at a pinned commit; a merged change reaches its built-in
-catalog when that pin moves, and platforms that use this site as a refresh source sooner.
+registry. Releases of the [official plugins](https://github.com/sokel-dev/sokel-official-plugins) arrive as pull
+requests opened by that repository's Release workflow (tag `<plugin>/vX.Y.Z` there): the entry's contract is rewritten
+from the plugin's code and the image is pinned by digest; a maintainer reviews and merges. The platform ships a
+snapshot of this repository at a pinned commit; a merged change reaches its built-in catalog when that pin moves, and
+platforms that use this site as a refresh source sooner.
 
 ## Publish a new version
 
