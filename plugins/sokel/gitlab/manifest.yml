@@ -1,1485 +1,1489 @@
-credential:
-    fields:
-        - desc: 自建实例填根地址（如 https://git.example.com）；留空 = gitlab.com
-          label: GitLab 地址
-          name: base_url
-          type: text
-        - desc: 个人访问令牌（用户头像 → Preferences → Access Tokens），scope 至少 api；建议专建一个机器人账号的 token 并按需给 scope
-          label: 访问令牌
-          name: token
-          required: true
-          type: secret
-        - desc: 平台代收 webhook 用：GitLab 项目 Settings→Webhooks 里填的 Secret token，两边一致才收（防伪造）。不用 webhook 可留空
-          label: Webhook Secret
-          name: webhook_secret
-          type: secret
-        - desc: path 形态逗号分隔（如 backend/server,infra/deploy）。**填了才启动事件源**：新提交/新 MR/合并/新 Issue/流水线失败 会触发工作流（轮询，约 1 分钟延迟；要零延迟用 GitLab Webhook 指平台的 Webhook 触发器）
-          label: 事件盯哪些项目
-          name: watch_projects
-          type: text
-events:
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 分支
-          name: ref
-          required: true
-          type: string
-        - label: 提交 ID
-          name: commit_id
-          required: true
-          type: string
-        - label: 提交标题
-          name: commit_title
-          type: string
-        - goType: int
-          label: 提交数
-          name: commit_count
-          required: true
-          type: number
-        - label: 推送人
-          name: author
-          required: true
-          type: string
-        - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
-          label: 来自哪条路
-          name: source
-          required: true
-          type: string
-        - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
-          label: 原始事件
-          name: raw
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-      id: commit_pushed
-      label: 有新提交
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Issue 编号
-          name: iid
-          required: true
-          type: number
-        - label: Issue 标题
-          name: title
-          type: string
-        - desc: 这次说了什么——派活时把它当指令
-          label: 评论内容
-          name: comment
-          required: true
-          type: text
-        - desc: '**防自触发靠它**：机器人回复也是评论，工作流里务必把机器人账号滤掉，否则无限循环'
-          label: 评论人
-          name: author
-          required: true
-          type: string
-        - label: 评论链接
-          name: url
-          type: string
-      id: issue_commented
-      label: Issue 有新评论
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Issue 编号
-          name: iid
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 正文
-          name: description
-          type: text
-        - desc: '**判「该不该派活」用它**：labels 是当前全部标签，加一个无关标签也会让它含 claude'
-          itemType: string
-          label: 本次新增的标签
-          name: added_labels
-          required: true
-          type: array
-        - itemType: string
-          label: 当前全部标签
-          name: labels
-          type: array
-        - label: Issue 链接
-          name: url
-          type: string
-        - desc: 打标签的人（轮询路径取不到，为空）
-          label: 操作人
-          name: author
-          type: string
-      id: issue_labeled
-      label: Issue 被打标签
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Issue 编号
-          name: iid
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - desc: Issue 的正文。**要把 Issue 内容交给下游（如让 agent 照着做）时用的就是它**——标题往往只是一句话
-          label: 正文
-          name: description
-          type: text
-        - desc: 拿它当闸：只处理打了某个标签的 Issue，比「谁建的都跑」安全得多
-          itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - label: Issue 链接
-          name: url
-          type: string
-        - label: 作者
-          name: author
-          required: true
-          type: string
-        - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
-          label: 来自哪条路
-          name: source
-          required: true
-          type: string
-        - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
-          label: 原始事件
-          name: raw
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-      id: issue_opened
-      label: 新 Issue
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - label: MR 标题
-          name: title
-          type: string
-        - label: 评论内容
-          name: comment
-          required: true
-          type: text
-        - desc: '**防自触发靠它**，机器人回复也是评论'
-          label: 评论人
-          name: author
-          required: true
-          type: string
-        - label: 评论链接
-          name: url
-          type: string
-      id: mr_commented
-      label: MR 有新评论
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 合并人
-          name: author
-          required: true
-          type: string
-        - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
-          label: 来自哪条路
-          name: source
-          required: true
-          type: string
-        - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
-          label: 原始事件
-          name: raw
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-      id: mr_merged
-      label: MR 被合并
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 作者
-          name: author
-          required: true
-          type: string
-        - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
-          label: 来自哪条路
-          name: source
-          required: true
-          type: string
-        - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
-          label: 原始事件
-          name: raw
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-      id: mr_opened
-      label: 新 MR
-    - fields:
-        - desc: path 形态（group/name）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - desc: 接「Job 列表」「Job 日志」排障
-          goType: int
-          label: 流水线 ID
-          name: pipeline_id
-          required: true
-          type: number
-        - label: 分支
-          name: ref
-          required: true
-          type: string
-        - label: 提交
-          name: sha
-          required: true
-          type: string
-        - label: 页面地址
-          name: web_url
-          required: true
-          type: string
-      id: pipeline_failed
-      label: 流水线失败
-events_common:
-    - project
-operations:
-    - id: branches_list
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 搜索
-          name: search
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 分支列表
-      outputs:
-        - fields:
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - label: 是否默认分支
-              name: default
-              required: true
-              type: boolean
-            - label: 是否保护分支
-              name: protected
-              required: true
-              type: boolean
-            - label: 最新提交
-              name: commit_id
-              type: string
-          goType: Branch
-          label: 分支列表
-          name: branches
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 直调任意 GitLab REST v4 接口（token 由插件带上）。typed 没覆盖的能力走这里，路径照官方 API 文档，如 /projects/:id/releases
-      id: call
-      inputs:
-        - default: GET
-          label: HTTP 方法
-          name: method
-          options:
-            - label: GET
-              value: GET
-            - label: POST
-              value: POST
-            - label: PUT
-              value: PUT
-            - label: DELETE
-              value: DELETE
-          type: enum
-        - desc: 以 / 开头、不带 /api/v4 前缀，如 /projects/42/releases；:id 位置自己填实值
-          label: 接口路径
-          name: path
-          required: true
-          type: string
-        - desc: 请求体 JSON，键名照 GitLab API 文档；GET 时作为 query 参数
-          label: 参数
-          name: body
-          opaque: true
-          type: json
-      label: 通用调用
-      outputs:
-        - desc: GitLab 应答 JSON，形状随接口而变，由官方 API 文档定义
-          label: 应答
-          name: data
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-    - desc: 某分支最近的提交（变更监控：定时查 → 有新提交触发下游）
-      id: commits_list
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - desc: 留空用默认分支
-          label: 分支
-          name: ref
-          type: string
-        - desc: RFC3339；留空不限
-          label: 起始时间
-          name: since
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 提交列表
-      outputs:
-        - fields:
-            - label: 提交 ID
-              name: id
-              required: true
-              type: string
-            - label: 短 ID
-              name: short_id
-              required: true
-              type: string
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - label: 时间
-              name: created_at
-              required: true
-              type: string
-            - label: 页面地址
-              name: web_url
-              type: string
-          goType: Commit
-          label: 提交列表
-          name: commits
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 读仓库里一个文件的内容（配置/清单/文档都常用）
-      id: file_get
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - desc: 仓库内路径，如 config/app.yaml
-          label: 文件路径
-          name: path
-          required: true
-          type: string
-        - desc: 留空用默认分支
-          label: 分支/tag/commit
-          name: ref
-          type: string
-      label: 读文件
-      outputs:
-        - label: 内容
-          name: content
-          required: true
-          type: text
-        - label: 最后修改的 commit
-          name: last_commit_id
-          required: true
-          type: string
-    - desc: 把内容提交到仓库（文件不存在则创建，存在则覆盖，自动判断）。多文件一次提交走「通用调用」的 commits 接口
-      id: file_write
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 文件路径
-          name: path
-          required: true
-          type: string
-        - label: 内容
-          name: content
-          required: true
-          type: text
-        - desc: 留空用默认分支
-          label: 提交到分支
-          name: branch
-          required: true
-          type: string
-        - label: 提交信息
-          name: message
-          required: true
-          type: string
-        - desc: branch 不存在时以它为起点新建（提 MR 的常用流）；留空不新建
-          label: 从哪个分支切出
-          name: start_branch
-          type: string
-      label: 写文件（提交）
-      outputs:
-        - label: 提交 ID
-          name: commit_id
-          required: true
-          type: string
-        - label: 提交页面
-          name: web_url
-          required: true
-          type: string
-    - desc: 调 /user 验证 token 有效，并显示这个 token 是谁的
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 用户名
-          name: username
-          required: true
-          type: string
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 创建 Issue（告警落单：监控发现问题 → 自动开单跟踪）
-      id: issue_create
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - desc: 支持 GitLab Markdown
-          label: 描述
-          name: description
-          type: text
-        - desc: 逗号分隔
-          label: 标签
-          name: labels
-          type: string
-        - desc: 用户名（不带 @）
-          label: 指派给
-          name: assignee
-          type: string
-      label: 建 Issue
-      outputs:
-        - goType: int
-          label: 编号
-          name: iid
-          required: true
-          type: number
-        - label: 页面地址
-          name: web_url
-          required: true
-          type: string
-    - id: issue_note
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Issue 编号
-          name: iid
-          required: true
-          type: number
-        - label: 评论内容
-          name: body
-          required: true
-          type: text
-      label: 评论 Issue
-      outputs:
-        - goType: int
-          label: 评论 ID
-          name: note_id
-          required: true
-          type: number
-    - desc: 改标题/正文、加减标签、指派、关闭或重开。只填要改的，其余不动
-      id: issue_update
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Issue 编号
-          name: iid
-          required: true
-          type: number
-        - desc: 留空 = 不改
-          label: 开关状态
-          name: state_event
-          options:
-            - label: 关闭
-              value: close
-            - label: 重开
-              value: reopen
-          type: enum
-        - itemType: string
-          label: 加标签
-          name: add_labels
-          type: array
-        - desc: '**处理完摘掉触发标签**，就不会被同一个 Issue 反复触发'
-          itemType: string
-          label: 去标签
-          name: remove_labels
-          type: array
-        - desc: 留空 = 不改
-          label: 标题
-          name: title
-          type: string
-        - desc: 留空 = 不改
-          label: 正文
-          name: description
-          type: text
-        - desc: 用户名；留空 = 不改
-          label: 指派给
-          name: assignee
-          type: string
-      label: 改 Issue
-      outputs:
-        - desc: opened / closed
-          label: 当前状态
-          name: state
-          required: true
-          type: string
-        - itemType: string
-          label: 当前标签
-          name: labels
-          required: true
-          type: array
-        - label: 链接
-          name: url
-          required: true
-          type: string
-    - id: issues_list
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - default: opened
-          label: 状态
-          name: state
-          options:
-            - label: 开着的
-              value: opened
-            - label: 已关闭
-              value: closed
-            - label: 全部
-              value: all
-          type: enum
-        - desc: 逗号分隔
-          label: 标签过滤
-          name: labels
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: Issue 列表
-      outputs:
-        - fields:
-            - goType: int
-              label: 编号
-              name: iid
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 状态
-              name: state
-              required: true
-              type: string
-            - itemType: string
-              label: 标签
-              name: labels
-              type: array
-            - label: 作者
-              name: author
-              type: string
-            - label: 页面地址
-              name: web_url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              type: string
-          goType: Issue
-          label: Issue 列表
-          name: issues
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 取一个 job 的日志尾部（失败排查：拿去给 LLM 总结失败原因再发群）
-      id: job_log
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: Job ID
-          name: job_id
-          required: true
-          type: number
-        - desc: 默认 200，上限 2000
-          goType: int
-          label: 最后几行
-          name: tail_lines
-          type: number
-      label: Job 日志
-      outputs:
-        - label: 日志
-          name: log
-          required: true
-          type: text
-        - goType: int
-          label: 行数
-          name: lines
-          required: true
-          type: number
-    - desc: 给 MR 投一个批准票。**注意这是以凭证那个账号的身份批的**——别让它替人做决定
-      id: mr_approve
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-      label: 批准 MR
-      outputs:
-        - goType: int
-          label: 还差几票
-          name: approvals_left
-          type: number
-        - itemType: string
-          label: 已批准的人
-          name: approved_by
-          type: array
-    - desc: 取一个 MR 改了哪些文件、每个文件的 diff。**让 agent review MR 用的就是它**
-      id: mr_changes
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - desc: 超出截断。默认 20000——一个几万行的迁移 diff 会把下游的上下文占满
-          goType: int
-          label: 单文件 diff 上限(字符)
-          name: max_diff_chars
-          type: number
-      label: MR 改动
-      outputs:
-        - fields:
-            - label: 文件路径
-              name: path
-              required: true
-              type: string
-            - desc: 重命名时才不同
-              label: 原路径
-              name: old_path
-              type: string
-            - label: 新增
-              name: new_file
-              required: true
-              type: boolean
-            - label: 删除
-              name: deleted_file
-              required: true
-              type: boolean
-            - desc: 统一 diff 片段
-              label: 改动内容
-              name: diff
-              required: true
-              type: string
-          goType: MrChange
-          label: 改动文件
-          name: changes
-          required: true
-          type: array
-        - goType: int
-          label: 文件数
-          name: count
-          required: true
-          type: number
-        - label: MR 标题
-          name: title
-          required: true
-          type: string
-        - label: 源分支
-          name: source_branch
-          required: true
-          type: string
-        - label: 目标分支
-          name: target_branch
-          required: true
-          type: string
-        - desc: true = 至少一个文件的 diff 没给全，别据此下「改动很小」的结论
-          label: 有 diff 被截断
-          name: truncated
-          required: true
-          type: boolean
-    - id: mr_create
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 源分支
-          name: source_branch
-          required: true
-          type: string
-        - desc: 留空用默认分支
-          label: 目标分支
-          name: target_branch
-          required: true
-          type: string
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 描述
-          name: description
-          type: text
-        - default: true
-          label: 合并后删源分支
-          name: remove_source_branch
-          type: boolean
-      label: 建 MR
-      outputs:
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - label: 页面地址
-          name: web_url
-          required: true
-          type: string
-    - desc: 在 MR 的某个文件某一行上开一条评论线程——review 意见要落到具体那一行才有用
-      id: mr_discussion
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - desc: MR 改动里的路径，用「MR 改动」出参的 path
-          label: 文件路径
-          name: path
-          required: true
-          type: string
-        - desc: '**新文件里的行号**（diff 右侧）。评论被删掉的行请用「原文件行号」'
-          goType: int
-          label: 行号
-          name: line
-          required: true
-          type: number
-        - desc: 评论被删除的行时填这个，同时把「行号」留空
-          goType: int
-          label: 原文件行号
-          name: old_line
-          type: number
-        - label: 评论内容
-          name: body
-          required: true
-          type: text
-      label: MR 行级评论
-      outputs:
-        - label: 线程 ID
-          name: discussion_id
-          required: true
-          type: string
-        - goType: int
-          label: 评论 ID
-          name: note_id
-          required: true
-          type: number
-    - id: mr_list
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - default: opened
-          label: 状态
-          name: state
-          options:
-            - label: 开着的
-              value: opened
-            - label: 已合并
-              value: merged
-            - label: 已关闭
-              value: closed
-            - label: 全部
-              value: all
-          type: enum
-        - label: 目标分支过滤
-          name: target_branch
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: MR 列表
-      outputs:
-        - fields:
-            - desc: 项目内编号（!42 的 42），其他 MR 操作认它
-              goType: int
-              label: MR 编号
-              name: iid
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 状态
-              name: state
-              required: true
-              type: string
-            - label: 源分支
-              name: source_branch
-              required: true
-              type: string
-            - label: 目标分支
-              name: target_branch
-              required: true
-              type: string
-            - label: 作者
-              name: author
-              type: string
-            - label: 页面地址
-              name: web_url
-              required: true
-              type: string
-            - desc: can_be_merged / cannot_be_merged…
-              label: 可合并性
-              name: merge_status
-              type: string
-          goType: Mr
-          label: MR 列表
-          name: mrs
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它，别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 合并一个 MR（未过 CI / 有冲突时 GitLab 会拒绝，报错里说明原因）
-      id: mr_merge
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - default: false
-          label: squash 合并
-          name: squash
-          type: boolean
-        - default: false
-          label: 等流水线过了再合
-          name: when_pipeline_succeeds
-          type: boolean
-      label: 合并 MR
-      outputs:
-        - label: 合并后状态
-          name: state
-          required: true
-          type: string
-        - label: 合并提交
-          name: merge_commit_id
-          required: true
-          type: string
-    - desc: 在 MR 下留一条评论（机器人报告审查结果/检查清单的落点）
-      id: mr_note
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - desc: 支持 GitLab Markdown
-          label: 评论内容
-          name: body
-          required: true
-          type: text
-      label: 评论 MR
-      outputs:
-        - goType: int
-          label: 评论 ID
-          name: note_id
-          required: true
-          type: number
-    - desc: 改标题/正文、加减标签、关闭或重开、转草稿。只填要改的，其余不动
-      id: mr_update
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: MR 编号
-          name: iid
-          required: true
-          type: number
-        - label: 开关状态
-          name: state_event
-          options:
-            - label: 关闭
-              value: close
-            - label: 重开
-              value: reopen
-          type: enum
-        - itemType: string
-          label: 加标签
-          name: add_labels
-          type: array
-        - itemType: string
-          label: 去标签
-          name: remove_labels
-          type: array
-        - label: 标题
-          name: title
-          type: string
-        - label: 正文
-          name: description
-          type: text
-      label: 改 MR
-      outputs:
-        - label: 当前状态
-          name: state
-          required: true
-          type: string
-        - itemType: string
-          label: 当前标签
-          name: labels
-          required: true
-          type: array
-        - label: 链接
-          name: url
-          required: true
-          type: string
-    - desc: 更新已有的一条评论。**长任务应该先回一条「处理中…」、跑完更新同一条**——既不刷屏，也少一次「评论触发」的成环机会
-      id: note_update
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 挂在哪
-          name: target
-          options:
-            - label: Issue
-              value: issue
-            - label: MR
-              value: merge_request
-          type: enum
-        - goType: int
-          label: Issue / MR 编号
-          name: iid
-          required: true
-          type: number
-        - desc: 「评论 Issue」的出参 note_id
-          goType: int
-          label: 评论 ID
-          name: note_id
-          required: true
-          type: number
-        - label: 新内容
-          name: body
-          required: true
-          type: text
-      label: 改评论
-      outputs:
-        - goType: int
-          label: 评论 ID
-          name: note_id
-          required: true
-          type: number
-    - desc: 看一条流水线里各 job 的状态（找出挂了哪个）
-      id: pipeline_jobs
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - goType: int
-          label: 流水线 ID
-          name: pipeline_id
-          required: true
-          type: number
-      label: 流水线 Job 列表
-      outputs:
-        - fields:
-            - desc: 看日志认它
-              goType: int
-              label: ID
-              name: id
-              required: true
-              type: number
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - label: 阶段
-              name: stage
-              required: true
-              type: string
-            - label: 状态
-              name: status
-              required: true
-              type: string
-            - label: 耗时(秒)
-              name: duration
-              type: number
-            - label: 页面地址
-              name: web_url
-              type: string
-          goType: Job
-          label: Job 列表
-          name: jobs
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-    - desc: 在指定分支起一条流水线，可带 CI 变量（定时构建/发布流程的起点）
-      id: pipeline_trigger
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - label: 分支/tag
-          name: ref
-          required: true
-          type: string
-        - desc: CI 变量键值对（如 {"DEPLOY_ENV":"staging"}），键名由 .gitlab-ci.yml 约定
-          label: CI 变量
-          name: variables
-          opaque: true
-          type: json
-      label: 触发流水线
-      outputs:
-        - goType: int
-          label: 流水线 ID
-          name: pipeline_id
-          required: true
-          type: number
-        - label: 页面地址
-          name: web_url
-          required: true
-          type: string
-        - label: 初始状态
-          name: status
-          required: true
-          type: string
-    - desc: 最近的流水线与状态（CI 监控：定时查 → failed 触发告警）
-      id: pipelines_list
-      inputs:
-        - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
-          label: 项目
-          name: project
-          required: true
-          type: string
-        - desc: 留空 = 全部
-          label: 状态过滤
-          name: status
-          options:
-            - label: 运行中
-              value: running
-            - label: 成功
-              value: success
-            - label: 失败
-              value: failed
-            - label: 排队
-              value: pending
-          type: enum
-        - label: 分支过滤
-          name: ref
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 流水线列表
-      outputs:
-        - fields:
-            - goType: int
-              label: ID
-              name: id
-              required: true
-              type: number
-            - label: 状态
-              name: status
-              required: true
-              type: string
-            - label: 分支
-              name: ref
-              required: true
-              type: string
-            - label: 提交
-              name: sha
-              type: string
-            - label: 页面地址
-              name: web_url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              type: string
-          goType: Pipeline
-          label: 流水线列表
-          name: pipelines
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 列出有权限的项目（可按名字搜）
-      id: projects_list
-      inputs:
-        - desc: 按名字/路径模糊搜；留空列全部
-          label: 搜索
-          name: search
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 项目列表
-      outputs:
-        - fields:
-            - goType: int
-              label: ID
-              name: id
-              required: true
-              type: number
-            - desc: group/name 形态，其他操作的 project 字段用它
-              label: 路径
-              name: path
-              required: true
-              type: string
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - label: 默认分支
-              name: default_branch
-              type: string
-            - label: 页面地址
-              name: web_url
-              required: true
-              type: string
-            - label: 最近活动
-              name: last_activity
-              type: string
-          goType: Project
-          label: 项目列表
-          name: projects
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
-          goType: int
-          label: 总数
-          name: total
-          type: number
-        - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 搜代码 / Issue / MR / 提交。留空项目 = 全实例搜（agent 找「这个函数在哪儿用过」最直接的入口）
-      id: search
-      inputs:
-        - desc: 关键词；代码搜索支持 GitLab 的高级语法（如 filename:*.go）
-          label: 搜什么
-          name: query
-          required: true
-          type: string
-        - default: blobs
-          label: 搜哪一类
-          name: scope
-          options:
-            - label: 代码
-              value: blobs
-            - label: Issue
-              value: issues
-            - label: MR
-              value: merge_requests
-            - label: 提交
-              value: commits
-          type: enum
-        - desc: 留空 = 全实例搜。**大实例上全局搜代码可能很慢**，能限定就限定
-          label: 限定项目
-          name: project
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 搜索
-      outputs:
-        - fields:
-            - desc: Issue/MR 的标题；代码命中时是文件名
-              label: 标题
-              name: title
-              type: string
-            - desc: 仅代码命中
-              label: 文件路径
-              name: path
-              type: string
-            - desc: 仅代码命中
-              goType: int
-              label: 起始行
-              name: line
-              type: number
-            - desc: 代码命中的上下文，或 Issue/MR 的正文开头
-              label: 片段
-              name: snippet
-              type: string
-            - desc: 仅 Issue/MR 命中
-              goType: int
-              label: 编号
-              name: iid
-              type: number
-            - desc: 仅代码命中
-              label: 分支
-              name: ref
-              type: string
-            - label: 链接
-              name: url
-              type: string
-            - desc: 跨项目搜索时用它分辨命中在哪个仓库
-              label: 项目
-              name: project
-              type: string
-          goType: SearchHit
-          label: 命中
-          name: results
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - goType: int
-          label: 总数
-          name: total
-          type: number
-        - label: 还有下一页
-          name: has_more
-          type: boolean
 plugin:
-    desc: 把 GitLab 接进工作流：读写仓库文件、建/评/合 MR、开 Issue、查流水线与失败日志、触发构建。
-    doc: README.md
-    label: GitLab
-    name: gitlab
-    org: sokel
-    version: v1.0.0
+  desc: 把 GitLab 接进工作流：读写仓库文件、建/评/合 MR、开 Issue、查流水线与失败日志、触发构建。
+  doc: README.md
+  label: GitLab
+  name: gitlab
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 自建实例填根地址（如 https://git.example.com）；留空 = gitlab.com
+      label: GitLab 地址
+      name: base_url
+      type: text
+    - desc: 个人访问令牌（用户头像 → Preferences → Access Tokens），scope 至少 api；建议专建一个机器人账号的 token 并按需给 scope
+      label: 访问令牌
+      name: token
+      required: true
+      type: secret
+    - desc: 平台代收 webhook 用：GitLab 项目 Settings→Webhooks 里填的 Secret token，两边一致才收（防伪造）。不用 webhook 可留空
+      label: Webhook Secret
+      name: webhook_secret
+      type: secret
+    - desc: path 形态逗号分隔（如 backend/server,infra/deploy）。**填了才启动事件源**：新提交/新 MR/合并/新 Issue/流水线失败 会触发工作流（轮询，约 1 分钟延迟；要零延迟用 GitLab Webhook 指平台的 Webhook 触发器）
+      label: 事件盯哪些项目
+      name: watch_projects
+      type: text
+
+events_common:
+  - project
+
+events:
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 分支
+        name: ref
+        required: true
+        type: string
+      - label: 提交 ID
+        name: commit_id
+        required: true
+        type: string
+      - label: 提交标题
+        name: commit_title
+        type: string
+      - goType: int
+        label: 提交数
+        name: commit_count
+        required: true
+        type: number
+      - label: 推送人
+        name: author
+        required: true
+        type: string
+      - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
+        label: 来自哪条路
+        name: source
+        required: true
+        type: string
+      - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
+        label: 原始事件
+        name: raw
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+    id: commit_pushed
+    label: 有新提交
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Issue 编号
+        name: iid
+        required: true
+        type: number
+      - label: Issue 标题
+        name: title
+        type: string
+      - desc: 这次说了什么——派活时把它当指令
+        label: 评论内容
+        name: comment
+        required: true
+        type: text
+      - desc: '**防自触发靠它**：机器人回复也是评论，工作流里务必把机器人账号滤掉，否则无限循环'
+        label: 评论人
+        name: author
+        required: true
+        type: string
+      - label: 评论链接
+        name: url
+        type: string
+    id: issue_commented
+    label: Issue 有新评论
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Issue 编号
+        name: iid
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 正文
+        name: description
+        type: text
+      - desc: '**判「该不该派活」用它**：labels 是当前全部标签，加一个无关标签也会让它含 claude'
+        itemType: string
+        label: 本次新增的标签
+        name: added_labels
+        required: true
+        type: array
+      - itemType: string
+        label: 当前全部标签
+        name: labels
+        type: array
+      - label: Issue 链接
+        name: url
+        type: string
+      - desc: 打标签的人（轮询路径取不到，为空）
+        label: 操作人
+        name: author
+        type: string
+    id: issue_labeled
+    label: Issue 被打标签
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Issue 编号
+        name: iid
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - desc: Issue 的正文。**要把 Issue 内容交给下游（如让 agent 照着做）时用的就是它**——标题往往只是一句话
+        label: 正文
+        name: description
+        type: text
+      - desc: 拿它当闸：只处理打了某个标签的 Issue，比「谁建的都跑」安全得多
+        itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - label: Issue 链接
+        name: url
+        type: string
+      - label: 作者
+        name: author
+        required: true
+        type: string
+      - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
+        label: 来自哪条路
+        name: source
+        required: true
+        type: string
+      - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
+        label: 原始事件
+        name: raw
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+    id: issue_opened
+    label: 新 Issue
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - label: MR 标题
+        name: title
+        type: string
+      - label: 评论内容
+        name: comment
+        required: true
+        type: text
+      - desc: '**防自触发靠它**，机器人回复也是评论'
+        label: 评论人
+        name: author
+        required: true
+        type: string
+      - label: 评论链接
+        name: url
+        type: string
+    id: mr_commented
+    label: MR 有新评论
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 合并人
+        name: author
+        required: true
+        type: string
+      - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
+        label: 来自哪条路
+        name: source
+        required: true
+        type: string
+      - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
+        label: 原始事件
+        name: raw
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+    id: mr_merged
+    label: MR 被合并
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 作者
+        name: author
+        required: true
+        type: string
+      - desc: poll = 轮询 Events API / webhook = GitLab 推送。**raw 的形状由它决定**
+        label: 来自哪条路
+        name: source
+        required: true
+        type: string
+      - desc: 上游原始载荷。**两条路的形状不一样**：source=poll 时是 Events API 的事件对象，source=webhook 时是 Hook 的请求体。要下钻 raw 就必须先看 source，否则换一种部署方式就会取到空——优先用上面那些已归一的字段
+        label: 原始事件
+        name: raw
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+    id: mr_opened
+    label: 新 MR
+  - fields:
+      - desc: path 形态（group/name）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - desc: 接「Job 列表」「Job 日志」排障
+        goType: int
+        label: 流水线 ID
+        name: pipeline_id
+        required: true
+        type: number
+      - label: 分支
+        name: ref
+        required: true
+        type: string
+      - label: 提交
+        name: sha
+        required: true
+        type: string
+      - label: 页面地址
+        name: web_url
+        required: true
+        type: string
+    id: pipeline_failed
+    label: 流水线失败
+
+operations:
+  - id: branches_list
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 搜索
+        name: search
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 分支列表
+    outputs:
+      - fields:
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 是否默认分支
+            name: default
+            required: true
+            type: boolean
+          - label: 是否保护分支
+            name: protected
+            required: true
+            type: boolean
+          - label: 最新提交
+            name: commit_id
+            type: string
+        goType: Branch
+        label: 分支列表
+        name: branches
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 直调任意 GitLab REST v4 接口（token 由插件带上）。typed 没覆盖的能力走这里，路径照官方 API 文档，如 /projects/:id/releases
+    id: call
+    inputs:
+      - default: GET
+        label: HTTP 方法
+        name: method
+        options:
+          - label: GET
+            value: GET
+          - label: POST
+            value: POST
+          - label: PUT
+            value: PUT
+          - label: DELETE
+            value: DELETE
+        type: enum
+      - desc: 以 / 开头、不带 /api/v4 前缀，如 /projects/42/releases；:id 位置自己填实值
+        label: 接口路径
+        name: path
+        required: true
+        type: string
+      - desc: 请求体 JSON，键名照 GitLab API 文档；GET 时作为 query 参数
+        label: 参数
+        name: body
+        opaque: true
+        type: json
+    label: 通用调用
+    outputs:
+      - desc: GitLab 应答 JSON，形状随接口而变，由官方 API 文档定义
+        label: 应答
+        name: data
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+  - desc: 某分支最近的提交（变更监控：定时查 → 有新提交触发下游）
+    id: commits_list
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - desc: 留空用默认分支
+        label: 分支
+        name: ref
+        type: string
+      - desc: RFC3339；留空不限
+        label: 起始时间
+        name: since
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 提交列表
+    outputs:
+      - fields:
+          - label: 提交 ID
+            name: id
+            required: true
+            type: string
+          - label: 短 ID
+            name: short_id
+            required: true
+            type: string
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - label: 时间
+            name: created_at
+            required: true
+            type: string
+          - label: 页面地址
+            name: web_url
+            type: string
+        goType: Commit
+        label: 提交列表
+        name: commits
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 读仓库里一个文件的内容（配置/清单/文档都常用）
+    id: file_get
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - desc: 仓库内路径，如 config/app.yaml
+        label: 文件路径
+        name: path
+        required: true
+        type: string
+      - desc: 留空用默认分支
+        label: 分支/tag/commit
+        name: ref
+        type: string
+    label: 读文件
+    outputs:
+      - label: 内容
+        name: content
+        required: true
+        type: text
+      - label: 最后修改的 commit
+        name: last_commit_id
+        required: true
+        type: string
+  - desc: 把内容提交到仓库（文件不存在则创建，存在则覆盖，自动判断）。多文件一次提交走「通用调用」的 commits 接口
+    id: file_write
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 文件路径
+        name: path
+        required: true
+        type: string
+      - label: 内容
+        name: content
+        required: true
+        type: text
+      - desc: 留空用默认分支
+        label: 提交到分支
+        name: branch
+        required: true
+        type: string
+      - label: 提交信息
+        name: message
+        required: true
+        type: string
+      - desc: branch 不存在时以它为起点新建（提 MR 的常用流）；留空不新建
+        label: 从哪个分支切出
+        name: start_branch
+        type: string
+    label: 写文件（提交）
+    outputs:
+      - label: 提交 ID
+        name: commit_id
+        required: true
+        type: string
+      - label: 提交页面
+        name: web_url
+        required: true
+        type: string
+  - desc: 调 /user 验证 token 有效，并显示这个 token 是谁的
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 用户名
+        name: username
+        required: true
+        type: string
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 创建 Issue（告警落单：监控发现问题 → 自动开单跟踪）
+    id: issue_create
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - desc: 支持 GitLab Markdown
+        label: 描述
+        name: description
+        type: text
+      - desc: 逗号分隔
+        label: 标签
+        name: labels
+        type: string
+      - desc: 用户名（不带 @）
+        label: 指派给
+        name: assignee
+        type: string
+    label: 建 Issue
+    outputs:
+      - goType: int
+        label: 编号
+        name: iid
+        required: true
+        type: number
+      - label: 页面地址
+        name: web_url
+        required: true
+        type: string
+  - id: issue_note
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Issue 编号
+        name: iid
+        required: true
+        type: number
+      - label: 评论内容
+        name: body
+        required: true
+        type: text
+    label: 评论 Issue
+    outputs:
+      - goType: int
+        label: 评论 ID
+        name: note_id
+        required: true
+        type: number
+  - desc: 改标题/正文、加减标签、指派、关闭或重开。只填要改的，其余不动
+    id: issue_update
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Issue 编号
+        name: iid
+        required: true
+        type: number
+      - desc: 留空 = 不改
+        label: 开关状态
+        name: state_event
+        options:
+          - label: 关闭
+            value: close
+          - label: 重开
+            value: reopen
+        type: enum
+      - itemType: string
+        label: 加标签
+        name: add_labels
+        type: array
+      - desc: '**处理完摘掉触发标签**，就不会被同一个 Issue 反复触发'
+        itemType: string
+        label: 去标签
+        name: remove_labels
+        type: array
+      - desc: 留空 = 不改
+        label: 标题
+        name: title
+        type: string
+      - desc: 留空 = 不改
+        label: 正文
+        name: description
+        type: text
+      - desc: 用户名；留空 = 不改
+        label: 指派给
+        name: assignee
+        type: string
+    label: 改 Issue
+    outputs:
+      - desc: opened / closed
+        label: 当前状态
+        name: state
+        required: true
+        type: string
+      - itemType: string
+        label: 当前标签
+        name: labels
+        required: true
+        type: array
+      - label: 链接
+        name: url
+        required: true
+        type: string
+  - id: issues_list
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - default: opened
+        label: 状态
+        name: state
+        options:
+          - label: 开着的
+            value: opened
+          - label: 已关闭
+            value: closed
+          - label: 全部
+            value: all
+        type: enum
+      - desc: 逗号分隔
+        label: 标签过滤
+        name: labels
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: Issue 列表
+    outputs:
+      - fields:
+          - goType: int
+            label: 编号
+            name: iid
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 状态
+            name: state
+            required: true
+            type: string
+          - itemType: string
+            label: 标签
+            name: labels
+            type: array
+          - label: 作者
+            name: author
+            type: string
+          - label: 页面地址
+            name: web_url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            type: string
+        goType: Issue
+        label: Issue 列表
+        name: issues
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 取一个 job 的日志尾部（失败排查：拿去给 LLM 总结失败原因再发群）
+    id: job_log
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: Job ID
+        name: job_id
+        required: true
+        type: number
+      - desc: 默认 200，上限 2000
+        goType: int
+        label: 最后几行
+        name: tail_lines
+        type: number
+    label: Job 日志
+    outputs:
+      - label: 日志
+        name: log
+        required: true
+        type: text
+      - goType: int
+        label: 行数
+        name: lines
+        required: true
+        type: number
+  - desc: 给 MR 投一个批准票。**注意这是以凭证那个账号的身份批的**——别让它替人做决定
+    id: mr_approve
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+    label: 批准 MR
+    outputs:
+      - goType: int
+        label: 还差几票
+        name: approvals_left
+        type: number
+      - itemType: string
+        label: 已批准的人
+        name: approved_by
+        type: array
+  - desc: 取一个 MR 改了哪些文件、每个文件的 diff。**让 agent review MR 用的就是它**
+    id: mr_changes
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - desc: 超出截断。默认 20000——一个几万行的迁移 diff 会把下游的上下文占满
+        goType: int
+        label: 单文件 diff 上限(字符)
+        name: max_diff_chars
+        type: number
+    label: MR 改动
+    outputs:
+      - fields:
+          - label: 文件路径
+            name: path
+            required: true
+            type: string
+          - desc: 重命名时才不同
+            label: 原路径
+            name: old_path
+            type: string
+          - label: 新增
+            name: new_file
+            required: true
+            type: boolean
+          - label: 删除
+            name: deleted_file
+            required: true
+            type: boolean
+          - desc: 统一 diff 片段
+            label: 改动内容
+            name: diff
+            required: true
+            type: string
+        goType: MrChange
+        label: 改动文件
+        name: changes
+        required: true
+        type: array
+      - goType: int
+        label: 文件数
+        name: count
+        required: true
+        type: number
+      - label: MR 标题
+        name: title
+        required: true
+        type: string
+      - label: 源分支
+        name: source_branch
+        required: true
+        type: string
+      - label: 目标分支
+        name: target_branch
+        required: true
+        type: string
+      - desc: true = 至少一个文件的 diff 没给全，别据此下「改动很小」的结论
+        label: 有 diff 被截断
+        name: truncated
+        required: true
+        type: boolean
+  - id: mr_create
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 源分支
+        name: source_branch
+        required: true
+        type: string
+      - desc: 留空用默认分支
+        label: 目标分支
+        name: target_branch
+        required: true
+        type: string
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 描述
+        name: description
+        type: text
+      - default: true
+        label: 合并后删源分支
+        name: remove_source_branch
+        type: boolean
+    label: 建 MR
+    outputs:
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - label: 页面地址
+        name: web_url
+        required: true
+        type: string
+  - desc: 在 MR 的某个文件某一行上开一条评论线程——review 意见要落到具体那一行才有用
+    id: mr_discussion
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - desc: MR 改动里的路径，用「MR 改动」出参的 path
+        label: 文件路径
+        name: path
+        required: true
+        type: string
+      - desc: '**新文件里的行号**（diff 右侧）。评论被删掉的行请用「原文件行号」'
+        goType: int
+        label: 行号
+        name: line
+        required: true
+        type: number
+      - desc: 评论被删除的行时填这个，同时把「行号」留空
+        goType: int
+        label: 原文件行号
+        name: old_line
+        type: number
+      - label: 评论内容
+        name: body
+        required: true
+        type: text
+    label: MR 行级评论
+    outputs:
+      - label: 线程 ID
+        name: discussion_id
+        required: true
+        type: string
+      - goType: int
+        label: 评论 ID
+        name: note_id
+        required: true
+        type: number
+  - id: mr_list
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - default: opened
+        label: 状态
+        name: state
+        options:
+          - label: 开着的
+            value: opened
+          - label: 已合并
+            value: merged
+          - label: 已关闭
+            value: closed
+          - label: 全部
+            value: all
+        type: enum
+      - label: 目标分支过滤
+        name: target_branch
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: MR 列表
+    outputs:
+      - fields:
+          - desc: 项目内编号（!42 的 42），其他 MR 操作认它
+            goType: int
+            label: MR 编号
+            name: iid
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 状态
+            name: state
+            required: true
+            type: string
+          - label: 源分支
+            name: source_branch
+            required: true
+            type: string
+          - label: 目标分支
+            name: target_branch
+            required: true
+            type: string
+          - label: 作者
+            name: author
+            type: string
+          - label: 页面地址
+            name: web_url
+            required: true
+            type: string
+          - desc: can_be_merged / cannot_be_merged…
+            label: 可合并性
+            name: merge_status
+            type: string
+        goType: Mr
+        label: MR 列表
+        name: mrs
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它，别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 合并一个 MR（未过 CI / 有冲突时 GitLab 会拒绝，报错里说明原因）
+    id: mr_merge
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - default: false
+        label: squash 合并
+        name: squash
+        type: boolean
+      - default: false
+        label: 等流水线过了再合
+        name: when_pipeline_succeeds
+        type: boolean
+    label: 合并 MR
+    outputs:
+      - label: 合并后状态
+        name: state
+        required: true
+        type: string
+      - label: 合并提交
+        name: merge_commit_id
+        required: true
+        type: string
+  - desc: 在 MR 下留一条评论（机器人报告审查结果/检查清单的落点）
+    id: mr_note
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - desc: 支持 GitLab Markdown
+        label: 评论内容
+        name: body
+        required: true
+        type: text
+    label: 评论 MR
+    outputs:
+      - goType: int
+        label: 评论 ID
+        name: note_id
+        required: true
+        type: number
+  - desc: 改标题/正文、加减标签、关闭或重开、转草稿。只填要改的，其余不动
+    id: mr_update
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: MR 编号
+        name: iid
+        required: true
+        type: number
+      - label: 开关状态
+        name: state_event
+        options:
+          - label: 关闭
+            value: close
+          - label: 重开
+            value: reopen
+        type: enum
+      - itemType: string
+        label: 加标签
+        name: add_labels
+        type: array
+      - itemType: string
+        label: 去标签
+        name: remove_labels
+        type: array
+      - label: 标题
+        name: title
+        type: string
+      - label: 正文
+        name: description
+        type: text
+    label: 改 MR
+    outputs:
+      - label: 当前状态
+        name: state
+        required: true
+        type: string
+      - itemType: string
+        label: 当前标签
+        name: labels
+        required: true
+        type: array
+      - label: 链接
+        name: url
+        required: true
+        type: string
+  - desc: 更新已有的一条评论。**长任务应该先回一条「处理中…」、跑完更新同一条**——既不刷屏，也少一次「评论触发」的成环机会
+    id: note_update
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 挂在哪
+        name: target
+        options:
+          - label: Issue
+            value: issue
+          - label: MR
+            value: merge_request
+        type: enum
+      - goType: int
+        label: Issue / MR 编号
+        name: iid
+        required: true
+        type: number
+      - desc: 「评论 Issue」的出参 note_id
+        goType: int
+        label: 评论 ID
+        name: note_id
+        required: true
+        type: number
+      - label: 新内容
+        name: body
+        required: true
+        type: text
+    label: 改评论
+    outputs:
+      - goType: int
+        label: 评论 ID
+        name: note_id
+        required: true
+        type: number
+  - desc: 看一条流水线里各 job 的状态（找出挂了哪个）
+    id: pipeline_jobs
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - goType: int
+        label: 流水线 ID
+        name: pipeline_id
+        required: true
+        type: number
+    label: 流水线 Job 列表
+    outputs:
+      - fields:
+          - desc: 看日志认它
+            goType: int
+            label: ID
+            name: id
+            required: true
+            type: number
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 阶段
+            name: stage
+            required: true
+            type: string
+          - label: 状态
+            name: status
+            required: true
+            type: string
+          - label: 耗时(秒)
+            name: duration
+            type: number
+          - label: 页面地址
+            name: web_url
+            type: string
+        goType: Job
+        label: Job 列表
+        name: jobs
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+  - desc: 在指定分支起一条流水线，可带 CI 变量（定时构建/发布流程的起点）
+    id: pipeline_trigger
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - label: 分支/tag
+        name: ref
+        required: true
+        type: string
+      - desc: CI 变量键值对（如 {"DEPLOY_ENV":"staging"}），键名由 .gitlab-ci.yml 约定
+        label: CI 变量
+        name: variables
+        opaque: true
+        type: json
+    label: 触发流水线
+    outputs:
+      - goType: int
+        label: 流水线 ID
+        name: pipeline_id
+        required: true
+        type: number
+      - label: 页面地址
+        name: web_url
+        required: true
+        type: string
+      - label: 初始状态
+        name: status
+        required: true
+        type: string
+  - desc: 最近的流水线与状态（CI 监控：定时查 → failed 触发告警）
+    id: pipelines_list
+    inputs:
+      - desc: 数字 ID 或路径（如 backend/server，即仓库地址里域名后那段）
+        label: 项目
+        name: project
+        required: true
+        type: string
+      - desc: 留空 = 全部
+        label: 状态过滤
+        name: status
+        options:
+          - label: 运行中
+            value: running
+          - label: 成功
+            value: success
+          - label: 失败
+            value: failed
+          - label: 排队
+            value: pending
+        type: enum
+      - label: 分支过滤
+        name: ref
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 流水线列表
+    outputs:
+      - fields:
+          - goType: int
+            label: ID
+            name: id
+            required: true
+            type: number
+          - label: 状态
+            name: status
+            required: true
+            type: string
+          - label: 分支
+            name: ref
+            required: true
+            type: string
+          - label: 提交
+            name: sha
+            type: string
+          - label: 页面地址
+            name: web_url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            type: string
+        goType: Pipeline
+        label: 流水线列表
+        name: pipelines
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 列出有权限的项目（可按名字搜）
+    id: projects_list
+    inputs:
+      - desc: 按名字/路径模糊搜；留空列全部
+        label: 搜索
+        name: search
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 项目列表
+    outputs:
+      - fields:
+          - goType: int
+            label: ID
+            name: id
+            required: true
+            type: number
+          - desc: group/name 形态，其他操作的 project 字段用它
+            label: 路径
+            name: path
+            required: true
+            type: string
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 默认分支
+            name: default_branch
+            type: string
+          - label: 页面地址
+            name: web_url
+            required: true
+            type: string
+          - label: 最近活动
+            name: last_activity
+            type: string
+        goType: Project
+        label: 项目列表
+        name: projects
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: GitLab 报的**全部**条数（不是本页）。0 = 上游没给这个头（超大结果集时会省略）
+        goType: int
+        label: 总数
+        name: total
+        type: number
+      - desc: '**翻页看它,别看本页条数**——正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 搜代码 / Issue / MR / 提交。留空项目 = 全实例搜（agent 找「这个函数在哪儿用过」最直接的入口）
+    id: search
+    inputs:
+      - desc: 关键词；代码搜索支持 GitLab 的高级语法（如 filename:*.go）
+        label: 搜什么
+        name: query
+        required: true
+        type: string
+      - default: blobs
+        label: 搜哪一类
+        name: scope
+        options:
+          - label: 代码
+            value: blobs
+          - label: Issue
+            value: issues
+          - label: MR
+            value: merge_requests
+          - label: 提交
+            value: commits
+        type: enum
+      - desc: 留空 = 全实例搜。**大实例上全局搜代码可能很慢**，能限定就限定
+        label: 限定项目
+        name: project
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 搜索
+    outputs:
+      - fields:
+          - desc: Issue/MR 的标题；代码命中时是文件名
+            label: 标题
+            name: title
+            type: string
+          - desc: 仅代码命中
+            label: 文件路径
+            name: path
+            type: string
+          - desc: 仅代码命中
+            goType: int
+            label: 起始行
+            name: line
+            type: number
+          - desc: 代码命中的上下文，或 Issue/MR 的正文开头
+            label: 片段
+            name: snippet
+            type: string
+          - desc: 仅 Issue/MR 命中
+            goType: int
+            label: 编号
+            name: iid
+            type: number
+          - desc: 仅代码命中
+            label: 分支
+            name: ref
+            type: string
+          - label: 链接
+            name: url
+            type: string
+          - desc: 跨项目搜索时用它分辨命中在哪个仓库
+            label: 项目
+            name: project
+            type: string
+        goType: SearchHit
+        label: 命中
+        name: results
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - goType: int
+        label: 总数
+        name: total
+        type: number
+      - label: 还有下一页
+        name: has_more
+        type: boolean
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-gitlab:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-gitlab:1.0.1@sha256:99ce98101883b1a4fb41621bc9433388a608cb3d4cbec4f1073f32df435528dc
