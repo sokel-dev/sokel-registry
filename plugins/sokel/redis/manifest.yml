@@ -1,656 +1,660 @@
-credential:
-    fields:
-        - desc: host:port，如 redis.internal:6379。**插件进程要能连到它**——云托管实例记得放行来源 IP
-          label: 地址
-          name: addr
-          required: true
-          type: text
-        - desc: Redis 6+ 的 ACL 用户；用传统 requirepass 密码就留空
-          label: 用户名
-          name: username
-          type: text
-        - desc: 没设密码就留空
-          label: 密码
-          name: password
-          type: secret
-        - desc: 默认 0。集群模式只有 0 号库
-          label: 库号
-          name: db
-          type: text
-        - desc: off 明文（默认，内网常见）/ on 走 TLS / on_insecure 走 TLS 但不校验证书（自签证书用）
-          label: TLS
-          name: tls
-          options:
-            - label: "off"
-              value: "off"
-            - label: "on"
-              value: "on"
-            - label: on_insecure
-              value: on_insecure
-          type: select
-        - desc: Pub/Sub 频道，逗号分隔，支持通配（如 orders.*）。**填了才启动事件源**：每条消息触发一次工作流。实时但不留存——插件没连着的那段时间收不到
-          label: 事件盯哪些频道
-          name: watch_channels
-          type: text
-        - desc: Stream 名，逗号分隔。**填了才启动事件源**：从接上的那一刻开始读新消息，消息 id 唯一，重启不会重放
-          label: 事件盯哪些 Stream
-          name: watch_streams
-          type: text
-events:
-    - fields:
-        - desc: Pub/Sub 是频道名，Stream 是 Stream 名
-          label: 来源
-          name: key
-          required: true
-          type: string
-        - desc: 原样字符串；JSON 要在流程里自己解析
-          label: 消息内容
-          name: payload
-          required: true
-          type: text
-        - desc: 按通配订阅时才有
-          label: 命中的模式
-          name: pattern
-          type: string
-      id: message_received
-      label: 收到频道消息
-    - fields:
-        - desc: Pub/Sub 是频道名，Stream 是 Stream 名
-          label: 来源
-          name: key
-          required: true
-          type: string
-        - desc: <毫秒>-<序号>，唯一且递增
-          label: 消息 ID
-          name: id
-          required: true
-          type: string
-        - desc: 消息字段键值对，键名由写入方决定
-          label: 字段
-          name: fields
-          opaque: true
-          required: true
-          type: json
-      id: stream_message
-      label: 收到 Stream 消息
-events_common:
-    - key
-operations:
-    - desc: 直接下任意 Redis 命令（上面没覆盖的：BITCOUNT/GEO/PFADD/EVAL…）
-      id: call
-      inputs:
-        - desc: 命令名，如 SETRANGE、PFADD、OBJECT
-          label: 命令
-          name: command
-          required: true
-          type: string
-        - desc: 按命令文档的顺序逐个给（含 key）
-          itemType: string
-          label: 参数
-          name: args
-          type: array
-      label: 通用命令
-      outputs:
-        - desc: Redis 应答，形状随命令而变（字符串/整数/数组/嵌套数组）
-          label: 返回
-          name: result
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-    - desc: 删除一个或多个键，回实际删掉的个数
-      id: del
-      inputs:
-        - itemType: string
-          label: 键列表
-          name: keys
-          required: true
-          type: array
-      label: 删键
-      outputs:
-        - goType: int
-          label: 删除个数
-          name: deleted
-          required: true
-          type: number
-    - desc: 只判存在，不取值（值很大时比 get 省）
-      id: exists
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-      label: 键是否存在
-      outputs:
-        - label: 存在
-          name: exists
-          required: true
-          type: boolean
-    - desc: 给已有的键设过期秒数；键不存在回 ok=false
-      id: expire
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - goType: int
-          label: 过期秒数
-          name: seconds
-          required: true
-          type: number
-      label: 设过期
-      outputs:
-        - label: 已设置
-          name: ok
-          required: true
-          type: boolean
-    - desc: 读一个字符串键；键不存在不是错误（exists=false）
-      id: get
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-      label: 取值
-      outputs:
-        - desc: 键不存在时为空串——判有没有看 exists
-          label: 值
-          name: value
-          required: true
-          type: text
-        - label: 存在
-          name: exists
-          required: true
-          type: boolean
-    - desc: 删掉哈希里的若干字段
-      id: hash_del
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - itemType: string
-          label: 字段名
-          name: fields
-          required: true
-          type: array
-      label: 删哈希字段
-      outputs:
-        - goType: int
-          label: 删除字段数
-          name: deleted
-          required: true
-          type: number
-    - desc: 读一个哈希的全部字段（对象型状态就存这儿）
-      id: hash_get_all
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-      label: 取哈希
-      outputs:
-        - desc: 哈希的字段键值对，键名由业务定（Redis 侧值一律是字符串）
-          label: 字段
-          name: fields
-          opaque: true
-          required: true
-          type: json
-        - desc: 0 = 哈希不存在或为空
-          goType: int
-          label: 字段数
-          name: count
-          required: true
-          type: number
-    - desc: 写入若干字段（已有字段覆盖，其余不动）
-      id: hash_set
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - desc: 要写入的字段键值对，如 {"status":"running","host":"a1"}
-          label: 字段
-          name: fields
-          opaque: true
-          required: true
-          type: json
-      label: 写哈希
-      outputs:
-        - desc: 覆盖已有字段不计入
-          goType: int
-          label: 新增字段数
-          name: added
-          required: true
-          type: number
-    - desc: PING 一下并报实例版本、部署形态、内存与键数
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 版本
-          name: version
-          required: true
-          type: string
-        - desc: standalone / sentinel / cluster
-          label: 部署形态
-          name: mode
-          required: true
-          type: string
-        - label: 已用内存
-          name: used_memory
-          required: true
-          type: string
-        - goType: int
-          label: 当前库键数
-          name: keys
-          required: true
-          type: number
-        - goType: int
-          label: 往返耗时(ms)
-          name: latency_ms
-          required: true
-          type: number
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 原子自增；键不存在按 0 起算。计数、限流、发号都用它
-      id: incr
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - desc: 默认 1；负数即自减
-          goType: int
-          label: 增量
-          name: by
-          type: number
-      label: 自增计数
-      outputs:
-        - goType: int
-          label: 自增后的值
-          name: value
-          required: true
-          type: number
-    - desc: 弹出并删除；列表空回空数组（不是错误）
-      id: list_pop
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - desc: 默认 1
-          goType: int
-          label: 弹出个数
-          name: count
-          type: number
-        - label: 弹出端
-          name: side
-          options:
-            - label: 左侧（默认，配右入即 FIFO）
-              value: left
-            - label: 右侧
-              value: right
-          type: enum
-      label: 出列表
-      outputs:
-        - itemType: string
-          label: 弹出的值
-          name: values
-          required: true
-          type: array
-        - desc: 0 = 队列空
-          goType: int
-          label: 实际弹出个数
-          name: count
-          required: true
-          type: number
-    - desc: 把值追加进列表；当队列用时配 list_pop
-      id: list_push
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - itemType: string
-          label: 值列表
-          name: values
-          required: true
-          type: array
-        - label: 推入端
-          name: side
-          options:
-            - label: 右侧（默认，先进先出配左出）
-              value: right
-            - label: 左侧
-              value: left
-          type: enum
-      label: 入列表
-      outputs:
-        - goType: int
-          label: 入队后长度
-          name: length
-          required: true
-          type: number
-    - desc: 只看不删（排查/展示用）
-      id: list_range
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - desc: 默认 0（第一条）；负数从尾部算，如 -5 = 倒数第五条
-          goType: int
-          label: 起始下标
-          name: start
-          type: number
-        - desc: 默认 0 = 全部
-          goType: int
-          label: 取几条
-          name: count
-          type: number
-      label: 看列表
-      outputs:
-        - itemType: string
-          label: 值
-          name: values
-          required: true
-          type: array
-        - goType: int
-          label: 条数
-          name: count
-          required: true
-          type: number
-    - desc: 往频道发一条 Pub/Sub 消息。**没订阅者就没人收**（不留存），要留存用 stream_add
-      id: publish
-      inputs:
-        - label: 频道
-          name: channel
-          required: true
-          type: string
-        - label: 消息内容
-          name: message
-          required: true
-          type: text
-      label: 发布消息
-      outputs:
-        - goType: int
-          label: 收到的订阅者数
-          name: receivers
-          required: true
-          type: number
-    - desc: 按模式增量扫键（不阻塞实例；**别用 KEYS**）
-      id: scan
-      inputs:
-        - desc: glob 形态，如 wf:job:*；留空 = 全部
-          label: 匹配模式
-          name: pattern
-          type: string
-        - desc: 第一次留空/0；翻页把上一轮回的 cursor 传回来
-          goType: int
-          label: 游标
-          name: cursor
-          type: number
-        - desc: 给 Redis 的提示值，默认 100。实际条数可能多于或少于它
-          goType: int
-          label: 每轮条数
-          name: count
-          type: number
-      label: 扫键
-      outputs:
-        - itemType: string
-          label: 本轮键
-          name: keys
-          required: true
-          type: array
-        - goType: int
-          label: 下一轮游标
-          name: cursor
-          required: true
-          type: number
-        - desc: cursor 回到 0 即扫完。**本轮可能是空的但没扫完**，看这个别看条数
-          label: 扫完了
-          name: done
-          required: true
-          type: boolean
-    - desc: 写一个字符串键，可带过期时间与写入条件
-      id: set
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - label: 值
-          name: value
-          required: true
-          type: text
-        - desc: 留空/0 = 不过期。**能给就给**：不过期的键只增不减
-          goType: int
-          label: 过期秒数
-          name: ttl_seconds
-          type: number
-        - desc: nx 可当分布式锁/幂等闸：抢到才回 ok=true
-          label: 写入条件
-          name: mode
-          options:
-            - label: 覆盖（默认）
-              value: overwrite
-            - label: 仅当键不存在
-              value: nx
-            - label: 仅当键已存在
-              value: xx
-          type: enum
-      label: 存值
-      outputs:
-        - desc: nx/xx 条件没命中时为 false（不是错误）
-          label: 已写入
-          name: ok
-          required: true
-          type: boolean
-    - desc: 加入集合并回新增个数——**去重判重就用它**：added=0 说明这条见过了
-      id: set_add
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - itemType: string
-          label: 成员
-          name: members
-          required: true
-          type: array
-      label: 集合添加
-      outputs:
-        - desc: 已存在的成员不计入
-          goType: int
-          label: 新增个数
-          name: added
-          required: true
-          type: number
-    - desc: 取集合全部成员（大集合先想想量）
-      id: set_members
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-      label: 集合成员
-      outputs:
-        - itemType: string
-          label: 成员
-          name: members
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-    - desc: 从集合里移除若干成员
-      id: set_remove
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - itemType: string
-          label: 成员
-          name: members
-          required: true
-          type: array
-      label: 集合移除
-      outputs:
-        - goType: int
-          label: 移除个数
-          name: removed
-          required: true
-          type: number
-    - desc: 追加一条 Stream 消息（留存、可回溯，配事件源消费）
-      id: stream_add
-      inputs:
-        - label: Stream 名
-          name: stream
-          required: true
-          type: string
-        - desc: 消息字段键值对，如 {"type":"order","id":"1001"}
-          label: 字段
-          name: fields
-          opaque: true
-          required: true
-          type: json
-        - desc: 超出丢最老的（近似裁剪，性能更好）。留空 = 不裁剪——**Stream 会一直涨**
-          goType: int
-          label: 保留条数上限
-          name: max_len
-          type: number
-      label: 写入 Stream
-      outputs:
-        - desc: Redis 生成的 <毫秒>-<序号>
-          label: 消息 ID
-          name: id
-          required: true
-          type: string
-    - desc: 查键还有多久过期
-      id: ttl
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-      label: 剩余时间
-      outputs:
-        - desc: 永久 = -1，不存在 = -2（原样透传 Redis 语义）
-          goType: int
-          label: 剩余秒数
-          name: seconds
-          required: true
-          type: number
-        - desc: alive 还在计时 / persistent 永久 / missing 不存在——分支判这个别判 -1
-          label: 状态
-          name: state
-          required: true
-          type: string
-    - desc: 按分数写入有序集合（排行榜、优先队列、按时间排的窗口）
-      id: zset_add
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - label: 成员
-          name: member
-          required: true
-          type: string
-        - desc: 排序依据；时间窗口场景常用时间戳
-          label: 分数
-          name: score
-          required: true
-          type: number
-      label: 排行榜写入
-      outputs:
-        - desc: 成员已存在则只更新分数，added=0
-          goType: int
-          label: 新增个数
-          name: added
-          required: true
-          type: number
-    - desc: 按名次取一段（含分数）
-      id: zset_range
-      inputs:
-        - desc: Redis 键名，如 wf:daily:count
-          label: 键
-          name: key
-          required: true
-          type: string
-        - desc: 默认 0（第一名）
-          goType: int
-          label: 起始名次
-          name: start
-          type: number
-        - desc: 默认 0 = 全部。取前十就填 10（与 list_range 同一约定）
-          goType: int
-          label: 取几名
-          name: count
-          type: number
-        - desc: 默认从低到高；排行榜取 Top N 要打开
-          label: 分数从高到低
-          name: desc
-          type: boolean
-      label: 排行榜取段
-      outputs:
-        - fields:
-            - label: 成员
-              name: member
-              required: true
-              type: string
-            - label: 分数
-              name: score
-              required: true
-              type: number
-          goType: ZItem
-          label: 成员与分数
-          name: items
-          required: true
-          type: array
-        - goType: int
-          label: 条数
-          name: count
-          required: true
-          type: number
 plugin:
-    desc: 把 Redis 当工作流的共享内存：跨运行的计数器、去重集合、状态标记、队列、排行榜，
-    doc: README.md
-    label: Redis
-    name: redis
-    org: sokel
-    version: v1.0.0
+  desc: 把 Redis 当工作流的共享内存：跨运行的计数器、去重集合、状态标记、队列、排行榜，
+  doc: README.md
+  label: Redis
+  name: redis
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: host:port，如 redis.internal:6379。**插件进程要能连到它**——云托管实例记得放行来源 IP
+      label: 地址
+      name: addr
+      required: true
+      type: text
+    - desc: Redis 6+ 的 ACL 用户；用传统 requirepass 密码就留空
+      label: 用户名
+      name: username
+      type: text
+    - desc: 没设密码就留空
+      label: 密码
+      name: password
+      type: secret
+    - desc: 默认 0。集群模式只有 0 号库
+      label: 库号
+      name: db
+      type: text
+    - desc: off 明文（默认，内网常见）/ on 走 TLS / on_insecure 走 TLS 但不校验证书（自签证书用）
+      label: TLS
+      name: tls
+      options:
+        - label: "off"
+          value: "off"
+        - label: "on"
+          value: "on"
+        - label: on_insecure
+          value: on_insecure
+      type: select
+    - desc: Pub/Sub 频道，逗号分隔，支持通配（如 orders.*）。**填了才启动事件源**：每条消息触发一次工作流。实时但不留存——插件没连着的那段时间收不到
+      label: 事件盯哪些频道
+      name: watch_channels
+      type: text
+    - desc: Stream 名，逗号分隔。**填了才启动事件源**：从接上的那一刻开始读新消息，消息 id 唯一，重启不会重放
+      label: 事件盯哪些 Stream
+      name: watch_streams
+      type: text
+
+events_common:
+  - key
+
+events:
+  - fields:
+      - desc: Pub/Sub 是频道名，Stream 是 Stream 名
+        label: 来源
+        name: key
+        required: true
+        type: string
+      - desc: 原样字符串；JSON 要在流程里自己解析
+        label: 消息内容
+        name: payload
+        required: true
+        type: text
+      - desc: 按通配订阅时才有
+        label: 命中的模式
+        name: pattern
+        type: string
+    id: message_received
+    label: 收到频道消息
+  - fields:
+      - desc: Pub/Sub 是频道名，Stream 是 Stream 名
+        label: 来源
+        name: key
+        required: true
+        type: string
+      - desc: <毫秒>-<序号>，唯一且递增
+        label: 消息 ID
+        name: id
+        required: true
+        type: string
+      - desc: 消息字段键值对，键名由写入方决定
+        label: 字段
+        name: fields
+        opaque: true
+        required: true
+        type: json
+    id: stream_message
+    label: 收到 Stream 消息
+
+operations:
+  - desc: 直接下任意 Redis 命令（上面没覆盖的：BITCOUNT/GEO/PFADD/EVAL…）
+    id: call
+    inputs:
+      - desc: 命令名，如 SETRANGE、PFADD、OBJECT
+        label: 命令
+        name: command
+        required: true
+        type: string
+      - desc: 按命令文档的顺序逐个给（含 key）
+        itemType: string
+        label: 参数
+        name: args
+        type: array
+    label: 通用命令
+    outputs:
+      - desc: Redis 应答，形状随命令而变（字符串/整数/数组/嵌套数组）
+        label: 返回
+        name: result
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+  - desc: 删除一个或多个键，回实际删掉的个数
+    id: del
+    inputs:
+      - itemType: string
+        label: 键列表
+        name: keys
+        required: true
+        type: array
+    label: 删键
+    outputs:
+      - goType: int
+        label: 删除个数
+        name: deleted
+        required: true
+        type: number
+  - desc: 只判存在，不取值（值很大时比 get 省）
+    id: exists
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+    label: 键是否存在
+    outputs:
+      - label: 存在
+        name: exists
+        required: true
+        type: boolean
+  - desc: 给已有的键设过期秒数；键不存在回 ok=false
+    id: expire
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - goType: int
+        label: 过期秒数
+        name: seconds
+        required: true
+        type: number
+    label: 设过期
+    outputs:
+      - label: 已设置
+        name: ok
+        required: true
+        type: boolean
+  - desc: 读一个字符串键；键不存在不是错误（exists=false）
+    id: get
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+    label: 取值
+    outputs:
+      - desc: 键不存在时为空串——判有没有看 exists
+        label: 值
+        name: value
+        required: true
+        type: text
+      - label: 存在
+        name: exists
+        required: true
+        type: boolean
+  - desc: 删掉哈希里的若干字段
+    id: hash_del
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - itemType: string
+        label: 字段名
+        name: fields
+        required: true
+        type: array
+    label: 删哈希字段
+    outputs:
+      - goType: int
+        label: 删除字段数
+        name: deleted
+        required: true
+        type: number
+  - desc: 读一个哈希的全部字段（对象型状态就存这儿）
+    id: hash_get_all
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+    label: 取哈希
+    outputs:
+      - desc: 哈希的字段键值对，键名由业务定（Redis 侧值一律是字符串）
+        label: 字段
+        name: fields
+        opaque: true
+        required: true
+        type: json
+      - desc: 0 = 哈希不存在或为空
+        goType: int
+        label: 字段数
+        name: count
+        required: true
+        type: number
+  - desc: 写入若干字段（已有字段覆盖，其余不动）
+    id: hash_set
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - desc: 要写入的字段键值对，如 {"status":"running","host":"a1"}
+        label: 字段
+        name: fields
+        opaque: true
+        required: true
+        type: json
+    label: 写哈希
+    outputs:
+      - desc: 覆盖已有字段不计入
+        goType: int
+        label: 新增字段数
+        name: added
+        required: true
+        type: number
+  - desc: PING 一下并报实例版本、部署形态、内存与键数
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 版本
+        name: version
+        required: true
+        type: string
+      - desc: standalone / sentinel / cluster
+        label: 部署形态
+        name: mode
+        required: true
+        type: string
+      - label: 已用内存
+        name: used_memory
+        required: true
+        type: string
+      - goType: int
+        label: 当前库键数
+        name: keys
+        required: true
+        type: number
+      - goType: int
+        label: 往返耗时(ms)
+        name: latency_ms
+        required: true
+        type: number
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 原子自增；键不存在按 0 起算。计数、限流、发号都用它
+    id: incr
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - desc: 默认 1；负数即自减
+        goType: int
+        label: 增量
+        name: by
+        type: number
+    label: 自增计数
+    outputs:
+      - goType: int
+        label: 自增后的值
+        name: value
+        required: true
+        type: number
+  - desc: 弹出并删除；列表空回空数组（不是错误）
+    id: list_pop
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - desc: 默认 1
+        goType: int
+        label: 弹出个数
+        name: count
+        type: number
+      - label: 弹出端
+        name: side
+        options:
+          - label: 左侧（默认，配右入即 FIFO）
+            value: left
+          - label: 右侧
+            value: right
+        type: enum
+    label: 出列表
+    outputs:
+      - itemType: string
+        label: 弹出的值
+        name: values
+        required: true
+        type: array
+      - desc: 0 = 队列空
+        goType: int
+        label: 实际弹出个数
+        name: count
+        required: true
+        type: number
+  - desc: 把值追加进列表；当队列用时配 list_pop
+    id: list_push
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - itemType: string
+        label: 值列表
+        name: values
+        required: true
+        type: array
+      - label: 推入端
+        name: side
+        options:
+          - label: 右侧（默认，先进先出配左出）
+            value: right
+          - label: 左侧
+            value: left
+        type: enum
+    label: 入列表
+    outputs:
+      - goType: int
+        label: 入队后长度
+        name: length
+        required: true
+        type: number
+  - desc: 只看不删（排查/展示用）
+    id: list_range
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - desc: 默认 0（第一条）；负数从尾部算，如 -5 = 倒数第五条
+        goType: int
+        label: 起始下标
+        name: start
+        type: number
+      - desc: 默认 0 = 全部
+        goType: int
+        label: 取几条
+        name: count
+        type: number
+    label: 看列表
+    outputs:
+      - itemType: string
+        label: 值
+        name: values
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+  - desc: 往频道发一条 Pub/Sub 消息。**没订阅者就没人收**（不留存），要留存用 stream_add
+    id: publish
+    inputs:
+      - label: 频道
+        name: channel
+        required: true
+        type: string
+      - label: 消息内容
+        name: message
+        required: true
+        type: text
+    label: 发布消息
+    outputs:
+      - goType: int
+        label: 收到的订阅者数
+        name: receivers
+        required: true
+        type: number
+  - desc: 按模式增量扫键（不阻塞实例；**别用 KEYS**）
+    id: scan
+    inputs:
+      - desc: glob 形态，如 wf:job:*；留空 = 全部
+        label: 匹配模式
+        name: pattern
+        type: string
+      - desc: 第一次留空/0；翻页把上一轮回的 cursor 传回来
+        goType: int
+        label: 游标
+        name: cursor
+        type: number
+      - desc: 给 Redis 的提示值，默认 100。实际条数可能多于或少于它
+        goType: int
+        label: 每轮条数
+        name: count
+        type: number
+    label: 扫键
+    outputs:
+      - itemType: string
+        label: 本轮键
+        name: keys
+        required: true
+        type: array
+      - goType: int
+        label: 下一轮游标
+        name: cursor
+        required: true
+        type: number
+      - desc: cursor 回到 0 即扫完。**本轮可能是空的但没扫完**，看这个别看条数
+        label: 扫完了
+        name: done
+        required: true
+        type: boolean
+  - desc: 写一个字符串键，可带过期时间与写入条件
+    id: set
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - label: 值
+        name: value
+        required: true
+        type: text
+      - desc: 留空/0 = 不过期。**能给就给**：不过期的键只增不减
+        goType: int
+        label: 过期秒数
+        name: ttl_seconds
+        type: number
+      - desc: nx 可当分布式锁/幂等闸：抢到才回 ok=true
+        label: 写入条件
+        name: mode
+        options:
+          - label: 覆盖（默认）
+            value: overwrite
+          - label: 仅当键不存在
+            value: nx
+          - label: 仅当键已存在
+            value: xx
+        type: enum
+    label: 存值
+    outputs:
+      - desc: nx/xx 条件没命中时为 false（不是错误）
+        label: 已写入
+        name: ok
+        required: true
+        type: boolean
+  - desc: 加入集合并回新增个数——**去重判重就用它**：added=0 说明这条见过了
+    id: set_add
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - itemType: string
+        label: 成员
+        name: members
+        required: true
+        type: array
+    label: 集合添加
+    outputs:
+      - desc: 已存在的成员不计入
+        goType: int
+        label: 新增个数
+        name: added
+        required: true
+        type: number
+  - desc: 取集合全部成员（大集合先想想量）
+    id: set_members
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+    label: 集合成员
+    outputs:
+      - itemType: string
+        label: 成员
+        name: members
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+  - desc: 从集合里移除若干成员
+    id: set_remove
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - itemType: string
+        label: 成员
+        name: members
+        required: true
+        type: array
+    label: 集合移除
+    outputs:
+      - goType: int
+        label: 移除个数
+        name: removed
+        required: true
+        type: number
+  - desc: 追加一条 Stream 消息（留存、可回溯，配事件源消费）
+    id: stream_add
+    inputs:
+      - label: Stream 名
+        name: stream
+        required: true
+        type: string
+      - desc: 消息字段键值对，如 {"type":"order","id":"1001"}
+        label: 字段
+        name: fields
+        opaque: true
+        required: true
+        type: json
+      - desc: 超出丢最老的（近似裁剪，性能更好）。留空 = 不裁剪——**Stream 会一直涨**
+        goType: int
+        label: 保留条数上限
+        name: max_len
+        type: number
+    label: 写入 Stream
+    outputs:
+      - desc: Redis 生成的 <毫秒>-<序号>
+        label: 消息 ID
+        name: id
+        required: true
+        type: string
+  - desc: 查键还有多久过期
+    id: ttl
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+    label: 剩余时间
+    outputs:
+      - desc: 永久 = -1，不存在 = -2（原样透传 Redis 语义）
+        goType: int
+        label: 剩余秒数
+        name: seconds
+        required: true
+        type: number
+      - desc: alive 还在计时 / persistent 永久 / missing 不存在——分支判这个别判 -1
+        label: 状态
+        name: state
+        required: true
+        type: string
+  - desc: 按分数写入有序集合（排行榜、优先队列、按时间排的窗口）
+    id: zset_add
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - label: 成员
+        name: member
+        required: true
+        type: string
+      - desc: 排序依据；时间窗口场景常用时间戳
+        label: 分数
+        name: score
+        required: true
+        type: number
+    label: 排行榜写入
+    outputs:
+      - desc: 成员已存在则只更新分数，added=0
+        goType: int
+        label: 新增个数
+        name: added
+        required: true
+        type: number
+  - desc: 按名次取一段（含分数）
+    id: zset_range
+    inputs:
+      - desc: Redis 键名，如 wf:daily:count
+        label: 键
+        name: key
+        required: true
+        type: string
+      - desc: 默认 0（第一名）
+        goType: int
+        label: 起始名次
+        name: start
+        type: number
+      - desc: 默认 0 = 全部。取前十就填 10（与 list_range 同一约定）
+        goType: int
+        label: 取几名
+        name: count
+        type: number
+      - desc: 默认从低到高；排行榜取 Top N 要打开
+        label: 分数从高到低
+        name: desc
+        type: boolean
+    label: 排行榜取段
+    outputs:
+      - fields:
+          - label: 成员
+            name: member
+            required: true
+            type: string
+          - label: 分数
+            name: score
+            required: true
+            type: number
+        goType: ZItem
+        label: 成员与分数
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-redis:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-redis:1.0.1@sha256:938256d8b269a853d8606e4a0ac0e380fe1f0216d4e75089beee93386643164d
