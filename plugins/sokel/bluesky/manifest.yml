@@ -1,157 +1,159 @@
-credential:
-    fields:
-        - desc: 完整 handle（如 acme.bsky.social）或邮箱
-          label: 账号
-          name: identifier
-          required: true
-          type: text
-        - desc: Bluesky 设置 → Privacy and Security → App Passwords 里生成，形如 xxxx-xxxx-xxxx-xxxx。**别用登录密码**：应用密码可单独撤销，且拿不到改密码/删账号这类权限
-          label: 应用专用密码
-          name: app_password
-          required: true
-          type: secret
-        - desc: 留空用 https://bsky.social；自建 PDS 才需要改
-          label: 服务地址
-          name: pds_url
-          type: text
-        - desc: 如 http://127.0.0.1:7897；部署环境直连不了 bsky.social 时必填
-          label: 出站代理
-          name: proxy
-          type: text
-operations:
-    - desc: 用账号密码换一次会话。ok=false 表示密码被撤销或改了
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 凭证可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-        - label: 账号
-          name: handle
-          type: string
-    - desc: 发一条 Bluesky 帖子：自动识别链接/话题/提及，可带图与链接卡片
-      id: bsky_post_create
-      inputs:
-        - desc: 上限 300 个字（按字形算，中文一个字算一个）。链接、#话题、@用户名会自动变成可点的
-          label: 正文
-          name: text
-          required: true
-          type: text
-        - desc: 填了就是回复。可直接粘 https://bsky.app/profile/xxx/post/xxx
-          label: 回复给（帖子链接或 at:// 地址）
-          name: reply_to_uri
-          type: string
-        - desc: 最多 4 张，每张 ≤2MB（Bluesky 的限制）
-          itemType: file
-          label: 图片
-          name: images
-          type: array
-        - desc: 按顺序与图片对应，给读屏用户看；少给几条不影响发布
-          itemType: string
-          label: 图片替代文本
-          name: image_alts
-          type: array
-        - desc: 留空则用正文里的第一个链接自动生成卡片；填 -（减号）表示不要卡片
-          label: 链接卡片
-          name: link_card_url
-          type: string
-        - default: zh
-          desc: 逗号分隔的 BCP-47 码，如 zh、en。影响别人的语言过滤能否看到你
-          label: 语言
-          name: langs
-          type: string
-      label: 发帖
-      outputs:
-        - desc: at:// 形式，回复/删除用它
-          label: 帖子地址
-          name: uri
-          required: true
-          type: string
-        - desc: 回复时要连同 uri 一起给
-          label: 内容哈希
-          name: cid
-          required: true
-          type: string
-        - desc: https://bsky.app/... 可直接点开或发进通知
-          label: 网页链接
-          name: url
-          required: true
-          type: string
-    - desc: 只能删授权账号自己发的
-      id: bsky_post_delete
-      inputs:
-        - desc: at:// 地址或 bsky.app 链接
-          label: 帖子地址
-          name: uri
-          required: true
-          type: string
-      label: 删帖
-      outputs:
-        - label: 已删除
-          name: deleted
-          required: true
-          type: boolean
-    - desc: 把多段文本发成一串首尾相连的帖子；第一段可带图
-      id: bsky_post_thread
-      inputs:
-        - desc: 按顺序逐条发出，后一条自动回复前一条。**一条一段**，本操作不替你断句
-          itemType: string
-          label: 每条正文
-          name: texts
-          required: true
-          type: array
-        - desc: 填了则整串挂在那条帖子下
-          label: 接在谁后面
-          name: reply_to_uri
-          type: string
-        - desc: 只挂在第一条上，最多 4 张
-          itemType: file
-          label: 首条的图片
-          name: images
-          type: array
-        - default: 500
-          goType: int
-          label: 每条之间停顿（毫秒）
-          name: interval_ms
-          type: number
-        - default: zh
-          label: 语言
-          name: langs
-          type: string
-      label: 发帖串
-      outputs:
-        - desc: 按发出顺序；中途失败时这里是**已经发出去的那几条**
-          itemType: string
-          label: 各条地址
-          name: uris
-          required: true
-          type: array
-        - label: 首条地址
-          name: root_uri
-          required: true
-          type: string
-        - label: 首条网页链接
-          name: root_url
-          required: true
-          type: string
-        - goType: int
-          label: 发出条数
-          name: count
-          required: true
-          type: number
 plugin:
-    desc: 发帖、发帖串、删帖。免费、无审批、无按次计费——是几个公开社交平台里接入成本最低的一个。
-    doc: README.md
-    label: Bluesky
-    name: bluesky
-    org: sokel
-    version: v1.0.0
+  desc: 发帖、发帖串、删帖。免费、无审批、无按次计费——是几个公开社交平台里接入成本最低的一个。
+  doc: README.md
+  label: Bluesky
+  name: bluesky
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 完整 handle（如 acme.bsky.social）或邮箱
+      label: 账号
+      name: identifier
+      required: true
+      type: text
+    - desc: Bluesky 设置 → Privacy and Security → App Passwords 里生成，形如 xxxx-xxxx-xxxx-xxxx。**别用登录密码**：应用密码可单独撤销，且拿不到改密码/删账号这类权限
+      label: 应用专用密码
+      name: app_password
+      required: true
+      type: secret
+    - desc: 留空用 https://bsky.social；自建 PDS 才需要改
+      label: 服务地址
+      name: pds_url
+      type: text
+    - desc: 如 http://127.0.0.1:7897；部署环境直连不了 bsky.social 时必填
+      label: 出站代理
+      name: proxy
+      type: text
+
+operations:
+  - desc: 用账号密码换一次会话。ok=false 表示密码被撤销或改了
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 凭证可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+      - label: 账号
+        name: handle
+        type: string
+  - desc: 发一条 Bluesky 帖子：自动识别链接/话题/提及，可带图与链接卡片
+    id: bsky_post_create
+    inputs:
+      - desc: 上限 300 个字（按字形算，中文一个字算一个）。链接、#话题、@用户名会自动变成可点的
+        label: 正文
+        name: text
+        required: true
+        type: text
+      - desc: 填了就是回复。可直接粘 https://bsky.app/profile/xxx/post/xxx
+        label: 回复给（帖子链接或 at:// 地址）
+        name: reply_to_uri
+        type: string
+      - desc: 最多 4 张，每张 ≤2MB（Bluesky 的限制）
+        itemType: file
+        label: 图片
+        name: images
+        type: array
+      - desc: 按顺序与图片对应，给读屏用户看；少给几条不影响发布
+        itemType: string
+        label: 图片替代文本
+        name: image_alts
+        type: array
+      - desc: 留空则用正文里的第一个链接自动生成卡片；填 -（减号）表示不要卡片
+        label: 链接卡片
+        name: link_card_url
+        type: string
+      - default: zh
+        desc: 逗号分隔的 BCP-47 码，如 zh、en。影响别人的语言过滤能否看到你
+        label: 语言
+        name: langs
+        type: string
+    label: 发帖
+    outputs:
+      - desc: at:// 形式，回复/删除用它
+        label: 帖子地址
+        name: uri
+        required: true
+        type: string
+      - desc: 回复时要连同 uri 一起给
+        label: 内容哈希
+        name: cid
+        required: true
+        type: string
+      - desc: https://bsky.app/... 可直接点开或发进通知
+        label: 网页链接
+        name: url
+        required: true
+        type: string
+  - desc: 只能删授权账号自己发的
+    id: bsky_post_delete
+    inputs:
+      - desc: at:// 地址或 bsky.app 链接
+        label: 帖子地址
+        name: uri
+        required: true
+        type: string
+    label: 删帖
+    outputs:
+      - label: 已删除
+        name: deleted
+        required: true
+        type: boolean
+  - desc: 把多段文本发成一串首尾相连的帖子；第一段可带图
+    id: bsky_post_thread
+    inputs:
+      - desc: 按顺序逐条发出，后一条自动回复前一条。**一条一段**，本操作不替你断句
+        itemType: string
+        label: 每条正文
+        name: texts
+        required: true
+        type: array
+      - desc: 填了则整串挂在那条帖子下
+        label: 接在谁后面
+        name: reply_to_uri
+        type: string
+      - desc: 只挂在第一条上，最多 4 张
+        itemType: file
+        label: 首条的图片
+        name: images
+        type: array
+      - default: 500
+        goType: int
+        label: 每条之间停顿（毫秒）
+        name: interval_ms
+        type: number
+      - default: zh
+        label: 语言
+        name: langs
+        type: string
+    label: 发帖串
+    outputs:
+      - desc: 按发出顺序；中途失败时这里是**已经发出去的那几条**
+        itemType: string
+        label: 各条地址
+        name: uris
+        required: true
+        type: array
+      - label: 首条地址
+        name: root_uri
+        required: true
+        type: string
+      - label: 首条网页链接
+        name: root_url
+        required: true
+        type: string
+      - goType: int
+        label: 发出条数
+        name: count
+        required: true
+        type: number
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-bluesky:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-bluesky:1.0.1@sha256:515ed144bd79e6d5e78d744639d65e53451f47a7a3cc53a4f497014fcf14004e
