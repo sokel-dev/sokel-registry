@@ -1,240 +1,244 @@
-credential:
-  fields:
-  - desc: 容器内路径（挂载点下子目录），如 /watch/研报入库
-    label: 监听目录
-    name: path
-    required: true
-    type: text
-  - desc: 逗号分隔（pdf,docx）；留空=全部文件
-    label: 扩展名过滤
-    name: include
-    type: text
-  - desc: 逗号分隔子串，命中即忽略；Synology 垃圾目录（@eaDir/#recycle 等）恒忽略
-    label: 忽略模式
-    name: ignore
-    type: text
-  - default: '2'
-    desc: 文件静默 N 秒且大小稳定才上报（防写一半的文件）
-    label: 落定秒数
-    name: settle_seconds
-    type: text
-deployment:
-  note: 必须部署在能访问该 NAS 的机器上。
-  targets:
-  - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-synology:latest
-events:
-- fields:
-  - label: 完整路径
-    name: path
-    required: true
-    type: string
-  - label: 文件名
-    name: name
-    required: true
-    type: string
-  - label: 扩展名
-    name: ext
-    required: true
-    type: string
-  - label: 所在目录
-    name: dir
-    required: true
-    type: string
-  - goType: int
-    label: 大小（字节）
-    name: size
-    required: true
-    type: number
-  - label: 修改时间（RFC3339）
-    name: mtime
-    required: true
-    type: string
-  id: file_changed
-  label: 文件修改
-- desc: 文件静默 settle 秒且大小稳定后才报——SMB 保存是临时文件+改名，大文件拷贝是持续写入，不等落定会拿到写了一半的文件
-  fields:
-  - label: 完整路径
-    name: path
-    required: true
-    type: string
-  - label: 文件名
-    name: name
-    required: true
-    type: string
-  - label: 扩展名
-    name: ext
-    required: true
-    type: string
-  - label: 所在目录
-    name: dir
-    required: true
-    type: string
-  - goType: int
-    label: 大小（字节）
-    name: size
-    required: true
-    type: number
-  - label: 修改时间（RFC3339）
-    name: mtime
-    required: true
-    type: string
-  id: file_created
-  label: 文件新增
-- fields:
-  - label: 完整路径
-    name: path
-    required: true
-    type: string
-  - label: 文件名
-    name: name
-    required: true
-    type: string
-  - label: 扩展名
-    name: ext
-    required: true
-    type: string
-  - label: 所在目录
-    name: dir
-    required: true
-    type: string
-  id: file_deleted
-  label: 文件删除
-events_common:
-- path
-- name
-- ext
-- dir
-operations:
-- desc: 删除监听目录内的一个文件（不删目录）
-  id: delete_file
-  inputs:
-  - desc: 要删除的文件（不删目录）；须在监听目录内
-    label: 文件路径
-    name: path
-    required: true
-    type: string
-  label: 删除文件
-  outputs:
-  - label: 是否成功
-    name: ok
-    required: true
-    type: boolean
-- desc: 列出监听目录内某子目录的条目（忽略系统垃圾目录）
-  id: list_dir
-  inputs:
-  - desc: 相对监听目录；留空=监听目录本身
-    label: 目录
-    name: dir
-    type: string
-  label: 列出目录
-  outputs:
-  - fields:
-    - label: 名称
-      name: name
-      required: true
-      type: string
-    - label: 完整路径
-      name: path
-      required: true
-      type: string
-    - label: 是否目录
-      name: is_dir
-      required: true
-      type: boolean
-    - goType: int64
-      label: 大小（字节）
-      name: size
-      required: true
-      type: number
-    - label: 修改时间
-      name: mtime
-      required: true
-      type: string
-    goType: DirEntry
-    label: 条目
-    name: entries
-    required: true
-    type: array
-  - goType: int
-    label: 数量
-    name: count
-    required: true
-    type: number
-- desc: 监听目录内移动/改名文件（处理完归档的典型用法），父目录自动创建
-  id: move_file
-  inputs:
-  - desc: 要移动的文件（须在监听目录内）
-    label: 源文件
-    name: path
-    required: true
-    type: string
-  - desc: 目标目录（以 / 结尾或已存在的目录 → 保留原名）或完整目标路径；须在监听目录内，父目录自动创建
-    label: 目标
-    name: to
-    required: true
-    type: string
-  label: 移动文件
-  outputs:
-  - label: 是否成功
-    name: ok
-    required: true
-    type: boolean
-  - label: 最终目标路径
-    name: to
-    required: true
-    type: string
-- desc: 按路径读取监听目录内的文件，产出平台文件引用（下游文件参数可用）
-  id: read_file
-  inputs:
-  - desc: 绝对路径或相对监听目录；须在凭证监听目录内
-    label: 文件路径
-    name: path
-    required: true
-    type: string
-  label: 读取文件
-  outputs:
-  - label: 文件
-    name: file
-    required: true
-    type: file
-  - label: 文件名
-    name: name
-    required: true
-    type: string
-  - goType: int
-    label: 大小（字节）
-    name: size
-    required: true
-    type: number
-  - label: 修改时间（RFC3339）
-    name: mtime
-    required: true
-    type: string
-- desc: 看监听目录在不在、是不是目录、容器读不读得了，并报当前条目数
-  id: health_check
-  label: 检查凭证
-  outputs:
-  - label: 可用
-    name: ok
-    required: true
-    type: boolean
-  - label: 监听目录
-    name: path
-    type: string
-  - desc: 目录第一层里未被忽略的条目
-    goType: int
-    label: 当前条目数
-    name: entries
-    type: number
-  - label: 说明
-    name: message
-    required: true
-    type: string
 plugin:
   desc: 监听 NAS 目录里的文件变动并触发工作流（落定检测已内置）。**需自行部署插件进程**，且必须部署在能访问该 NAS 的机器上。
   doc: README.md
   label: 群晖 NAS
   name: synology
   org: sokel
-  version: v1.0.0
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 容器内路径（挂载点下子目录），如 /watch/研报入库
+      label: 监听目录
+      name: path
+      required: true
+      type: text
+    - desc: 逗号分隔（pdf,docx）；留空=全部文件
+      label: 扩展名过滤
+      name: include
+      type: text
+    - desc: 逗号分隔子串，命中即忽略；Synology 垃圾目录（@eaDir/#recycle 等）恒忽略
+      label: 忽略模式
+      name: ignore
+      type: text
+    - default: "2"
+      desc: 文件静默 N 秒且大小稳定才上报（防写一半的文件）
+      label: 落定秒数
+      name: settle_seconds
+      type: text
+
+events_common:
+  - path
+  - name
+  - ext
+  - dir
+
+events:
+  - fields:
+      - label: 完整路径
+        name: path
+        required: true
+        type: string
+      - label: 文件名
+        name: name
+        required: true
+        type: string
+      - label: 扩展名
+        name: ext
+        required: true
+        type: string
+      - label: 所在目录
+        name: dir
+        required: true
+        type: string
+      - goType: int
+        label: 大小（字节）
+        name: size
+        required: true
+        type: number
+      - label: 修改时间（RFC3339）
+        name: mtime
+        required: true
+        type: string
+    id: file_changed
+    label: 文件修改
+  - desc: 文件静默 settle 秒且大小稳定后才报——SMB 保存是临时文件+改名，大文件拷贝是持续写入，不等落定会拿到写了一半的文件
+    fields:
+      - label: 完整路径
+        name: path
+        required: true
+        type: string
+      - label: 文件名
+        name: name
+        required: true
+        type: string
+      - label: 扩展名
+        name: ext
+        required: true
+        type: string
+      - label: 所在目录
+        name: dir
+        required: true
+        type: string
+      - goType: int
+        label: 大小（字节）
+        name: size
+        required: true
+        type: number
+      - label: 修改时间（RFC3339）
+        name: mtime
+        required: true
+        type: string
+    id: file_created
+    label: 文件新增
+  - fields:
+      - label: 完整路径
+        name: path
+        required: true
+        type: string
+      - label: 文件名
+        name: name
+        required: true
+        type: string
+      - label: 扩展名
+        name: ext
+        required: true
+        type: string
+      - label: 所在目录
+        name: dir
+        required: true
+        type: string
+    id: file_deleted
+    label: 文件删除
+
+operations:
+  - desc: 删除监听目录内的一个文件（不删目录）
+    id: delete_file
+    inputs:
+      - desc: 要删除的文件（不删目录）；须在监听目录内
+        label: 文件路径
+        name: path
+        required: true
+        type: string
+    label: 删除文件
+    outputs:
+      - label: 是否成功
+        name: ok
+        required: true
+        type: boolean
+  - desc: 看监听目录在不在、是不是目录、容器读不读得了，并报当前条目数
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 监听目录
+        name: path
+        type: string
+      - desc: 目录第一层里未被忽略的条目
+        goType: int
+        label: 当前条目数
+        name: entries
+        type: number
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 列出监听目录内某子目录的条目（忽略系统垃圾目录）
+    id: list_dir
+    inputs:
+      - desc: 相对监听目录；留空=监听目录本身
+        label: 目录
+        name: dir
+        type: string
+    label: 列出目录
+    outputs:
+      - fields:
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 完整路径
+            name: path
+            required: true
+            type: string
+          - label: 是否目录
+            name: is_dir
+            required: true
+            type: boolean
+          - goType: int64
+            label: 大小（字节）
+            name: size
+            required: true
+            type: number
+          - label: 修改时间
+            name: mtime
+            required: true
+            type: string
+        goType: DirEntry
+        label: 条目
+        name: entries
+        required: true
+        type: array
+      - goType: int
+        label: 数量
+        name: count
+        required: true
+        type: number
+  - desc: 监听目录内移动/改名文件（处理完归档的典型用法），父目录自动创建
+    id: move_file
+    inputs:
+      - desc: 要移动的文件（须在监听目录内）
+        label: 源文件
+        name: path
+        required: true
+        type: string
+      - desc: 目标目录（以 / 结尾或已存在的目录 → 保留原名）或完整目标路径；须在监听目录内，父目录自动创建
+        label: 目标
+        name: to
+        required: true
+        type: string
+    label: 移动文件
+    outputs:
+      - label: 是否成功
+        name: ok
+        required: true
+        type: boolean
+      - label: 最终目标路径
+        name: to
+        required: true
+        type: string
+  - desc: 按路径读取监听目录内的文件，产出平台文件引用（下游文件参数可用）
+    id: read_file
+    inputs:
+      - desc: 绝对路径或相对监听目录；须在凭证监听目录内
+        label: 文件路径
+        name: path
+        required: true
+        type: string
+    label: 读取文件
+    outputs:
+      - label: 文件
+        name: file
+        required: true
+        type: file
+      - label: 文件名
+        name: name
+        required: true
+        type: string
+      - goType: int
+        label: 大小（字节）
+        name: size
+        required: true
+        type: number
+      - label: 修改时间（RFC3339）
+        name: mtime
+        required: true
+        type: string
+deployment:
+  note: 必须部署在能访问该 NAS 的机器上。
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-synology:1.0.1@sha256:8fe974af4dc16fc163c148bd3ce22382513626c3427a1f2c57b745140aa70dc6
