@@ -1,194 +1,196 @@
-credential:
-    fields:
-        - desc: 控制台「短信」应用的 AppID（纯数字）。只用国际短信可留空
-          label: 国内短信 AppID
-          name: sms_appid
-          type: text
-        - label: 国内短信 AppKey
-          name: sms_appkey
-          type: secret
-        - desc: 控制台「国际短信」应用的 AppID。只用国内短信可留空
-          label: 国际短信 AppID
-          name: intl_appid
-          type: text
-        - label: 国际短信 AppKey
-          name: intl_appkey
-          type: secret
-operations:
-    - desc: 查短信余额：国内（条数）+ 国际（余额，按金额计费），配了哪组应用查哪边。余额告警工作流用：定时查 → 低于阈值发通知
-      id: balance
-      label: 查余额
-      outputs:
-        - desc: 没配国内应用时为 0
-          goType: int
-          label: 国内·运营类余额(条)
-          name: balance
-          required: true
-          type: number
-        - goType: int
-          label: 国内·三网合一余额(条)
-          name: transactional
-          required: true
-          type: number
-        - desc: 国际短信按金额计费；没配国际应用时为 0
-          label: 国际·余额
-          name: intl_balance
-          required: true
-          type: number
-    - desc: 用配好的应用各查一次余额——appid/appkey 有误当场暴露
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 发到境外号码：号码带国家码（如 +81…、+1…）。用凭证里的国际短信应用
-      id: intl_send
-      inputs:
-        - desc: 带国家码：+81xxx / +1xxx；多个逗号分隔
-          label: 手机号
-          name: to
-          required: true
-          type: string
-        - desc: 英文 160 字符一条；中文等 Unicode 70 字符一条，超出分段计费
-          label: 内容
-          name: content
-          required: true
-          type: text
-      label: 国际短信·发送
-      outputs:
-        - label: 发送 ID
-          name: send_id
-          required: true
-          type: string
-        - goType: int
-          label: 计费条数
-          name: fee
-          required: true
-          type: number
-    - desc: 按已审核的国际短信模板发送：模板 ID + 变量
-      id: intl_xsend
-      inputs:
-        - desc: 带国家码；多个逗号分隔
-          label: 手机号
-          name: to
-          required: true
-          type: string
-        - label: 模板 ID
-          name: project
-          required: true
-          type: string
-        - desc: 模板变量对象，键=模板里的 @var(键名)；原样传给 SUBMAIL
-          label: 模板变量
-          name: vars
-          opaque: true
-          type: json
-      label: 国际短信·模板发送
-      outputs:
-        - label: 发送 ID
-          name: send_id
-          required: true
-          type: string
-        - goType: int
-          label: 计费条数
-          name: fee
-          required: true
-          type: number
-    - desc: 按 send_id 或手机号查下发结果：delivered=已送达，dropped=运营商丢弃（签名未报备/内容风控/空号）。发送成功但手机没响，答案在这里
-      id: sms_log
-      inputs:
-        - desc: 发送操作的产出；与手机号至少填一个
-          label: 发送 ID
-          name: send_id
-          type: string
-        - desc: 查这个号码最近的下发记录
-          label: 手机号
-          name: to
-          type: string
-        - desc: 默认 1（今天）
-          goType: int
-          label: 查最近几天
-          name: days
-          type: number
-      label: 国内短信·查发送状态
-      outputs:
-        - desc: '每条含 send_id/to/status/report 等，形状由 SUBMAIL 定义——status: delivered=已送达 dropped=被丢弃（report 里有运营商原因）sending=在途'
-          label: 发送记录
-          name: logs
-          opaque: true
-          required: true
-          type: array
-        - goType: int
-          label: 条数
-          name: count
-          required: true
-          type: number
-    - desc: 全文发送：内容必须带已报备的短信签名（如【某某科技】），否则运营商直接拒收
-      id: sms_send
-      inputs:
-        - desc: 11 位号码；多个逗号分隔（单次上限 1 万）
-          label: 手机号
-          name: to
-          required: true
-          type: string
-        - desc: '**必须含【已报备的签名】**，通常放开头；70 字以内一条，超出按 67 字/条分段计费'
-          label: 内容
-          name: content
-          required: true
-          type: text
-      label: 国内短信·发送
-      outputs:
-        - label: 发送 ID
-          name: send_id
-          required: true
-          type: string
-        - goType: int
-          label: 计费条数
-          name: fee
-          required: true
-          type: number
-    - desc: 按已审核的模板发送（验证码/通知类推荐）：给模板 ID + 变量
-      id: sms_xsend
-      inputs:
-        - desc: 11 位号码；多个逗号分隔
-          label: 手机号
-          name: to
-          required: true
-          type: string
-        - desc: 控制台「短信模板」里的 项目标识（如 abc12）
-          label: 模板 ID
-          name: project
-          required: true
-          type: string
-        - desc: 如 {"code":"123456"}
-          label: 模板变量
-          name: vars
-          opaque: true
-          type: json
-      label: 国内短信·模板发送
-      outputs:
-        - label: 发送 ID
-          name: send_id
-          required: true
-          type: string
-        - goType: int
-          label: 计费条数
-          name: fee
-          required: true
-          type: number
 plugin:
-    desc: 通过 SUBMAIL（赛邮云通信）发国内短信与国际短信：告警通知、验证码、运营触达。
-    doc: README.md
-    label: 赛邮短信
-    name: submail
-    org: sokel
-    version: v1.0.0
+  desc: 通过 SUBMAIL（赛邮云通信）发国内短信与国际短信：告警通知、验证码、运营触达。
+  doc: README.md
+  label: 赛邮短信
+  name: submail
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 控制台「短信」应用的 AppID（纯数字）。只用国际短信可留空
+      label: 国内短信 AppID
+      name: sms_appid
+      type: text
+    - label: 国内短信 AppKey
+      name: sms_appkey
+      type: secret
+    - desc: 控制台「国际短信」应用的 AppID。只用国内短信可留空
+      label: 国际短信 AppID
+      name: intl_appid
+      type: text
+    - label: 国际短信 AppKey
+      name: intl_appkey
+      type: secret
+
+operations:
+  - desc: 查短信余额：国内（条数）+ 国际（余额，按金额计费），配了哪组应用查哪边。余额告警工作流用：定时查 → 低于阈值发通知
+    id: balance
+    label: 查余额
+    outputs:
+      - desc: 没配国内应用时为 0
+        goType: int
+        label: 国内·运营类余额(条)
+        name: balance
+        required: true
+        type: number
+      - goType: int
+        label: 国内·三网合一余额(条)
+        name: transactional
+        required: true
+        type: number
+      - desc: 国际短信按金额计费；没配国际应用时为 0
+        label: 国际·余额
+        name: intl_balance
+        required: true
+        type: number
+  - desc: 用配好的应用各查一次余额——appid/appkey 有误当场暴露
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 发到境外号码：号码带国家码（如 +81…、+1…）。用凭证里的国际短信应用
+    id: intl_send
+    inputs:
+      - desc: 带国家码：+81xxx / +1xxx；多个逗号分隔
+        label: 手机号
+        name: to
+        required: true
+        type: string
+      - desc: 英文 160 字符一条；中文等 Unicode 70 字符一条，超出分段计费
+        label: 内容
+        name: content
+        required: true
+        type: text
+    label: 国际短信·发送
+    outputs:
+      - label: 发送 ID
+        name: send_id
+        required: true
+        type: string
+      - goType: int
+        label: 计费条数
+        name: fee
+        required: true
+        type: number
+  - desc: 按已审核的国际短信模板发送：模板 ID + 变量
+    id: intl_xsend
+    inputs:
+      - desc: 带国家码；多个逗号分隔
+        label: 手机号
+        name: to
+        required: true
+        type: string
+      - label: 模板 ID
+        name: project
+        required: true
+        type: string
+      - desc: 模板变量对象，键=模板里的 @var(键名)；原样传给 SUBMAIL
+        label: 模板变量
+        name: vars
+        opaque: true
+        type: json
+    label: 国际短信·模板发送
+    outputs:
+      - label: 发送 ID
+        name: send_id
+        required: true
+        type: string
+      - goType: int
+        label: 计费条数
+        name: fee
+        required: true
+        type: number
+  - desc: 按 send_id 或手机号查下发结果：delivered=已送达，dropped=运营商丢弃（签名未报备/内容风控/空号）。发送成功但手机没响，答案在这里
+    id: sms_log
+    inputs:
+      - desc: 发送操作的产出；与手机号至少填一个
+        label: 发送 ID
+        name: send_id
+        type: string
+      - desc: 查这个号码最近的下发记录
+        label: 手机号
+        name: to
+        type: string
+      - desc: 默认 1（今天）
+        goType: int
+        label: 查最近几天
+        name: days
+        type: number
+    label: 国内短信·查发送状态
+    outputs:
+      - desc: '每条含 send_id/to/status/report 等，形状由 SUBMAIL 定义——status: delivered=已送达 dropped=被丢弃（report 里有运营商原因）sending=在途'
+        label: 发送记录
+        name: logs
+        opaque: true
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+  - desc: 全文发送：内容必须带已报备的短信签名（如【某某科技】），否则运营商直接拒收
+    id: sms_send
+    inputs:
+      - desc: 11 位号码；多个逗号分隔（单次上限 1 万）
+        label: 手机号
+        name: to
+        required: true
+        type: string
+      - desc: '**必须含【已报备的签名】**，通常放开头；70 字以内一条，超出按 67 字/条分段计费'
+        label: 内容
+        name: content
+        required: true
+        type: text
+    label: 国内短信·发送
+    outputs:
+      - label: 发送 ID
+        name: send_id
+        required: true
+        type: string
+      - goType: int
+        label: 计费条数
+        name: fee
+        required: true
+        type: number
+  - desc: 按已审核的模板发送（验证码/通知类推荐）：给模板 ID + 变量
+    id: sms_xsend
+    inputs:
+      - desc: 11 位号码；多个逗号分隔
+        label: 手机号
+        name: to
+        required: true
+        type: string
+      - desc: 控制台「短信模板」里的 项目标识（如 abc12）
+        label: 模板 ID
+        name: project
+        required: true
+        type: string
+      - desc: 如 {"code":"123456"}
+        label: 模板变量
+        name: vars
+        opaque: true
+        type: json
+    label: 国内短信·模板发送
+    outputs:
+      - label: 发送 ID
+        name: send_id
+        required: true
+        type: string
+      - goType: int
+        label: 计费条数
+        name: fee
+        required: true
+        type: number
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-submail:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-submail:1.0.1@sha256:17fe55c93f5e20e05e24dfb2162516ce78c38dd74721a3f95f5206b868c3ded6
