@@ -1,3184 +1,3188 @@
-credential:
-    fields:
-        - desc: GitHub Enterprise Server 填根地址（如 https://github.example.com，**不用带 /api/v3**，插件会补）；留空 = github.com
-          label: GitHub 地址
-          name: base_url
-          type: text
-        - desc: 个人访问令牌。经典令牌勾 repo（私有仓库）与 workflow（触发 Actions）；细粒度令牌按仓库授权，至少给 Contents/Issues/Pull requests 读写，要回写检查结果再加 Commit statuses 与 Checks。建议专建一个机器人账号
-          label: 访问令牌
-          name: token
-          required: true
-          type: secret
-        - desc: 平台代收 webhook 用：GitHub 仓库 Settings→Webhooks 里填的 Secret，两边一致才收（**HMAC-SHA256 验签**）。不用 webhook 可留空
-          label: Webhook Secret
-          name: webhook_secret
-          type: secret
-        - desc: owner/repo 逗号分隔（如 sokel-dev/sokel,acme/infra）。**填了才启动轮询事件源**：新提交/新 PR/合并/新 Issue/评论/工作流失败 会触发工作流（约 1 分钟延迟）。配了 Webhook 就**不要**再填这个——两条路会各触发一次
-          label: 事件盯哪些仓库
-          name: watch_repos
-          type: text
-events:
-    - desc: 有人往被监听的仓库推了提交
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 已去掉 refs/heads/ 前缀
-          label: 分支
-          name: ref
-          required: true
-          type: string
-        - label: 最新提交
-          name: commit_sha
-          required: true
-          type: string
-        - label: 最新提交信息
-          name: commit_message
-          required: true
-          type: string
-        - goType: int
-          label: 本次推了几个提交
-          name: commit_count
-          required: true
-          type: number
-        - label: 推送者
-          name: author
-          required: true
-          type: string
-        - desc: 强推会改写历史——审计场景要看它
-          label: 是强推
-          name: forced
-          type: boolean
-        - label: 是新建分支
-          name: created
-          type: boolean
-        - desc: '**删分支也是 push 事件**，且 commit_sha 全是 0——不判这个会去处理一个不存在的提交'
-          label: 是删除分支
-          name: deleted
-          type: boolean
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: commit_pushed
-      label: 有新提交
-    - desc: Issue 下有人发言（ChatOps 斜杠命令从这里进）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 评论内容
-          name: comment
-          required: true
-          type: text
-        - desc: '**加表情回执用它**'
-          goType: int
-          label: 评论 ID
-          name: comment_id
-          required: true
-          type: number
-        - label: 发言人
-          name: author
-          required: true
-          type: string
-        - desc: OWNER / MEMBER / COLLABORATOR / CONTRIBUTOR / NONE。**ChatOps 必须查它**——否则任何路人都能用斜杠命令指挥你的机器人
-          label: 发言人身份
-          name: author_association
-          type: string
-        - desc: '**必须挡掉**：机器人回复自己的评论会无限循环，这是 ChatOps 第一个踩的坑'
-          label: 是机器人发的
-          name: is_bot
-          type: boolean
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: issue_commented
-      label: Issue 有新评论
-    - desc: Issue 或 PR 被加上了标签（摘标签不触发）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 正文
-          name: body
-          type: text
-        - desc: '**一次事件只对应一个标签**——GitHub 每加一个标签发一次，比 GitLab 的批量 diff 干净'
-          label: 这次加的标签
-          name: added_label
-          required: true
-          type: string
-        - itemType: string
-          label: 现在的全部标签
-          name: labels
-          required: true
-          type: array
-        - desc: GitHub 给 PR 打标签走的也是 issues 事件
-          label: 其实是 PR
-          name: is_pr
-          type: boolean
-        - label: 操作者
-          name: actor
-          required: true
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: issue_labeled
-      label: Issue 被打标签
-    - desc: 有人开了 Issue
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 正文
-          name: body
-          type: text
-        - label: 创建者
-          name: author
-          required: true
-          type: string
-        - itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: issue_opened
-      label: 新 Issue
-    - desc: PR 下有人发言（GitHub 与 Issue 评论同一个事件，这里按是不是 PR 拆开）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - label: PR 标题
-          name: title
-          required: true
-          type: string
-        - label: 评论内容
-          name: comment
-          required: true
-          type: text
-        - goType: int
-          label: 评论 ID
-          name: comment_id
-          required: true
-          type: number
-        - label: 发言人
-          name: author
-          required: true
-          type: string
-        - label: 发言人身份
-          name: author_association
-          type: string
-        - label: 是机器人发的
-          name: is_bot
-          type: boolean
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: pr_commented
-      label: PR 有新评论
-    - desc: PR 合并进目标分支（**关掉不合不算**）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 作者
-          name: author
-          required: true
-          type: string
-        - label: 合并者
-          name: merged_by
-          required: true
-          type: string
-        - label: 目标分支
-          name: base
-          required: true
-          type: string
-        - label: 合并后的提交
-          name: merge_sha
-          required: true
-          type: string
-        - itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: pr_merged
-      label: PR 被合并
-    - desc: 有人开了 Pull Request
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - label: 正文
-          name: body
-          type: text
-        - label: 作者
-          name: author
-          required: true
-          type: string
-        - label: 目标分支
-          name: base
-          required: true
-          type: string
-        - label: 来源分支
-          name: head
-          required: true
-          type: string
-        - desc: '**回写提交状态用它**'
-          label: 来源分支最新提交
-          name: head_sha
-          required: true
-          type: string
-        - desc: 草稿 PR 一般不该触发评审机器人
-          label: 是草稿
-          name: draft
-          type: boolean
-        - itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: pr_opened
-      label: 新 PR
-    - desc: 有人提交了评审结论（通过/请求修改/评论）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - label: PR 标题
-          name: title
-          required: true
-          type: string
-        - label: 评审人
-          name: reviewer
-          required: true
-          type: string
-        - desc: approved / changes_requested / commented
-          label: 结论
-          name: state
-          required: true
-          type: string
-        - label: 总评
-          name: body
-          type: text
-        - label: 被评审的提交
-          name: head_sha
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: pr_review_submitted
-      label: PR 有评审
-    - desc: 发布了一个 Release（草稿转正式也算）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 标签
-          name: tag
-          required: true
-          type: string
-        - label: 标题
-          name: name
-          required: true
-          type: string
-        - label: 发布说明
-          name: body
-          type: text
-        - label: 是预发布
-          name: prerelease
-          type: boolean
-        - label: 发布者
-          name: author
-          required: true
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: release_published
-      label: 有新发布
-    - desc: Actions 跑挂了（只在结论是 failure 时触发，取消与跳过不算）
-      fields:
-        - desc: owner/repo
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 工作流名
-          name: workflow
-          required: true
-          type: string
-        - desc: 拿它去查作业与日志
-          goType: int
-          label: 运行 ID
-          name: run_id
-          required: true
-          type: number
-        - label: 分支
-          name: branch
-          required: true
-          type: string
-        - label: 提交
-          name: commit_sha
-          required: true
-          type: string
-        - desc: push / pull_request / schedule…
-          label: 原始触发事件
-          name: event
-          required: true
-          type: string
-        - label: 触发者
-          name: actor
-          required: true
-          type: string
-        - desc: '**重试失败会再发一次事件**——只想报一次的话判 attempt==1'
-          goType: int
-          label: 第几次重试
-          name: attempt
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: webhook 或 poll——两条路都开时用它区分
-          label: 来路
-          name: source
-          type: string
-      id: workflow_failed
-      label: 工作流失败
-events_common:
-    - repo
-operations:
-    - desc: 从某个分支或提交拉一个新分支（机器人开 PR 前的第一步）
-      id: branch_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 不带 refs/heads/ 前缀
-          label: 新分支名
-          name: branch
-          required: true
-          type: string
-        - desc: 分支名或提交 sha；留空 = 默认分支的最新提交
-          label: 基于
-          name: from
-          type: string
-      label: 建分支
-      outputs:
-        - label: 分支名
-          name: branch
-          required: true
-          type: string
-        - label: 指向的提交
-          name: sha
-          required: true
-          type: string
-        - desc: true = 分支本来就有，没有新建（**不报错**：机器人重跑一次不该炸）
-          label: 已存在
-          name: existed
-          required: true
-          type: boolean
-    - desc: 读取某个分支的保护规则（合规巡检：主分支的保护有没有被人关掉）
-      id: branch_protection_get
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 留空 = 默认分支
-          label: 分支
-          name: branch
-          type: string
-      label: 查分支保护
-      outputs:
-        - desc: '**false 时下面各项都是零值**——没有保护规则时 GitHub 回 404，这里翻译成 protected=false 而不是报错'
-          label: 受保护
-          name: protected
-          required: true
-          type: boolean
-        - goType: int
-          label: 需要几个人批准
-          name: required_approvals
-          required: true
-          type: number
-        - label: 新提交作废旧批准
-          name: dismiss_stale_reviews
-          required: true
-          type: boolean
-        - label: 需要 code owner 批准
-          name: require_code_owner_review
-          required: true
-          type: boolean
-        - desc: 检查名，与「回写提交状态」的 context 是同一个命名空间
-          itemType: string
-          label: 必须通过的检查
-          name: required_checks
-          required: true
-          type: array
-        - label: 管理员也受约束
-          name: enforce_admins
-          required: true
-          type: boolean
-        - label: 允许强推
-          name: allow_force_push
-          required: true
-          type: boolean
-        - label: 要求线性历史
-          name: required_linear_history
-          required: true
-          type: boolean
-    - desc: 列出仓库的分支
-      id: branches_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 分支列表
-      outputs:
-        - fields:
-            - label: 名字
-              name: name
-              required: true
-              type: string
-            - label: 最新提交
-              name: sha
-              required: true
-              type: string
-            - desc: 受保护分支上直接 push 会被拒，要走 PR
-              label: 受保护
-              name: protected
-              required: true
-              type: boolean
-          goType: Branch
-          label: 分支列表
-          name: branches
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 直调任意 GitHub REST 接口——上面没覆盖到的都走这里
-      id: call
-      inputs:
-        - default: GET
-          label: 方法
-          name: method
-          options:
-            - value: GET
-            - value: POST
-            - value: PATCH
-            - value: PUT
-            - value: DELETE
-          type: enum
-        - desc: 以 / 开头、**不带** https://api.github.com 前缀，如 /repos/owner/name/topics
-          label: 接口路径
-          name: path
-          required: true
-          type: string
-        - desc: 任意 GitHub 接口的请求体，形状由目标接口决定
-          label: 请求体
-          name: body
-          opaque: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-        - label: 查询参数
-          name: query
-          type: json
-          valueType:
-            goType: string
-            name: ""
-            type: string
-      label: 通用调用
-      outputs:
-        - goType: int
-          label: HTTP 状态码
-          name: status
-          required: true
-          type: number
-        - desc: 上游原样返回，形状由目标接口决定
-          label: 响应体
-          name: data
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-        - desc: 从 Link 头判断
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: Checks API：带标题/markdown 摘要/行内注解的检查结果（比「提交状态」富，但要 App 或细粒度令牌）
-      id: check_run_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 同「回写提交状态」：用 PR 的 head_sha
-          label: 提交 sha
-          name: sha
-          required: true
-          type: string
-        - label: 检查名
-          name: name
-          required: true
-          type: string
-        - desc: 留空 = 标成「进行中」
-          label: 结论
-          name: conclusion
-          options:
-            - label: 通过
-              value: success
-            - label: 失败
-              value: failure
-            - label: 中性
-              value: neutral
-            - label: 已取消
-              value: cancelled
-            - label: 超时
-              value: timed_out
-            - label: 需人工处理
-              value: action_required
-          type: enum
-        - label: 标题
-          name: title
-          type: string
-        - desc: markdown
-          label: 摘要
-          name: summary
-          type: text
-        - desc: markdown，显示在摘要下方
-          label: 详情
-          name: details
-          type: text
-        - desc: '**一次最多 50 条**，超出的部分 GitHub 直接丢掉不报错'
-          fields:
-            - label: 文件路径
-              name: path
-              required: true
-              type: string
-            - goType: int
-              label: 起始行
-              name: start_line
-              required: true
-              type: number
-            - desc: 单行就与起始行相同
-              goType: int
-              label: 结束行
-              name: end_line
-              required: true
-              type: number
-            - desc: notice / warning / failure
-              label: 级别
-              name: level
-              required: true
-              type: string
-            - label: 内容
-              name: message
-              required: true
-              type: string
-            - desc: 可留空
-              label: 标题
-              name: title
-              required: true
-              type: string
-          goType: Annotation
-          label: 行内注解
-          name: annotations
-          type: array
-        - label: 详情链接
-          name: details_url
-          type: string
-      label: 建检查运行
-      outputs:
-        - goType: int
-          label: 检查运行 ID
-          name: check_run_id
-          required: true
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: 超过 50 条时这里是 50——差额就是被丢掉的
-          goType: int
-          label: 实际提交的注解数
-          name: annotations_sent
-          required: true
-          type: number
-    - desc: 列出对仓库有权限的人及其权限级别（准入审计；也用来判断某人能不能被指派）
-      id: collaborators_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 留空 = 全部
-          label: 只看某个权限
-          name: permission
-          options:
-            - label: 有写权限的
-              value: push
-            - label: 管理员
-              value: admin
-            - label: 只读
-              value: pull
-            - label: 可分类
-              value: triage
-            - label: 可维护
-              value: maintain
-          type: enum
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 协作者列表
-      outputs:
-        - fields:
-            - label: 用户名
-              name: login
-              required: true
-              type: string
-            - desc: admin / maintain / push / triage / pull
-              label: 权限
-              name: permission
-              required: true
-              type: string
-            - desc: User 或 Bot
-              label: 类型
-              name: type
-              required: true
-              type: string
-            - label: 主页
-              name: url
-              required: true
-              type: string
-          goType: Collaborator
-          label: 协作者
-          name: collaborators
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 在某个提交上挂一条状态（PR 页面下方那排 ✓/✗），机器人把结论写回 GitHub 的最简方式
-      id: commit_status_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: '**要用 PR 的 head_sha，不是合并提交**——写错地方的状态不会出现在 PR 页面上'
-          label: 提交 sha
-          name: sha
-          required: true
-          type: string
-        - label: 状态
-          name: state
-          options:
-            - label: 通过
-              value: success
-            - label: 失败
-              value: failure
-            - label: 出错
-              value: error
-            - label: 进行中
-              value: pending
-          required: true
-          type: enum
-        - default: sokel
-          desc: 这条状态的标识（如 sokel/lint）。**同名会覆盖**——进行中→完成就是靠同名覆盖做的
-          label: 检查名
-          name: context
-          type: string
-        - desc: 最多 140 字，超了 GitHub 会截断
-          label: 一句话说明
-          name: description
-          type: string
-        - desc: 点状态跳转到哪（如工作流运行记录）
-          label: 详情链接
-          name: target_url
-          type: string
-      label: 回写提交状态
-      outputs:
-        - goType: int
-          label: 状态 ID
-          name: status_id
-          required: true
-          type: number
-        - label: 检查名
-          name: context
-          required: true
-          type: string
-    - desc: 列出某个分支上的提交
-      id: commits_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 留空 = 默认分支
-          label: 分支
-          name: branch
-          type: string
-        - desc: 只返回改动了该路径的提交
-          label: 只看某个文件
-          name: path
-          type: string
-        - desc: ISO8601（如 2026-08-01T00:00:00Z）
-          label: 起始时间
-          name: since
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 提交列表
-      outputs:
-        - fields:
-            - label: sha
-              name: sha
-              required: true
-              type: string
-            - label: 提交信息
-              name: message
-              required: true
-              type: string
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - label: 时间
-              name: date
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-          goType: Commit
-          label: 提交列表
-          name: commits
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 读取仓库里某个文件的内容
-      id: file_get
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 仓库内相对路径，如 README.md 或 src/main.go
-          label: 文件路径
-          name: path
-          required: true
-          type: string
-        - desc: 留空 = 默认分支
-          label: 分支或提交
-          name: ref
-          type: string
-      label: 读文件
-      outputs:
-        - label: 内容
-          name: content
-          required: true
-          type: text
-        - desc: '**改这个文件时要把它传给「写文件」**（虽然写文件也会自己去取一次）'
-          label: blob sha
-          name: sha
-          required: true
-          type: string
-        - goType: int
-          label: 字节数
-          name: size
-          required: true
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 新建或修改一个文件并提交（自动判断新建/更新）
-      id: file_write
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 文件路径
-          name: path
-          required: true
-          type: string
-        - desc: 完整内容（不是补丁）——这个接口是整文件覆盖
-          label: 内容
-          name: content
-          required: true
-          type: text
-        - label: 提交信息
-          name: message
-          required: true
-          type: string
-        - desc: 留空 = 默认分支；**分支必须已存在**，要新分支先用「建分支」
-          label: 分支
-          name: branch
-          type: string
-      label: 写文件
-      outputs:
-        - label: 提交 sha
-          name: commit_sha
-          required: true
-          type: string
-        - label: 新的 blob sha
-          name: sha
-          required: true
-          type: string
-        - desc: false = 覆盖了已有文件
-          label: 是新建
-          name: created
-          required: true
-          type: boolean
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 验证令牌可用，并回报速率余量与令牌权限范围
-      id: health_check
-      label: 健康检查
-      outputs:
-        - label: 是否可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-        - label: 令牌属于谁
-          name: login
-          required: true
-          type: string
-        - desc: 经典令牌才有；细粒度令牌这里是空的（GitHub 不在头里回报），不代表没权限
-          itemType: string
-          label: 令牌权限范围
-          name: scopes
-          type: array
-        - goType: int
-          label: 本小时剩余调用次数
-          name: rate_remaining
-          type: number
-    - desc: 给 Issue 或 PR 加/去指派人
-      id: issue_assign
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: Issue 或 PR 编号
-          goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - default: add
-          label: 方式
-          name: mode
-          options:
-            - label: 追加
-              value: add
-            - label: 移除
-              value: remove
-          type: enum
-        - desc: '**对仓库没有写权限的人会被静默忽略**——加完请看出参核对，别假设成功'
-          itemType: string
-          label: 用户名
-          name: assignees
-          required: true
-          type: array
-      label: 指派
-      outputs:
-        - desc: 拿它和你传的比对——少了谁就是那个人没有仓库权限
-          itemType: string
-          label: 现在的指派人
-          name: assignees
-          required: true
-          type: array
-    - desc: 在 Issue 或 PR 下发一条评论（GitHub 两者共用评论接口，PR 也用这个）
-      id: issue_comment
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: Issue 或 PR 编号
-          goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - desc: markdown
-          label: 内容
-          name: body
-          required: true
-          type: text
-      label: 发评论
-      outputs:
-        - desc: 要给它加表情或事后编辑就留着这个
-          goType: int
-          label: 评论 ID
-          name: comment_id
-          required: true
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 新建一条 Issue
-      id: issue_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - desc: markdown
-          label: 正文
-          name: body
-          type: text
-        - desc: '**标签必须已存在**，否则 422；不确定就先用「建标签」'
-          itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - desc: 用户名；对仓库没写权限的人会被静默忽略
-          itemType: string
-          label: 指派给
-          name: assignees
-          type: array
-        - desc: 编号或标题
-          label: 里程碑
-          name: milestone
-          type: string
-      label: 开 Issue
-      outputs:
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 取单条 Issue（或 PR）的完整信息，可带上评论
-      id: issue_get
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: Issue 或 PR 的编号（两者共用编号空间）
-          goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - desc: 默认只取正文
-          label: 带上评论
-          name: with_comments
-          type: boolean
-      label: Issue 详情
-      outputs:
-        - fields:
-            - goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - desc: 超长会截断
-              label: 正文
-              name: body
-              required: true
-              type: string
-            - desc: open / closed
-              label: 状态
-              name: state
-              required: true
-              type: string
-            - desc: GitHub 把 PR 也当 Issue 返回——判据看这个，别看标题
-              label: 其实是 PR
-              name: is_pr
-              required: true
-              type: boolean
-            - label: 创建者
-              name: author
-              required: true
-              type: string
-            - itemType: string
-              label: 指派给
-              name: assignees
-              required: true
-              type: array
-            - itemType: string
-              label: 标签
-              name: labels
-              required: true
-              type: array
-            - label: 里程碑
-              name: milestone
-              required: true
-              type: string
-            - goType: int
-              label: 评论数
-              name: comments
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-            - desc: 未关闭时为空
-              label: 关闭时间
-              name: closed_at
-              required: true
-              type: string
-          goType: Issue
-          label: Issue
-          name: issue
-          required: true
-          type: json
-        - fields:
-            - desc: 改/删评论、加表情都要它
-              goType: int
-              label: 评论 ID
-              name: id
-              required: true
-              type: number
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - label: 内容
-              name: body
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 时间
-              name: created_at
-              required: true
-              type: string
-          goType: Comment
-          label: 评论
-          name: comments
-          type: array
-    - desc: 给 Issue 或 PR 加、去、或整体设定标签
-      id: issue_label
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: Issue 或 PR 编号
-          goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - default: add
-          label: 方式
-          name: mode
-          options:
-            - label: 追加
-              value: add
-            - label: 移除
-              value: remove
-            - label: 整体替换
-              value: set
-          type: enum
-        - desc: '**追加时标签必须已存在**（GitHub 会自动建？不会，422）；set 会把没列出的都摘掉'
-          itemType: string
-          label: 标签
-          name: labels
-          required: true
-          type: array
-      label: 打标签
-      outputs:
-        - itemType: string
-          label: 现在的标签
-          name: labels
-          required: true
-          type: array
-    - desc: 改标题/正文/状态/里程碑；关闭与重开也走这里（stale-bot 的最后一步）
-      id: issue_update
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: Issue 或 PR 编号
-          goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - desc: 留空 = 不改
-          label: 标题
-          name: title
-          type: string
-        - desc: 留空 = 不改
-          label: 正文
-          name: body
-          type: text
-        - desc: 留空 = 不改
-          label: 状态
-          name: state
-          options:
-            - label: 重开
-              value: open
-            - label: 关闭
-              value: closed
-          type: enum
-        - desc: '**stale-bot 关闭时应给 not_planned**——不给的话默认算「已完成」，统计会失真'
-          label: 关闭原因
-          name: state_reason
-          options:
-            - label: 已完成
-              value: completed
-            - label: 不做了
-              value: not_planned
-            - label: 重开
-              value: reopened
-          type: enum
-        - desc: 编号或标题；填 none 移出里程碑
-          label: 里程碑
-          name: milestone
-          type: string
-      label: 改 Issue
-      outputs:
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 当前状态
-          name: state
-          required: true
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 按状态/标签/指派人/更新时间筛 Issue（stale-bot 那套筛选都在这）
-      id: issues_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - default: open
-          label: 状态
-          name: state
-          options:
-            - label: 未关闭
-              value: open
-            - label: 已关闭
-              value: closed
-            - label: 全部
-              value: all
-          type: enum
-        - desc: '**同时**带上这些标签的才返回（是与不是或）'
-          itemType: string
-          label: 标签
-          name: labels
-          type: array
-        - desc: 用户名；填 none = 没人认领的，填 * = 任何人认领的
-          label: 指派给
-          name: assignee
-          type: string
-        - desc: 用户名
-          label: 创建者
-          name: creator
-          type: string
-        - desc: 里程碑编号或标题；none = 不在任何里程碑里
-          label: 里程碑
-          name: milestone
-          type: string
-        - desc: ISO8601。**stale-bot 反过来用**：要「很久没动的」就按 updated 升序取第一页
-          label: 这个时间之后更新的
-          name: since
-          type: string
-        - default: created
-          label: 排序
-          name: sort
-          options:
-            - label: 创建时间
-              value: created
-            - label: 更新时间
-              value: updated
-            - label: 评论数
-              value: comments
-          type: enum
-        - default: desc
-          label: 方向
-          name: direction
-          options:
-            - label: 倒序
-              value: desc
-            - label: 正序
-              value: asc
-          type: enum
-        - desc: GitHub 的 Issue 接口**本来就会返回 PR**；默认剔掉，打开这个开关才保留
-          label: 把 PR 也算进来
-          name: include_prs
-          type: boolean
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: Issue 列表
-      outputs:
-        - fields:
-            - goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - desc: 超长会截断
-              label: 正文
-              name: body
-              required: true
-              type: string
-            - desc: open / closed
-              label: 状态
-              name: state
-              required: true
-              type: string
-            - desc: GitHub 把 PR 也当 Issue 返回——判据看这个，别看标题
-              label: 其实是 PR
-              name: is_pr
-              required: true
-              type: boolean
-            - label: 创建者
-              name: author
-              required: true
-              type: string
-            - itemType: string
-              label: 指派给
-              name: assignees
-              required: true
-              type: array
-            - itemType: string
-              label: 标签
-              name: labels
-              required: true
-              type: array
-            - label: 里程碑
-              name: milestone
-              required: true
-              type: string
-            - goType: int
-              label: 评论数
-              name: comments
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-            - desc: 未关闭时为空
-              label: 关闭时间
-              name: closed_at
-              required: true
-              type: string
-          goType: Issue
-          label: Issue 列表
-          name: issues
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-        - desc: 本页里因为是 PR 而被剔掉的条数（include_prs 打开时恒为 0）
-          goType: int
-          label: 剔掉的 PR 数
-          name: dropped_prs
-          type: number
-    - desc: 取某个作业的日志正文（默认只给尾部，够定位失败原因）
-      id: job_log
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 从「运行的作业」拿
-          goType: int
-          label: 作业 ID
-          name: job_id
-          required: true
-          type: number
-        - desc: 默认 200。日志动辄几 MB，整篇塞进下游会把上下文吃满；**要全文填 -1**（不是 0——0 与「没填」在线上分不开）
-          goType: int
-          label: 只要末尾多少行
-          name: tail
-          type: number
-      label: 作业日志
-      outputs:
-        - label: 日志
-          name: log
-          required: true
-          type: text
-        - goType: int
-          label: 返回行数
-          name: lines
-          required: true
-          type: number
-        - desc: true = 前面还有内容
-          label: 被截断了
-          name: truncated
-          required: true
-          type: boolean
-    - desc: 新建或更新一个仓库标签（已存在则改颜色与说明，不报错）
-      id: label_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 名字
-          name: name
-          required: true
-          type: string
-        - desc: '六位十六进制，不带 #（如 d73a4a）；留空 = 随机'
-          label: 颜色
-          name: color
-          type: string
-        - desc: 最多 100 字
-          label: 说明
-          name: description
-          type: string
-      label: 建标签
-      outputs:
-        - label: 名字
-          name: name
-          required: true
-          type: string
-        - desc: false = 已存在，做了更新
-          label: 是新建
-          name: created
-          required: true
-          type: boolean
-    - desc: 列出仓库定义的标签（打标签前先确认它存在）
-      id: labels_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 标签列表
-      outputs:
-        - fields:
-            - label: 名字
-              name: name
-              required: true
-              type: string
-            - desc: '六位十六进制，不带 #'
-              label: 颜色
-              name: color
-              required: true
-              type: string
-            - label: 说明
-              name: description
-              required: true
-              type: string
-          goType: Label
-          label: 标签列表
-          name: labels
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 列出里程碑与完成进度
-      id: milestones_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - default: open
-          label: 状态
-          name: state
-          options:
-            - label: 进行中
-              value: open
-            - label: 已关闭
-              value: closed
-            - label: 全部
-              value: all
-          type: enum
-      label: 里程碑列表
-      outputs:
-        - fields:
-            - desc: 给 Issue 设里程碑时可以用它，也可以用标题
-              goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 说明
-              name: description
-              required: true
-              type: string
-            - label: 状态
-              name: state
-              required: true
-              type: string
-            - goType: int
-              label: 未完成
-              name: open_issues
-              required: true
-              type: number
-            - goType: int
-              label: 已完成
-              name: closed_issues
-              required: true
-              type: number
-            - label: 截止时间
-              name: due_on
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-          goType: Milestone
-          label: 里程碑列表
-          name: milestones
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-    - desc: 新建一个 Pull Request
-      id: pr_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - label: 标题
-          name: title
-          required: true
-          type: string
-        - desc: 跨 fork 时写 owner:branch
-          label: 来源分支
-          name: head
-          required: true
-          type: string
-        - desc: 留空 = 默认分支
-          label: 目标分支
-          name: base
-          type: string
-        - desc: markdown
-          label: 正文
-          name: body
-          type: text
-        - desc: 机器人开的 PR 建议先草稿，人看过再转正式
-          label: 开成草稿
-          name: draft
-          type: boolean
-        - default: true
-          label: 允许维护者改
-          name: maintainer_can_modify
-          type: boolean
-      label: 开 PR
-      outputs:
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - label: 来源分支最新提交
-          name: head_sha
-          required: true
-          type: string
-    - desc: 列出 PR 的文件改动与 diff（评审机器人的输入）
-      id: pr_files
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - desc: 默认只给文件名与增删行数；打开才给 patch（很长，注意下游上下文）
-          label: 带上 diff 正文
-          name: with_patch
-          type: boolean
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: PR 改了哪些文件
-      outputs:
-        - fields:
-            - label: 路径
-              name: path
-              required: true
-              type: string
-            - desc: added / modified / removed / renamed
-              label: 状态
-              name: status
-              required: true
-              type: string
-            - goType: int
-              label: 新增行数
-              name: additions
-              required: true
-              type: number
-            - goType: int
-              label: 删除行数
-              name: deletions
-              required: true
-              type: number
-            - desc: 只有 with_patch 打开才有；二进制文件恒为空
-              label: diff
-              name: patch
-              required: true
-              type: string
-            - label: blob sha
-              name: sha
-              required: true
-              type: string
-          goType: PRFile
-          label: 文件改动
-          name: files
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-        - goType: int
-          label: 本页新增行数
-          name: additions
-          required: true
-          type: number
-        - goType: int
-          label: 本页删除行数
-          name: deletions
-          required: true
-          type: number
-    - desc: 取单个 PR 的完整信息
-      id: pr_get
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-      label: PR 详情
-      outputs:
-        - fields:
-            - goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 正文
-              name: body
-              required: true
-              type: string
-            - desc: open / closed
-              label: 状态
-              name: state
-              required: true
-              type: string
-            - desc: '**closed 不等于 merged**——关掉不合也是 closed，判据看这个'
-              label: 已合并
-              name: merged
-              required: true
-              type: boolean
-            - desc: 草稿 PR 合不了，要先转正式
-              label: 草稿
-              name: draft
-              required: true
-              type: boolean
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - label: 目标分支
-              name: base
-              required: true
-              type: string
-            - label: 来源分支
-              name: head
-              required: true
-              type: string
-            - desc: '**回写提交状态用它**'
-              label: 来源分支最新提交
-              name: head_sha
-              required: true
-              type: string
-            - itemType: string
-              label: 标签
-              name: labels
-              required: true
-              type: array
-            - itemType: string
-              label: 指派给
-              name: assignees
-              required: true
-              type: array
-            - itemType: string
-              label: 待评审人
-              name: reviewers
-              required: true
-              type: array
-            - desc: true/false/unknown——GitHub 是异步算的，刚开的 PR 多半是 unknown，等几秒再查
-              label: 能不能合
-              name: mergeable
-              required: true
-              type: string
-            - goType: int
-              label: 新增行数
-              name: additions
-              required: true
-              type: number
-            - goType: int
-              label: 删除行数
-              name: deletions
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-          goType: PR
-          label: PR
-          name: pr
-          required: true
-          type: json
-    - desc: 按状态/分支筛 Pull Request
-      id: pr_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - default: open
-          label: 状态
-          name: state
-          options:
-            - label: 未关闭
-              value: open
-            - label: 已关闭
-              value: closed
-            - label: 全部
-              value: all
-          type: enum
-        - desc: 只看合往这个分支的
-          label: 目标分支
-          name: base
-          type: string
-        - desc: owner:branch 形态；跨 fork 时要带 owner
-          label: 来源分支
-          name: head
-          type: string
-        - default: created
-          label: 排序
-          name: sort
-          options:
-            - label: 创建时间
-              value: created
-            - label: 更新时间
-              value: updated
-            - label: 评论数
-              value: popularity
-            - label: 久未合并
-              value: long-running
-          type: enum
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: PR 列表
-      outputs:
-        - fields:
-            - goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 正文
-              name: body
-              required: true
-              type: string
-            - desc: open / closed
-              label: 状态
-              name: state
-              required: true
-              type: string
-            - desc: '**closed 不等于 merged**——关掉不合也是 closed，判据看这个'
-              label: 已合并
-              name: merged
-              required: true
-              type: boolean
-            - desc: 草稿 PR 合不了，要先转正式
-              label: 草稿
-              name: draft
-              required: true
-              type: boolean
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - label: 目标分支
-              name: base
-              required: true
-              type: string
-            - label: 来源分支
-              name: head
-              required: true
-              type: string
-            - desc: '**回写提交状态用它**'
-              label: 来源分支最新提交
-              name: head_sha
-              required: true
-              type: string
-            - itemType: string
-              label: 标签
-              name: labels
-              required: true
-              type: array
-            - itemType: string
-              label: 指派给
-              name: assignees
-              required: true
-              type: array
-            - itemType: string
-              label: 待评审人
-              name: reviewers
-              required: true
-              type: array
-            - desc: true/false/unknown——GitHub 是异步算的，刚开的 PR 多半是 unknown，等几秒再查
-              label: 能不能合
-              name: mergeable
-              required: true
-              type: string
-            - goType: int
-              label: 新增行数
-              name: additions
-              required: true
-              type: number
-            - goType: int
-              label: 删除行数
-              name: deletions
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-          goType: PR
-          label: PR 列表
-          name: prs
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 合并 Pull Request（三种合法都支持）
-      id: pr_merge
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - default: merge
-          label: 合并方式
-          name: method
-          options:
-            - label: 合并提交
-              value: merge
-            - label: 压成一个提交
-              value: squash
-            - label: 变基
-              value: rebase
-          type: enum
-        - desc: 留空 = GitHub 默认
-          label: 合并提交标题
-          name: title
-          type: string
-        - label: 合并提交正文
-          name: message
-          type: text
-        - desc: '**并发保护**：填了就只在来源分支仍是这个 sha 时才合。机器人「检查通过就合」的场景必须填——从检查通过到发起合并之间对方可能又推了一版'
-          label: 期望的最新提交
-          name: expect_sha
-          type: string
-      label: 合 PR
-      outputs:
-        - label: 是否已合
-          name: merged
-          required: true
-          type: boolean
-        - label: 合并后的提交
-          name: sha
-          required: true
-          type: string
-        - desc: 没合成时这里是原因（如「Base branch was modified」= expect_sha 对不上）
-          label: GitHub 的说明
-          name: message
-          required: true
-          type: string
-    - desc: 给 PR 加评审人或评审团队（自动分配 reviewer 的机器人用这个）
-      id: pr_request_reviewers
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - desc: 用户名
-          itemType: string
-          label: 评审人
-          name: reviewers
-          type: array
-        - desc: 团队 slug（组织仓库才有）
-          itemType: string
-          label: 评审团队
-          name: team_reviewers
-          type: array
-        - desc: 默认是加；打开则把列出的移除
-          label: 改成移除
-          name: remove
-          type: boolean
-      label: 请人评审
-      outputs:
-        - desc: '**PR 作者不能是自己的评审人**——传了会被 GitHub 静默丢掉，拿这个核对'
-          itemType: string
-          label: 现在的评审人
-          name: reviewers
-          required: true
-          type: array
-    - desc: 以 approve / 请求修改 / 纯评论的身份提交一次评审，可带 diff 行内评论
-      id: pr_review
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - default: COMMENT
-          label: 结论
-          name: event
-          options:
-            - label: 只评论
-              value: COMMENT
-            - label: 通过
-              value: APPROVE
-            - label: 请求修改
-              value: REQUEST_CHANGES
-          type: enum
-        - desc: REQUEST_CHANGES 与 COMMENT **必须有总评**，空的会 422
-          label: 总评
-          name: body
-          type: text
-        - desc: 针对 diff 某一行的评论。**行号是新版文件的行号**，且必须落在本次 diff 涉及的行上，否则整个评审 422（不是那一条被忽略）
-          fields:
-            - label: 文件路径
-              name: path
-              required: true
-              type: string
-            - desc: 新版文件的行号；必须是本次 diff 动过的行
-              goType: int
-              label: 行号
-              name: line
-              required: true
-              type: number
-            - desc: RIGHT（新版，默认）或 LEFT（旧版，评论被删掉的行时用）
-              label: 哪一侧
-              name: side
-              required: true
-              type: string
-            - label: 内容
-              name: body
-              required: true
-              type: string
-          goType: ReviewComment
-          label: 行内评论
-          name: comments
-          type: array
-      label: 提交评审
-      outputs:
-        - goType: int
-          label: 评审 ID
-          name: review_id
-          required: true
-          type: number
-        - label: 状态
-          name: state
-          required: true
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 改标题/正文/目标分支/状态；草稿转正式也在这
-      id: pr_update
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: PR 编号
-          name: number
-          required: true
-          type: number
-        - desc: 留空 = 不改
-          label: 标题
-          name: title
-          type: string
-        - desc: 留空 = 不改
-          label: 正文
-          name: body
-          type: text
-        - desc: 换目标分支；留空 = 不改
-          label: 目标分支
-          name: base
-          type: string
-        - desc: 留空 = 不改
-          label: 状态
-          name: state
-          options:
-            - label: 重开
-              value: open
-            - label: 关闭
-              value: closed
-          type: enum
-        - desc: '**这一项走 GraphQL**：REST 没有把草稿转正式的接口'
-          label: 草稿转正式
-          name: ready_for_review
-          type: boolean
-      label: 改 PR
-      outputs:
-        - goType: int
-          label: 编号
-          name: number
-          required: true
-          type: number
-        - label: 当前状态
-          name: state
-          required: true
-          type: string
-        - label: 是否草稿
-          name: draft
-          required: true
-          type: boolean
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-    - desc: 把一个 Issue 或 PR 加进看板（triage 机器人的第一步）
-      id: project_item_add
-      inputs:
-        - label: 用户或组织
-          name: owner
-          required: true
-          type: string
-        - goType: int
-          label: 看板编号
-          name: project_number
-          required: true
-          type: number
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - goType: int
-          label: Issue 或 PR 编号
-          name: number
-          required: true
-          type: number
-        - desc: 留空自动试
-          label: 是组织
-          name: is_org
-          type: boolean
-      label: 加进看板
-      outputs:
-        - desc: 接着用它挪列
-          label: 卡片 ID
-          name: item_id
-          required: true
-          type: string
-        - desc: GitHub 对重复添加返回同一张卡片，不报错——机器人重跑安全
-          label: 之前就在看板里
-          name: already
-          required: true
-          type: boolean
-    - desc: 改卡片的某个字段值；把 Status 改成别的值就是「挪到另一列」
-      id: project_item_field_set
-      inputs:
-        - label: 用户或组织
-          name: owner
-          required: true
-          type: string
-        - goType: int
-          label: 看板编号
-          name: project_number
-          required: true
-          type: number
-        - desc: PVTI_ 开头，从「看板卡片」或「加进看板」拿
-          label: 卡片 ID
-          name: item_id
-          required: true
-          type: string
-        - default: Status
-          desc: 如 Status、Priority；大小写要与看板上一致
-          label: 字段名
-          name: field
-          type: string
-        - desc: 单选字段填选项名（如 In Progress）；文本/数字字段填字面值。**选项名必须与看板上的完全一致**——对不上会明确报错并列出可选项，不会静默不动
-          label: 目标值
-          name: value
-          required: true
-          type: string
-        - desc: 留空自动试
-          label: 是组织
-          name: is_org
-          type: boolean
-      label: 改看板字段
-      outputs:
-        - label: 已更新
-          name: updated
-          required: true
-          type: boolean
-        - label: 字段名
-          name: field
-          required: true
-          type: string
-        - label: 现在的值
-          name: value
-          required: true
-          type: string
-    - desc: 列出看板里的卡片及其字段值（Status 在哪一列就在字段里）
-      id: project_items_list
-      inputs:
-        - label: 用户或组织
-          name: owner
-          required: true
-          type: string
-        - desc: 看板地址末尾那个数字
-          goType: int
-          label: 看板编号
-          name: number
-          required: true
-          type: number
-        - desc: 留空自动试
-          label: 是组织
-          name: is_org
-          type: boolean
-        - desc: 默认 50，上限 100（GraphQL 单页上限）
-          goType: int
-          label: 最多取多少
-          name: limit
-          type: number
-      label: 看板卡片
-      outputs:
-        - fields:
-            - desc: PVTI_ 开头；改字段要它
-              label: 卡片 ID
-              name: id
-              required: true
-              type: string
-            - desc: ISSUE / PULL_REQUEST / DRAFT_ISSUE
-              label: 类型
-              name: type
-              required: true
-              type: string
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - desc: 草稿卡片为 0
-              goType: int
-              label: Issue/PR 编号
-              name: number
-              required: true
-              type: number
-            - desc: 草稿卡片为空
-              label: 所属仓库
-              name: repo
-              required: true
-              type: string
-            - label: 状态
-              name: state
-              required: true
-              type: string
-            - desc: Status 单选字段的值，也就是看板上的列名
-              label: 所在列
-              name: status
-              required: true
-              type: string
-            - desc: 形如 Status=In Progress，含自定义字段
-              itemType: string
-              label: 所有字段
-              name: fields
-              required: true
-              type: array
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-          goType: ProjectItem
-          label: 卡片列表
-          name: items
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 列出某个用户或组织的 Projects V2 看板
-      id: projects_list
-      inputs:
-        - desc: 看板挂在账号下，不是仓库下
-          label: 用户或组织
-          name: owner
-          required: true
-          type: string
-        - desc: '**组织与个人是两个不同的 GraphQL 查询**，认错会返回空列表而不是报错。留空自动试两次'
-          label: 是组织
-          name: is_org
-          type: boolean
-      label: 看板列表
-      outputs:
-        - fields:
-            - desc: 看板地址末尾那个数字，其他看板操作用它
-              goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - desc: GraphQL 的全局 ID（PVT_ 开头）；加卡片要它
-              label: 节点 ID
-              name: id
-              required: true
-              type: string
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 已关闭
-              name: closed
-              required: true
-              type: boolean
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - goType: int
-              label: 卡片数
-              name: items
-              required: true
-              type: number
-          goType: Project
-          label: 看板列表
-          name: projects
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-    - desc: 给 Issue/PR 或某条评论加一个表情——ChatOps 机器人回执「收到」的标准做法
-      id: reaction_add
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - default: comment
-          label: 加在哪
-          name: target
-          options:
-            - label: Issue 或 PR 本身
-              value: issue
-            - label: 某条评论
-              value: comment
-          type: enum
-        - desc: target=issue 时填 Issue/PR 编号；target=comment 时填评论 ID（发评论的出参里有）
-          goType: int
-          label: 编号或评论 ID
-          name: id
-          required: true
-          type: number
-        - default: eyes
-          desc: "\U0001F440 = 已看到在处理，\U0001F680 = 已执行，是 ChatOps 的通行约定"
-          label: 表情
-          name: content
-          options:
-            - label: "\U0001F44D"
-              value: "+1"
-            - label: "\U0001F44E"
-              value: "-1"
-            - label: "\U0001F604"
-              value: laugh
-            - label: "\U0001F615"
-              value: confused
-            - label: ❤️
-              value: heart
-            - label: "\U0001F389"
-              value: hooray
-            - label: "\U0001F680"
-              value: rocket
-            - label: "\U0001F440"
-              value: eyes
-          type: enum
-      label: 加表情
-      outputs:
-        - goType: int
-          label: 表情 ID
-          name: reaction_id
-          required: true
-          type: number
-        - desc: GitHub 对重复加表情回 200，不是错
-          label: 之前就加过
-          name: already
-          required: true
-          type: boolean
-    - desc: 创建一个 Release（可让 GitHub 自动生成发布说明）
-      id: release_create
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 如 v1.2.0。标签不存在会**按 target 自动创建**
-          label: 标签名
-          name: tag
-          required: true
-          type: string
-        - desc: 分支名或提交 sha；标签已存在时忽略；留空 = 默认分支
-          label: 基于
-          name: target
-          type: string
-        - desc: 留空 = 用标签名
-          label: 标题
-          name: name
-          type: string
-        - desc: 留空且打开了自动生成，就用 GitHub 生成的
-          label: 发布说明
-          name: body
-          type: text
-        - desc: GitHub 按上个标签以来的 PR 生成。**与手写正文可以并存**：生成的会接在正文后面
-          label: 自动生成发布说明
-          name: generate_notes
-          type: boolean
-        - label: 存为草稿
-          name: draft
-          type: boolean
-        - label: 标为预发布
-          name: prerelease
-          type: boolean
-      label: 发版
-      outputs:
-        - goType: int
-          label: 发布 ID
-          name: release_id
-          required: true
-          type: number
-        - label: 标签
-          name: tag
-          required: true
-          type: string
-        - label: 页面地址
-          name: url
-          required: true
-          type: string
-        - desc: 自动生成时这里是 GitHub 生成的全文
-          label: 最终的发布说明
-          name: body
-          required: true
-          type: text
-    - desc: 列出仓库的 Release
-      id: releases_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 发布列表
-      outputs:
-        - fields:
-            - goType: int
-              label: 发布 ID
-              name: id
-              required: true
-              type: number
-            - label: 标签
-              name: tag_name
-              required: true
-              type: string
-            - label: 标题
-              name: name
-              required: true
-              type: string
-            - label: 发布说明
-              name: body
-              required: true
-              type: string
-            - label: 草稿
-              name: draft
-              required: true
-              type: boolean
-            - label: 预发布
-              name: prerelease
-              required: true
-              type: boolean
-            - label: 发布者
-              name: author
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 创建时间
-              name: created_at
-              required: true
-              type: string
-            - desc: 草稿为空
-              label: 发布时间
-              name: published_at
-              required: true
-              type: string
-          goType: Release
-          label: 发布列表
-          name: releases
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 取单个仓库的元信息
-      id: repo_get
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-      label: 仓库详情
-      outputs:
-        - fields:
-            - desc: owner/repo 形态，其他操作的 repo 字段用它
-              label: 全名
-              name: full_name
-              required: true
-              type: string
-            - label: 名字
-              name: name
-              required: true
-              type: string
-            - label: 归属
-              name: owner
-              required: true
-              type: string
-            - label: 简介
-              name: description
-              required: true
-              type: string
-            - label: 私有
-              name: private
-              required: true
-              type: boolean
-            - label: 是 fork
-              name: fork
-              required: true
-              type: boolean
-            - desc: 归档仓库只读，写操作会 403
-              label: 已归档
-              name: archived
-              required: true
-              type: boolean
-            - label: 默认分支
-              name: default_branch
-              required: true
-              type: string
-            - goType: int
-              label: 星标数
-              name: stars
-              required: true
-              type: number
-            - desc: '**含 PR**——GitHub 这个计数把 PR 也算进去'
-              goType: int
-              label: 未关闭 Issue 数
-              name: open_issues
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-          goType: Repo
-          label: 仓库
-          name: repo
-          required: true
-          type: json
-        - itemType: string
-          label: 主题标签
-          name: topics
-          type: array
-    - desc: 列出某个用户或组织的仓库；留空则列当前令牌账号有权限的仓库
-      id: repos_list
-      inputs:
-        - desc: 留空 = 当前令牌自己的仓库（含私有）
-          label: 用户或组织
-          name: owner
-          type: string
-        - default: all
-          label: 范围
-          name: type
-          options:
-            - label: 全部
-              value: all
-            - label: 自己拥有的
-              value: owner
-            - label: 作为成员参与的
-              value: member
-            - label: 公开的
-              value: public
-            - label: 私有的
-              value: private
-          type: enum
-        - default: updated
-          label: 排序
-          name: sort
-          options:
-            - label: 最近更新
-              value: updated
-            - label: 创建时间
-              value: created
-            - label: 最近推送
-              value: pushed
-            - label: 名字
-              value: full_name
-          type: enum
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 仓库列表
-      outputs:
-        - fields:
-            - desc: owner/repo 形态，其他操作的 repo 字段用它
-              label: 全名
-              name: full_name
-              required: true
-              type: string
-            - label: 名字
-              name: name
-              required: true
-              type: string
-            - label: 归属
-              name: owner
-              required: true
-              type: string
-            - label: 简介
-              name: description
-              required: true
-              type: string
-            - label: 私有
-              name: private
-              required: true
-              type: boolean
-            - label: 是 fork
-              name: fork
-              required: true
-              type: boolean
-            - desc: 归档仓库只读，写操作会 403
-              label: 已归档
-              name: archived
-              required: true
-              type: boolean
-            - label: 默认分支
-              name: default_branch
-              required: true
-              type: string
-            - goType: int
-              label: 星标数
-              name: stars
-              required: true
-              type: number
-            - desc: '**含 PR**——GitHub 这个计数把 PR 也算进去'
-              goType: int
-              label: 未关闭 Issue 数
-              name: open_issues
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-          goType: Repo
-          label: 仓库列表
-          name: repos
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
-    - desc: 列出某次工作流运行里的作业与每一步的结果（定位是哪一步挂的）
-      id: run_jobs
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 从「工作流运行记录」拿
-          goType: int
-          label: 运行 ID
-          name: run_id
-          required: true
-          type: number
-      label: 运行的作业
-      outputs:
-        - fields:
-            - desc: 取日志要它
-              goType: int
-              label: 作业 ID
-              name: id
-              required: true
-              type: number
-            - label: 作业名
-              name: name
-              required: true
-              type: string
-            - label: 状态
-              name: status
-              required: true
-              type: string
-            - label: 结论
-              name: conclusion
-              required: true
-              type: string
-            - desc: 步骤名 → 结论，形如 build=success
-              itemType: string
-              label: 步骤
-              name: steps
-              required: true
-              type: array
-            - label: 开始时间
-              name: started_at
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-          goType: Job
-          label: 作业列表
-          name: jobs
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: 跨所有作业汇总成 作业名/步骤名，直接可以发进通知——不用调用方自己再遍历一遍
-          itemType: string
-          label: 失败的步骤
-          name: failed_steps
-          required: true
-          type: array
-    - desc: 搜 Issue/PR、代码或仓库（GitHub 搜索语法原样传）
-      id: search
-      inputs:
-        - default: issues
-          label: 搜什么
-          name: type
-          options:
-            - label: Issue 与 PR
-              value: issues
-            - label: 代码
-              value: code
-            - label: 仓库
-              value: repositories
-            - label: 提交
-              value: commits
-          type: enum
-        - desc: 'GitHub 搜索语法，如 `repo:owner/name is:open label:bug`、`org:foo is:pr review:required`。**限定符必须写在这里**——没有 repo: 的话是全站搜'
-          label: 搜索式
-          name: query
-          required: true
-          type: string
-        - desc: 默认 30，上限 100
-          goType: int
-          label: 最多返回
-          name: limit
-          type: number
-      label: 搜索
-      outputs:
-        - fields:
-            - label: 标题
-              name: title
-              required: true
-              type: string
-            - label: 仓库
-              name: repo
-              required: true
-              type: string
-            - desc: 仓库/代码搜索时为 0
-              goType: int
-              label: 编号
-              name: number
-              required: true
-              type: number
-            - label: 状态
-              name: state
-              required: true
-              type: string
-            - label: 作者
-              name: author
-              required: true
-              type: string
-            - desc: 只有代码搜索有
-              label: 文件路径
-              name: path
-              required: true
-              type: string
-            - desc: 截断过
-              label: 片段
-              name: snippet
-              required: true
-              type: string
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-          goType: SearchHit
-          label: 命中
-          name: results
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**搜索接口是少数会给总数的**（上限 1000，超过按 1000 算）'
-          goType: int
-          label: 总命中数
-          name: total
-          required: true
-          type: number
-        - desc: true = GitHub 搜索超时了只返回了部分——**别把它当成「就这么多」**
-          label: 结果不完整
-          name: incomplete
-          required: true
-          type: boolean
-    - desc: 手动跑一个 Actions 工作流（工作流得声明了 workflow_dispatch 才行）
-      id: workflow_dispatch
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 文件名（如 deploy.yml）或数字 ID
-          label: 工作流
-          name: workflow
-          required: true
-          type: string
-        - desc: 留空 = 默认分支
-          label: 分支或标签
-          name: ref
-          required: true
-          type: string
-        - desc: 对应工作流里的 inputs。**值必须是字符串**——GitHub 只收字符串，传数字会 422
-          label: 输入参数
-          name: inputs
-          type: json
-          valueType:
-            goType: string
-            name: ""
-            type: string
-      label: 触发工作流
-      outputs:
-        - label: 已发出
-          name: dispatched
-          required: true
-          type: boolean
-        - desc: '**GitHub 这个接口不返回运行 ID**（204 空响应）——要拿到 run_id 得隔几秒去查运行记录'
-          label: 说明
-          name: note
-          required: true
-          type: string
-    - desc: 列出 Actions 的运行记录（按工作流/分支/状态筛）
-      id: workflow_runs_list
-      inputs:
-        - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
-          label: 仓库
-          name: repo
-          required: true
-          type: string
-        - desc: 文件名（如 ci.yml）或数字 ID；留空 = 全部工作流
-          label: 工作流
-          name: workflow
-          type: string
-        - label: 分支
-          name: branch
-          type: string
-        - label: 状态
-          name: status
-          options:
-            - label: 已完成
-              value: completed
-            - label: 进行中
-              value: in_progress
-            - label: 排队中
-              value: queued
-            - label: 失败
-              value: failure
-            - label: 成功
-              value: success
-          type: enum
-        - desc: 用户名
-          label: 触发者
-          name: actor
-          type: string
-        - desc: 默认 1；每页 50 条
-          goType: int
-          label: 页码
-          name: page
-          type: number
-      label: 工作流运行记录
-      outputs:
-        - fields:
-            - desc: 查作业与日志要它
-              goType: int
-              label: 运行 ID
-              name: id
-              required: true
-              type: number
-            - label: 工作流名
-              name: name
-              required: true
-              type: string
-            - desc: queued / in_progress / completed
-              label: 状态
-              name: status
-              required: true
-              type: string
-            - desc: success / failure / cancelled…；**未完成时为空**，别拿空当成功
-              label: 结论
-              name: conclusion
-              required: true
-              type: string
-            - label: 分支
-              name: branch
-              required: true
-              type: string
-            - label: 提交
-              name: sha
-              required: true
-              type: string
-            - desc: push / pull_request / workflow_dispatch…
-              label: 触发事件
-              name: event
-              required: true
-              type: string
-            - label: 触发者
-              name: actor
-              required: true
-              type: string
-            - goType: int
-              label: 第几次运行
-              name: run_number
-              required: true
-              type: number
-            - goType: int
-              label: 第几次重试
-              name: attempt
-              required: true
-              type: number
-            - label: 页面地址
-              name: url
-              required: true
-              type: string
-            - label: 开始时间
-              name: created_at
-              required: true
-              type: string
-            - label: 更新时间
-              name: updated_at
-              required: true
-              type: string
-          goType: WorkflowRun
-          label: 运行记录
-          name: runs
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
-          label: 还有下一页
-          name: has_more
-          type: boolean
 plugin:
-    desc: GitHub 项目维护自动化（github.com / GitHub Enterprise Server）：Issue 与 PR 全流程、仓库读写与建分支、Actions 触发与失败日志、发版、Projects V2 看板流转，外加机器人回执面（回写提交状态/检查运行/表情）——自动分类、stale 清理、PR 评审、ChatOps 都能拼出来。事件支持 Webhook（零延迟）与轮询两条路。**需自行部署插件进程**：安装后在本页接入组里复制接入命令。
-    doc: README.md
-    label: GitHub
-    name: github
-    org: sokel
-    version: v1.0.0
+  desc: GitHub 项目维护自动化（github.com / GitHub Enterprise Server）：Issue 与 PR 全流程、仓库读写与建分支、Actions 触发与失败日志、发版、Projects V2 看板流转，外加机器人回执面（回写提交状态/检查运行/表情）——自动分类、stale 清理、PR 评审、ChatOps 都能拼出来。事件支持 Webhook（零延迟）与轮询两条路。**需自行部署插件进程**：安装后在本页接入组里复制接入命令。
+  doc: README.md
+  label: GitHub
+  name: github
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: GitHub Enterprise Server 填根地址（如 https://github.example.com，**不用带 /api/v3**，插件会补）；留空 = github.com
+      label: GitHub 地址
+      name: base_url
+      type: text
+    - desc: 个人访问令牌。经典令牌勾 repo（私有仓库）与 workflow（触发 Actions）；细粒度令牌按仓库授权，至少给 Contents/Issues/Pull requests 读写，要回写检查结果再加 Commit statuses 与 Checks。建议专建一个机器人账号
+      label: 访问令牌
+      name: token
+      required: true
+      type: secret
+    - desc: 平台代收 webhook 用：GitHub 仓库 Settings→Webhooks 里填的 Secret，两边一致才收（**HMAC-SHA256 验签**）。不用 webhook 可留空
+      label: Webhook Secret
+      name: webhook_secret
+      type: secret
+    - desc: owner/repo 逗号分隔（如 sokel-dev/sokel,acme/infra）。**填了才启动轮询事件源**：新提交/新 PR/合并/新 Issue/评论/工作流失败 会触发工作流（约 1 分钟延迟）。配了 Webhook 就**不要**再填这个——两条路会各触发一次
+      label: 事件盯哪些仓库
+      name: watch_repos
+      type: text
+
+events_common:
+  - repo
+
+events:
+  - desc: 有人往被监听的仓库推了提交
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 已去掉 refs/heads/ 前缀
+        label: 分支
+        name: ref
+        required: true
+        type: string
+      - label: 最新提交
+        name: commit_sha
+        required: true
+        type: string
+      - label: 最新提交信息
+        name: commit_message
+        required: true
+        type: string
+      - goType: int
+        label: 本次推了几个提交
+        name: commit_count
+        required: true
+        type: number
+      - label: 推送者
+        name: author
+        required: true
+        type: string
+      - desc: 强推会改写历史——审计场景要看它
+        label: 是强推
+        name: forced
+        type: boolean
+      - label: 是新建分支
+        name: created
+        type: boolean
+      - desc: '**删分支也是 push 事件**，且 commit_sha 全是 0——不判这个会去处理一个不存在的提交'
+        label: 是删除分支
+        name: deleted
+        type: boolean
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: commit_pushed
+    label: 有新提交
+  - desc: Issue 下有人发言（ChatOps 斜杠命令从这里进）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 评论内容
+        name: comment
+        required: true
+        type: text
+      - desc: '**加表情回执用它**'
+        goType: int
+        label: 评论 ID
+        name: comment_id
+        required: true
+        type: number
+      - label: 发言人
+        name: author
+        required: true
+        type: string
+      - desc: OWNER / MEMBER / COLLABORATOR / CONTRIBUTOR / NONE。**ChatOps 必须查它**——否则任何路人都能用斜杠命令指挥你的机器人
+        label: 发言人身份
+        name: author_association
+        type: string
+      - desc: '**必须挡掉**：机器人回复自己的评论会无限循环，这是 ChatOps 第一个踩的坑'
+        label: 是机器人发的
+        name: is_bot
+        type: boolean
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: issue_commented
+    label: Issue 有新评论
+  - desc: Issue 或 PR 被加上了标签（摘标签不触发）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 正文
+        name: body
+        type: text
+      - desc: '**一次事件只对应一个标签**——GitHub 每加一个标签发一次，比 GitLab 的批量 diff 干净'
+        label: 这次加的标签
+        name: added_label
+        required: true
+        type: string
+      - itemType: string
+        label: 现在的全部标签
+        name: labels
+        required: true
+        type: array
+      - desc: GitHub 给 PR 打标签走的也是 issues 事件
+        label: 其实是 PR
+        name: is_pr
+        type: boolean
+      - label: 操作者
+        name: actor
+        required: true
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: issue_labeled
+    label: Issue 被打标签
+  - desc: 有人开了 Issue
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 正文
+        name: body
+        type: text
+      - label: 创建者
+        name: author
+        required: true
+        type: string
+      - itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: issue_opened
+    label: 新 Issue
+  - desc: PR 下有人发言（GitHub 与 Issue 评论同一个事件，这里按是不是 PR 拆开）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - label: PR 标题
+        name: title
+        required: true
+        type: string
+      - label: 评论内容
+        name: comment
+        required: true
+        type: text
+      - goType: int
+        label: 评论 ID
+        name: comment_id
+        required: true
+        type: number
+      - label: 发言人
+        name: author
+        required: true
+        type: string
+      - label: 发言人身份
+        name: author_association
+        type: string
+      - label: 是机器人发的
+        name: is_bot
+        type: boolean
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: pr_commented
+    label: PR 有新评论
+  - desc: PR 合并进目标分支（**关掉不合不算**）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 作者
+        name: author
+        required: true
+        type: string
+      - label: 合并者
+        name: merged_by
+        required: true
+        type: string
+      - label: 目标分支
+        name: base
+        required: true
+        type: string
+      - label: 合并后的提交
+        name: merge_sha
+        required: true
+        type: string
+      - itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: pr_merged
+    label: PR 被合并
+  - desc: 有人开了 Pull Request
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - label: 正文
+        name: body
+        type: text
+      - label: 作者
+        name: author
+        required: true
+        type: string
+      - label: 目标分支
+        name: base
+        required: true
+        type: string
+      - label: 来源分支
+        name: head
+        required: true
+        type: string
+      - desc: '**回写提交状态用它**'
+        label: 来源分支最新提交
+        name: head_sha
+        required: true
+        type: string
+      - desc: 草稿 PR 一般不该触发评审机器人
+        label: 是草稿
+        name: draft
+        type: boolean
+      - itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: pr_opened
+    label: 新 PR
+  - desc: 有人提交了评审结论（通过/请求修改/评论）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - label: PR 标题
+        name: title
+        required: true
+        type: string
+      - label: 评审人
+        name: reviewer
+        required: true
+        type: string
+      - desc: approved / changes_requested / commented
+        label: 结论
+        name: state
+        required: true
+        type: string
+      - label: 总评
+        name: body
+        type: text
+      - label: 被评审的提交
+        name: head_sha
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: pr_review_submitted
+    label: PR 有评审
+  - desc: 发布了一个 Release（草稿转正式也算）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 标签
+        name: tag
+        required: true
+        type: string
+      - label: 标题
+        name: name
+        required: true
+        type: string
+      - label: 发布说明
+        name: body
+        type: text
+      - label: 是预发布
+        name: prerelease
+        type: boolean
+      - label: 发布者
+        name: author
+        required: true
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: release_published
+    label: 有新发布
+  - desc: Actions 跑挂了（只在结论是 failure 时触发，取消与跳过不算）
+    fields:
+      - desc: owner/repo
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 工作流名
+        name: workflow
+        required: true
+        type: string
+      - desc: 拿它去查作业与日志
+        goType: int
+        label: 运行 ID
+        name: run_id
+        required: true
+        type: number
+      - label: 分支
+        name: branch
+        required: true
+        type: string
+      - label: 提交
+        name: commit_sha
+        required: true
+        type: string
+      - desc: push / pull_request / schedule…
+        label: 原始触发事件
+        name: event
+        required: true
+        type: string
+      - label: 触发者
+        name: actor
+        required: true
+        type: string
+      - desc: '**重试失败会再发一次事件**——只想报一次的话判 attempt==1'
+        goType: int
+        label: 第几次重试
+        name: attempt
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: webhook 或 poll——两条路都开时用它区分
+        label: 来路
+        name: source
+        type: string
+    id: workflow_failed
+    label: 工作流失败
+
+operations:
+  - desc: 从某个分支或提交拉一个新分支（机器人开 PR 前的第一步）
+    id: branch_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 不带 refs/heads/ 前缀
+        label: 新分支名
+        name: branch
+        required: true
+        type: string
+      - desc: 分支名或提交 sha；留空 = 默认分支的最新提交
+        label: 基于
+        name: from
+        type: string
+    label: 建分支
+    outputs:
+      - label: 分支名
+        name: branch
+        required: true
+        type: string
+      - label: 指向的提交
+        name: sha
+        required: true
+        type: string
+      - desc: true = 分支本来就有，没有新建（**不报错**：机器人重跑一次不该炸）
+        label: 已存在
+        name: existed
+        required: true
+        type: boolean
+  - desc: 读取某个分支的保护规则（合规巡检：主分支的保护有没有被人关掉）
+    id: branch_protection_get
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 留空 = 默认分支
+        label: 分支
+        name: branch
+        type: string
+    label: 查分支保护
+    outputs:
+      - desc: '**false 时下面各项都是零值**——没有保护规则时 GitHub 回 404，这里翻译成 protected=false 而不是报错'
+        label: 受保护
+        name: protected
+        required: true
+        type: boolean
+      - goType: int
+        label: 需要几个人批准
+        name: required_approvals
+        required: true
+        type: number
+      - label: 新提交作废旧批准
+        name: dismiss_stale_reviews
+        required: true
+        type: boolean
+      - label: 需要 code owner 批准
+        name: require_code_owner_review
+        required: true
+        type: boolean
+      - desc: 检查名，与「回写提交状态」的 context 是同一个命名空间
+        itemType: string
+        label: 必须通过的检查
+        name: required_checks
+        required: true
+        type: array
+      - label: 管理员也受约束
+        name: enforce_admins
+        required: true
+        type: boolean
+      - label: 允许强推
+        name: allow_force_push
+        required: true
+        type: boolean
+      - label: 要求线性历史
+        name: required_linear_history
+        required: true
+        type: boolean
+  - desc: 列出仓库的分支
+    id: branches_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 分支列表
+    outputs:
+      - fields:
+          - label: 名字
+            name: name
+            required: true
+            type: string
+          - label: 最新提交
+            name: sha
+            required: true
+            type: string
+          - desc: 受保护分支上直接 push 会被拒，要走 PR
+            label: 受保护
+            name: protected
+            required: true
+            type: boolean
+        goType: Branch
+        label: 分支列表
+        name: branches
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 直调任意 GitHub REST 接口——上面没覆盖到的都走这里
+    id: call
+    inputs:
+      - default: GET
+        label: 方法
+        name: method
+        options:
+          - value: GET
+          - value: POST
+          - value: PATCH
+          - value: PUT
+          - value: DELETE
+        type: enum
+      - desc: 以 / 开头、**不带** https://api.github.com 前缀，如 /repos/owner/name/topics
+        label: 接口路径
+        name: path
+        required: true
+        type: string
+      - desc: 任意 GitHub 接口的请求体，形状由目标接口决定
+        label: 请求体
+        name: body
+        opaque: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+      - label: 查询参数
+        name: query
+        type: json
+        valueType:
+          goType: string
+          name: ""
+          type: string
+    label: 通用调用
+    outputs:
+      - goType: int
+        label: HTTP 状态码
+        name: status
+        required: true
+        type: number
+      - desc: 上游原样返回，形状由目标接口决定
+        label: 响应体
+        name: data
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+      - desc: 从 Link 头判断
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: Checks API：带标题/markdown 摘要/行内注解的检查结果（比「提交状态」富，但要 App 或细粒度令牌）
+    id: check_run_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 同「回写提交状态」：用 PR 的 head_sha
+        label: 提交 sha
+        name: sha
+        required: true
+        type: string
+      - label: 检查名
+        name: name
+        required: true
+        type: string
+      - desc: 留空 = 标成「进行中」
+        label: 结论
+        name: conclusion
+        options:
+          - label: 通过
+            value: success
+          - label: 失败
+            value: failure
+          - label: 中性
+            value: neutral
+          - label: 已取消
+            value: cancelled
+          - label: 超时
+            value: timed_out
+          - label: 需人工处理
+            value: action_required
+        type: enum
+      - label: 标题
+        name: title
+        type: string
+      - desc: markdown
+        label: 摘要
+        name: summary
+        type: text
+      - desc: markdown，显示在摘要下方
+        label: 详情
+        name: details
+        type: text
+      - desc: '**一次最多 50 条**，超出的部分 GitHub 直接丢掉不报错'
+        fields:
+          - label: 文件路径
+            name: path
+            required: true
+            type: string
+          - goType: int
+            label: 起始行
+            name: start_line
+            required: true
+            type: number
+          - desc: 单行就与起始行相同
+            goType: int
+            label: 结束行
+            name: end_line
+            required: true
+            type: number
+          - desc: notice / warning / failure
+            label: 级别
+            name: level
+            required: true
+            type: string
+          - label: 内容
+            name: message
+            required: true
+            type: string
+          - desc: 可留空
+            label: 标题
+            name: title
+            required: true
+            type: string
+        goType: Annotation
+        label: 行内注解
+        name: annotations
+        type: array
+      - label: 详情链接
+        name: details_url
+        type: string
+    label: 建检查运行
+    outputs:
+      - goType: int
+        label: 检查运行 ID
+        name: check_run_id
+        required: true
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: 超过 50 条时这里是 50——差额就是被丢掉的
+        goType: int
+        label: 实际提交的注解数
+        name: annotations_sent
+        required: true
+        type: number
+  - desc: 列出对仓库有权限的人及其权限级别（准入审计；也用来判断某人能不能被指派）
+    id: collaborators_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 留空 = 全部
+        label: 只看某个权限
+        name: permission
+        options:
+          - label: 有写权限的
+            value: push
+          - label: 管理员
+            value: admin
+          - label: 只读
+            value: pull
+          - label: 可分类
+            value: triage
+          - label: 可维护
+            value: maintain
+        type: enum
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 协作者列表
+    outputs:
+      - fields:
+          - label: 用户名
+            name: login
+            required: true
+            type: string
+          - desc: admin / maintain / push / triage / pull
+            label: 权限
+            name: permission
+            required: true
+            type: string
+          - desc: User 或 Bot
+            label: 类型
+            name: type
+            required: true
+            type: string
+          - label: 主页
+            name: url
+            required: true
+            type: string
+        goType: Collaborator
+        label: 协作者
+        name: collaborators
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 在某个提交上挂一条状态（PR 页面下方那排 ✓/✗），机器人把结论写回 GitHub 的最简方式
+    id: commit_status_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: '**要用 PR 的 head_sha，不是合并提交**——写错地方的状态不会出现在 PR 页面上'
+        label: 提交 sha
+        name: sha
+        required: true
+        type: string
+      - label: 状态
+        name: state
+        options:
+          - label: 通过
+            value: success
+          - label: 失败
+            value: failure
+          - label: 出错
+            value: error
+          - label: 进行中
+            value: pending
+        required: true
+        type: enum
+      - default: sokel
+        desc: 这条状态的标识（如 sokel/lint）。**同名会覆盖**——进行中→完成就是靠同名覆盖做的
+        label: 检查名
+        name: context
+        type: string
+      - desc: 最多 140 字，超了 GitHub 会截断
+        label: 一句话说明
+        name: description
+        type: string
+      - desc: 点状态跳转到哪（如工作流运行记录）
+        label: 详情链接
+        name: target_url
+        type: string
+    label: 回写提交状态
+    outputs:
+      - goType: int
+        label: 状态 ID
+        name: status_id
+        required: true
+        type: number
+      - label: 检查名
+        name: context
+        required: true
+        type: string
+  - desc: 列出某个分支上的提交
+    id: commits_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 留空 = 默认分支
+        label: 分支
+        name: branch
+        type: string
+      - desc: 只返回改动了该路径的提交
+        label: 只看某个文件
+        name: path
+        type: string
+      - desc: ISO8601（如 2026-08-01T00:00:00Z）
+        label: 起始时间
+        name: since
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 提交列表
+    outputs:
+      - fields:
+          - label: sha
+            name: sha
+            required: true
+            type: string
+          - label: 提交信息
+            name: message
+            required: true
+            type: string
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - label: 时间
+            name: date
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+        goType: Commit
+        label: 提交列表
+        name: commits
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 读取仓库里某个文件的内容
+    id: file_get
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 仓库内相对路径，如 README.md 或 src/main.go
+        label: 文件路径
+        name: path
+        required: true
+        type: string
+      - desc: 留空 = 默认分支
+        label: 分支或提交
+        name: ref
+        type: string
+    label: 读文件
+    outputs:
+      - label: 内容
+        name: content
+        required: true
+        type: text
+      - desc: '**改这个文件时要把它传给「写文件」**（虽然写文件也会自己去取一次）'
+        label: blob sha
+        name: sha
+        required: true
+        type: string
+      - goType: int
+        label: 字节数
+        name: size
+        required: true
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 新建或修改一个文件并提交（自动判断新建/更新）
+    id: file_write
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 文件路径
+        name: path
+        required: true
+        type: string
+      - desc: 完整内容（不是补丁）——这个接口是整文件覆盖
+        label: 内容
+        name: content
+        required: true
+        type: text
+      - label: 提交信息
+        name: message
+        required: true
+        type: string
+      - desc: 留空 = 默认分支；**分支必须已存在**，要新分支先用「建分支」
+        label: 分支
+        name: branch
+        type: string
+    label: 写文件
+    outputs:
+      - label: 提交 sha
+        name: commit_sha
+        required: true
+        type: string
+      - label: 新的 blob sha
+        name: sha
+        required: true
+        type: string
+      - desc: false = 覆盖了已有文件
+        label: 是新建
+        name: created
+        required: true
+        type: boolean
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 验证令牌可用，并回报速率余量与令牌权限范围
+    id: health_check
+    label: 健康检查
+    outputs:
+      - label: 是否可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+      - label: 令牌属于谁
+        name: login
+        required: true
+        type: string
+      - desc: 经典令牌才有；细粒度令牌这里是空的（GitHub 不在头里回报），不代表没权限
+        itemType: string
+        label: 令牌权限范围
+        name: scopes
+        type: array
+      - goType: int
+        label: 本小时剩余调用次数
+        name: rate_remaining
+        type: number
+  - desc: 给 Issue 或 PR 加/去指派人
+    id: issue_assign
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: Issue 或 PR 编号
+        goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - default: add
+        label: 方式
+        name: mode
+        options:
+          - label: 追加
+            value: add
+          - label: 移除
+            value: remove
+        type: enum
+      - desc: '**对仓库没有写权限的人会被静默忽略**——加完请看出参核对，别假设成功'
+        itemType: string
+        label: 用户名
+        name: assignees
+        required: true
+        type: array
+    label: 指派
+    outputs:
+      - desc: 拿它和你传的比对——少了谁就是那个人没有仓库权限
+        itemType: string
+        label: 现在的指派人
+        name: assignees
+        required: true
+        type: array
+  - desc: 在 Issue 或 PR 下发一条评论（GitHub 两者共用评论接口，PR 也用这个）
+    id: issue_comment
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: Issue 或 PR 编号
+        goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - desc: markdown
+        label: 内容
+        name: body
+        required: true
+        type: text
+    label: 发评论
+    outputs:
+      - desc: 要给它加表情或事后编辑就留着这个
+        goType: int
+        label: 评论 ID
+        name: comment_id
+        required: true
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 新建一条 Issue
+    id: issue_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - desc: markdown
+        label: 正文
+        name: body
+        type: text
+      - desc: '**标签必须已存在**，否则 422；不确定就先用「建标签」'
+        itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - desc: 用户名；对仓库没写权限的人会被静默忽略
+        itemType: string
+        label: 指派给
+        name: assignees
+        type: array
+      - desc: 编号或标题
+        label: 里程碑
+        name: milestone
+        type: string
+    label: 开 Issue
+    outputs:
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 取单条 Issue（或 PR）的完整信息，可带上评论
+    id: issue_get
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: Issue 或 PR 的编号（两者共用编号空间）
+        goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - desc: 默认只取正文
+        label: 带上评论
+        name: with_comments
+        type: boolean
+    label: Issue 详情
+    outputs:
+      - fields:
+          - goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - desc: 超长会截断
+            label: 正文
+            name: body
+            required: true
+            type: string
+          - desc: open / closed
+            label: 状态
+            name: state
+            required: true
+            type: string
+          - desc: GitHub 把 PR 也当 Issue 返回——判据看这个，别看标题
+            label: 其实是 PR
+            name: is_pr
+            required: true
+            type: boolean
+          - label: 创建者
+            name: author
+            required: true
+            type: string
+          - itemType: string
+            label: 指派给
+            name: assignees
+            required: true
+            type: array
+          - itemType: string
+            label: 标签
+            name: labels
+            required: true
+            type: array
+          - label: 里程碑
+            name: milestone
+            required: true
+            type: string
+          - goType: int
+            label: 评论数
+            name: comments
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+          - desc: 未关闭时为空
+            label: 关闭时间
+            name: closed_at
+            required: true
+            type: string
+        goType: Issue
+        label: Issue
+        name: issue
+        required: true
+        type: json
+      - fields:
+          - desc: 改/删评论、加表情都要它
+            goType: int
+            label: 评论 ID
+            name: id
+            required: true
+            type: number
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - label: 内容
+            name: body
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 时间
+            name: created_at
+            required: true
+            type: string
+        goType: Comment
+        label: 评论
+        name: comments
+        type: array
+  - desc: 给 Issue 或 PR 加、去、或整体设定标签
+    id: issue_label
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: Issue 或 PR 编号
+        goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - default: add
+        label: 方式
+        name: mode
+        options:
+          - label: 追加
+            value: add
+          - label: 移除
+            value: remove
+          - label: 整体替换
+            value: set
+        type: enum
+      - desc: '**追加时标签必须已存在**（GitHub 会自动建？不会，422）；set 会把没列出的都摘掉'
+        itemType: string
+        label: 标签
+        name: labels
+        required: true
+        type: array
+    label: 打标签
+    outputs:
+      - itemType: string
+        label: 现在的标签
+        name: labels
+        required: true
+        type: array
+  - desc: 改标题/正文/状态/里程碑；关闭与重开也走这里（stale-bot 的最后一步）
+    id: issue_update
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: Issue 或 PR 编号
+        goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - desc: 留空 = 不改
+        label: 标题
+        name: title
+        type: string
+      - desc: 留空 = 不改
+        label: 正文
+        name: body
+        type: text
+      - desc: 留空 = 不改
+        label: 状态
+        name: state
+        options:
+          - label: 重开
+            value: open
+          - label: 关闭
+            value: closed
+        type: enum
+      - desc: '**stale-bot 关闭时应给 not_planned**——不给的话默认算「已完成」，统计会失真'
+        label: 关闭原因
+        name: state_reason
+        options:
+          - label: 已完成
+            value: completed
+          - label: 不做了
+            value: not_planned
+          - label: 重开
+            value: reopened
+        type: enum
+      - desc: 编号或标题；填 none 移出里程碑
+        label: 里程碑
+        name: milestone
+        type: string
+    label: 改 Issue
+    outputs:
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 当前状态
+        name: state
+        required: true
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 按状态/标签/指派人/更新时间筛 Issue（stale-bot 那套筛选都在这）
+    id: issues_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - default: open
+        label: 状态
+        name: state
+        options:
+          - label: 未关闭
+            value: open
+          - label: 已关闭
+            value: closed
+          - label: 全部
+            value: all
+        type: enum
+      - desc: '**同时**带上这些标签的才返回（是与不是或）'
+        itemType: string
+        label: 标签
+        name: labels
+        type: array
+      - desc: 用户名；填 none = 没人认领的，填 * = 任何人认领的
+        label: 指派给
+        name: assignee
+        type: string
+      - desc: 用户名
+        label: 创建者
+        name: creator
+        type: string
+      - desc: 里程碑编号或标题；none = 不在任何里程碑里
+        label: 里程碑
+        name: milestone
+        type: string
+      - desc: ISO8601。**stale-bot 反过来用**：要「很久没动的」就按 updated 升序取第一页
+        label: 这个时间之后更新的
+        name: since
+        type: string
+      - default: created
+        label: 排序
+        name: sort
+        options:
+          - label: 创建时间
+            value: created
+          - label: 更新时间
+            value: updated
+          - label: 评论数
+            value: comments
+        type: enum
+      - default: desc
+        label: 方向
+        name: direction
+        options:
+          - label: 倒序
+            value: desc
+          - label: 正序
+            value: asc
+        type: enum
+      - desc: GitHub 的 Issue 接口**本来就会返回 PR**；默认剔掉，打开这个开关才保留
+        label: 把 PR 也算进来
+        name: include_prs
+        type: boolean
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: Issue 列表
+    outputs:
+      - fields:
+          - goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - desc: 超长会截断
+            label: 正文
+            name: body
+            required: true
+            type: string
+          - desc: open / closed
+            label: 状态
+            name: state
+            required: true
+            type: string
+          - desc: GitHub 把 PR 也当 Issue 返回——判据看这个，别看标题
+            label: 其实是 PR
+            name: is_pr
+            required: true
+            type: boolean
+          - label: 创建者
+            name: author
+            required: true
+            type: string
+          - itemType: string
+            label: 指派给
+            name: assignees
+            required: true
+            type: array
+          - itemType: string
+            label: 标签
+            name: labels
+            required: true
+            type: array
+          - label: 里程碑
+            name: milestone
+            required: true
+            type: string
+          - goType: int
+            label: 评论数
+            name: comments
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+          - desc: 未关闭时为空
+            label: 关闭时间
+            name: closed_at
+            required: true
+            type: string
+        goType: Issue
+        label: Issue 列表
+        name: issues
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+      - desc: 本页里因为是 PR 而被剔掉的条数（include_prs 打开时恒为 0）
+        goType: int
+        label: 剔掉的 PR 数
+        name: dropped_prs
+        type: number
+  - desc: 取某个作业的日志正文（默认只给尾部，够定位失败原因）
+    id: job_log
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 从「运行的作业」拿
+        goType: int
+        label: 作业 ID
+        name: job_id
+        required: true
+        type: number
+      - desc: 默认 200。日志动辄几 MB，整篇塞进下游会把上下文吃满；**要全文填 -1**（不是 0——0 与「没填」在线上分不开）
+        goType: int
+        label: 只要末尾多少行
+        name: tail
+        type: number
+    label: 作业日志
+    outputs:
+      - label: 日志
+        name: log
+        required: true
+        type: text
+      - goType: int
+        label: 返回行数
+        name: lines
+        required: true
+        type: number
+      - desc: true = 前面还有内容
+        label: 被截断了
+        name: truncated
+        required: true
+        type: boolean
+  - desc: 新建或更新一个仓库标签（已存在则改颜色与说明，不报错）
+    id: label_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 名字
+        name: name
+        required: true
+        type: string
+      - desc: '六位十六进制，不带 #（如 d73a4a）；留空 = 随机'
+        label: 颜色
+        name: color
+        type: string
+      - desc: 最多 100 字
+        label: 说明
+        name: description
+        type: string
+    label: 建标签
+    outputs:
+      - label: 名字
+        name: name
+        required: true
+        type: string
+      - desc: false = 已存在，做了更新
+        label: 是新建
+        name: created
+        required: true
+        type: boolean
+  - desc: 列出仓库定义的标签（打标签前先确认它存在）
+    id: labels_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 标签列表
+    outputs:
+      - fields:
+          - label: 名字
+            name: name
+            required: true
+            type: string
+          - desc: '六位十六进制，不带 #'
+            label: 颜色
+            name: color
+            required: true
+            type: string
+          - label: 说明
+            name: description
+            required: true
+            type: string
+        goType: Label
+        label: 标签列表
+        name: labels
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 列出里程碑与完成进度
+    id: milestones_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - default: open
+        label: 状态
+        name: state
+        options:
+          - label: 进行中
+            value: open
+          - label: 已关闭
+            value: closed
+          - label: 全部
+            value: all
+        type: enum
+    label: 里程碑列表
+    outputs:
+      - fields:
+          - desc: 给 Issue 设里程碑时可以用它，也可以用标题
+            goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 说明
+            name: description
+            required: true
+            type: string
+          - label: 状态
+            name: state
+            required: true
+            type: string
+          - goType: int
+            label: 未完成
+            name: open_issues
+            required: true
+            type: number
+          - goType: int
+            label: 已完成
+            name: closed_issues
+            required: true
+            type: number
+          - label: 截止时间
+            name: due_on
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+        goType: Milestone
+        label: 里程碑列表
+        name: milestones
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+  - desc: 新建一个 Pull Request
+    id: pr_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - label: 标题
+        name: title
+        required: true
+        type: string
+      - desc: 跨 fork 时写 owner:branch
+        label: 来源分支
+        name: head
+        required: true
+        type: string
+      - desc: 留空 = 默认分支
+        label: 目标分支
+        name: base
+        type: string
+      - desc: markdown
+        label: 正文
+        name: body
+        type: text
+      - desc: 机器人开的 PR 建议先草稿，人看过再转正式
+        label: 开成草稿
+        name: draft
+        type: boolean
+      - default: true
+        label: 允许维护者改
+        name: maintainer_can_modify
+        type: boolean
+    label: 开 PR
+    outputs:
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - label: 来源分支最新提交
+        name: head_sha
+        required: true
+        type: string
+  - desc: 列出 PR 的文件改动与 diff（评审机器人的输入）
+    id: pr_files
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - desc: 默认只给文件名与增删行数；打开才给 patch（很长，注意下游上下文）
+        label: 带上 diff 正文
+        name: with_patch
+        type: boolean
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: PR 改了哪些文件
+    outputs:
+      - fields:
+          - label: 路径
+            name: path
+            required: true
+            type: string
+          - desc: added / modified / removed / renamed
+            label: 状态
+            name: status
+            required: true
+            type: string
+          - goType: int
+            label: 新增行数
+            name: additions
+            required: true
+            type: number
+          - goType: int
+            label: 删除行数
+            name: deletions
+            required: true
+            type: number
+          - desc: 只有 with_patch 打开才有；二进制文件恒为空
+            label: diff
+            name: patch
+            required: true
+            type: string
+          - label: blob sha
+            name: sha
+            required: true
+            type: string
+        goType: PRFile
+        label: 文件改动
+        name: files
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+      - goType: int
+        label: 本页新增行数
+        name: additions
+        required: true
+        type: number
+      - goType: int
+        label: 本页删除行数
+        name: deletions
+        required: true
+        type: number
+  - desc: 取单个 PR 的完整信息
+    id: pr_get
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+    label: PR 详情
+    outputs:
+      - fields:
+          - goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 正文
+            name: body
+            required: true
+            type: string
+          - desc: open / closed
+            label: 状态
+            name: state
+            required: true
+            type: string
+          - desc: '**closed 不等于 merged**——关掉不合也是 closed，判据看这个'
+            label: 已合并
+            name: merged
+            required: true
+            type: boolean
+          - desc: 草稿 PR 合不了，要先转正式
+            label: 草稿
+            name: draft
+            required: true
+            type: boolean
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - label: 目标分支
+            name: base
+            required: true
+            type: string
+          - label: 来源分支
+            name: head
+            required: true
+            type: string
+          - desc: '**回写提交状态用它**'
+            label: 来源分支最新提交
+            name: head_sha
+            required: true
+            type: string
+          - itemType: string
+            label: 标签
+            name: labels
+            required: true
+            type: array
+          - itemType: string
+            label: 指派给
+            name: assignees
+            required: true
+            type: array
+          - itemType: string
+            label: 待评审人
+            name: reviewers
+            required: true
+            type: array
+          - desc: true/false/unknown——GitHub 是异步算的，刚开的 PR 多半是 unknown，等几秒再查
+            label: 能不能合
+            name: mergeable
+            required: true
+            type: string
+          - goType: int
+            label: 新增行数
+            name: additions
+            required: true
+            type: number
+          - goType: int
+            label: 删除行数
+            name: deletions
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+        goType: PR
+        label: PR
+        name: pr
+        required: true
+        type: json
+  - desc: 按状态/分支筛 Pull Request
+    id: pr_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - default: open
+        label: 状态
+        name: state
+        options:
+          - label: 未关闭
+            value: open
+          - label: 已关闭
+            value: closed
+          - label: 全部
+            value: all
+        type: enum
+      - desc: 只看合往这个分支的
+        label: 目标分支
+        name: base
+        type: string
+      - desc: owner:branch 形态；跨 fork 时要带 owner
+        label: 来源分支
+        name: head
+        type: string
+      - default: created
+        label: 排序
+        name: sort
+        options:
+          - label: 创建时间
+            value: created
+          - label: 更新时间
+            value: updated
+          - label: 评论数
+            value: popularity
+          - label: 久未合并
+            value: long-running
+        type: enum
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: PR 列表
+    outputs:
+      - fields:
+          - goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 正文
+            name: body
+            required: true
+            type: string
+          - desc: open / closed
+            label: 状态
+            name: state
+            required: true
+            type: string
+          - desc: '**closed 不等于 merged**——关掉不合也是 closed，判据看这个'
+            label: 已合并
+            name: merged
+            required: true
+            type: boolean
+          - desc: 草稿 PR 合不了，要先转正式
+            label: 草稿
+            name: draft
+            required: true
+            type: boolean
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - label: 目标分支
+            name: base
+            required: true
+            type: string
+          - label: 来源分支
+            name: head
+            required: true
+            type: string
+          - desc: '**回写提交状态用它**'
+            label: 来源分支最新提交
+            name: head_sha
+            required: true
+            type: string
+          - itemType: string
+            label: 标签
+            name: labels
+            required: true
+            type: array
+          - itemType: string
+            label: 指派给
+            name: assignees
+            required: true
+            type: array
+          - itemType: string
+            label: 待评审人
+            name: reviewers
+            required: true
+            type: array
+          - desc: true/false/unknown——GitHub 是异步算的，刚开的 PR 多半是 unknown，等几秒再查
+            label: 能不能合
+            name: mergeable
+            required: true
+            type: string
+          - goType: int
+            label: 新增行数
+            name: additions
+            required: true
+            type: number
+          - goType: int
+            label: 删除行数
+            name: deletions
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+        goType: PR
+        label: PR 列表
+        name: prs
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 合并 Pull Request（三种合法都支持）
+    id: pr_merge
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - default: merge
+        label: 合并方式
+        name: method
+        options:
+          - label: 合并提交
+            value: merge
+          - label: 压成一个提交
+            value: squash
+          - label: 变基
+            value: rebase
+        type: enum
+      - desc: 留空 = GitHub 默认
+        label: 合并提交标题
+        name: title
+        type: string
+      - label: 合并提交正文
+        name: message
+        type: text
+      - desc: '**并发保护**：填了就只在来源分支仍是这个 sha 时才合。机器人「检查通过就合」的场景必须填——从检查通过到发起合并之间对方可能又推了一版'
+        label: 期望的最新提交
+        name: expect_sha
+        type: string
+    label: 合 PR
+    outputs:
+      - label: 是否已合
+        name: merged
+        required: true
+        type: boolean
+      - label: 合并后的提交
+        name: sha
+        required: true
+        type: string
+      - desc: 没合成时这里是原因（如「Base branch was modified」= expect_sha 对不上）
+        label: GitHub 的说明
+        name: message
+        required: true
+        type: string
+  - desc: 给 PR 加评审人或评审团队（自动分配 reviewer 的机器人用这个）
+    id: pr_request_reviewers
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - desc: 用户名
+        itemType: string
+        label: 评审人
+        name: reviewers
+        type: array
+      - desc: 团队 slug（组织仓库才有）
+        itemType: string
+        label: 评审团队
+        name: team_reviewers
+        type: array
+      - desc: 默认是加；打开则把列出的移除
+        label: 改成移除
+        name: remove
+        type: boolean
+    label: 请人评审
+    outputs:
+      - desc: '**PR 作者不能是自己的评审人**——传了会被 GitHub 静默丢掉，拿这个核对'
+        itemType: string
+        label: 现在的评审人
+        name: reviewers
+        required: true
+        type: array
+  - desc: 以 approve / 请求修改 / 纯评论的身份提交一次评审，可带 diff 行内评论
+    id: pr_review
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - default: COMMENT
+        label: 结论
+        name: event
+        options:
+          - label: 只评论
+            value: COMMENT
+          - label: 通过
+            value: APPROVE
+          - label: 请求修改
+            value: REQUEST_CHANGES
+        type: enum
+      - desc: REQUEST_CHANGES 与 COMMENT **必须有总评**，空的会 422
+        label: 总评
+        name: body
+        type: text
+      - desc: 针对 diff 某一行的评论。**行号是新版文件的行号**，且必须落在本次 diff 涉及的行上，否则整个评审 422（不是那一条被忽略）
+        fields:
+          - label: 文件路径
+            name: path
+            required: true
+            type: string
+          - desc: 新版文件的行号；必须是本次 diff 动过的行
+            goType: int
+            label: 行号
+            name: line
+            required: true
+            type: number
+          - desc: RIGHT（新版，默认）或 LEFT（旧版，评论被删掉的行时用）
+            label: 哪一侧
+            name: side
+            required: true
+            type: string
+          - label: 内容
+            name: body
+            required: true
+            type: string
+        goType: ReviewComment
+        label: 行内评论
+        name: comments
+        type: array
+    label: 提交评审
+    outputs:
+      - goType: int
+        label: 评审 ID
+        name: review_id
+        required: true
+        type: number
+      - label: 状态
+        name: state
+        required: true
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 改标题/正文/目标分支/状态；草稿转正式也在这
+    id: pr_update
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: PR 编号
+        name: number
+        required: true
+        type: number
+      - desc: 留空 = 不改
+        label: 标题
+        name: title
+        type: string
+      - desc: 留空 = 不改
+        label: 正文
+        name: body
+        type: text
+      - desc: 换目标分支；留空 = 不改
+        label: 目标分支
+        name: base
+        type: string
+      - desc: 留空 = 不改
+        label: 状态
+        name: state
+        options:
+          - label: 重开
+            value: open
+          - label: 关闭
+            value: closed
+        type: enum
+      - desc: '**这一项走 GraphQL**：REST 没有把草稿转正式的接口'
+        label: 草稿转正式
+        name: ready_for_review
+        type: boolean
+    label: 改 PR
+    outputs:
+      - goType: int
+        label: 编号
+        name: number
+        required: true
+        type: number
+      - label: 当前状态
+        name: state
+        required: true
+        type: string
+      - label: 是否草稿
+        name: draft
+        required: true
+        type: boolean
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+  - desc: 把一个 Issue 或 PR 加进看板（triage 机器人的第一步）
+    id: project_item_add
+    inputs:
+      - label: 用户或组织
+        name: owner
+        required: true
+        type: string
+      - goType: int
+        label: 看板编号
+        name: project_number
+        required: true
+        type: number
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - goType: int
+        label: Issue 或 PR 编号
+        name: number
+        required: true
+        type: number
+      - desc: 留空自动试
+        label: 是组织
+        name: is_org
+        type: boolean
+    label: 加进看板
+    outputs:
+      - desc: 接着用它挪列
+        label: 卡片 ID
+        name: item_id
+        required: true
+        type: string
+      - desc: GitHub 对重复添加返回同一张卡片，不报错——机器人重跑安全
+        label: 之前就在看板里
+        name: already
+        required: true
+        type: boolean
+  - desc: 改卡片的某个字段值；把 Status 改成别的值就是「挪到另一列」
+    id: project_item_field_set
+    inputs:
+      - label: 用户或组织
+        name: owner
+        required: true
+        type: string
+      - goType: int
+        label: 看板编号
+        name: project_number
+        required: true
+        type: number
+      - desc: PVTI_ 开头，从「看板卡片」或「加进看板」拿
+        label: 卡片 ID
+        name: item_id
+        required: true
+        type: string
+      - default: Status
+        desc: 如 Status、Priority；大小写要与看板上一致
+        label: 字段名
+        name: field
+        type: string
+      - desc: 单选字段填选项名（如 In Progress）；文本/数字字段填字面值。**选项名必须与看板上的完全一致**——对不上会明确报错并列出可选项，不会静默不动
+        label: 目标值
+        name: value
+        required: true
+        type: string
+      - desc: 留空自动试
+        label: 是组织
+        name: is_org
+        type: boolean
+    label: 改看板字段
+    outputs:
+      - label: 已更新
+        name: updated
+        required: true
+        type: boolean
+      - label: 字段名
+        name: field
+        required: true
+        type: string
+      - label: 现在的值
+        name: value
+        required: true
+        type: string
+  - desc: 列出看板里的卡片及其字段值（Status 在哪一列就在字段里）
+    id: project_items_list
+    inputs:
+      - label: 用户或组织
+        name: owner
+        required: true
+        type: string
+      - desc: 看板地址末尾那个数字
+        goType: int
+        label: 看板编号
+        name: number
+        required: true
+        type: number
+      - desc: 留空自动试
+        label: 是组织
+        name: is_org
+        type: boolean
+      - desc: 默认 50，上限 100（GraphQL 单页上限）
+        goType: int
+        label: 最多取多少
+        name: limit
+        type: number
+    label: 看板卡片
+    outputs:
+      - fields:
+          - desc: PVTI_ 开头；改字段要它
+            label: 卡片 ID
+            name: id
+            required: true
+            type: string
+          - desc: ISSUE / PULL_REQUEST / DRAFT_ISSUE
+            label: 类型
+            name: type
+            required: true
+            type: string
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - desc: 草稿卡片为 0
+            goType: int
+            label: Issue/PR 编号
+            name: number
+            required: true
+            type: number
+          - desc: 草稿卡片为空
+            label: 所属仓库
+            name: repo
+            required: true
+            type: string
+          - label: 状态
+            name: state
+            required: true
+            type: string
+          - desc: Status 单选字段的值，也就是看板上的列名
+            label: 所在列
+            name: status
+            required: true
+            type: string
+          - desc: 形如 Status=In Progress，含自定义字段
+            itemType: string
+            label: 所有字段
+            name: fields
+            required: true
+            type: array
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+        goType: ProjectItem
+        label: 卡片列表
+        name: items
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 列出某个用户或组织的 Projects V2 看板
+    id: projects_list
+    inputs:
+      - desc: 看板挂在账号下，不是仓库下
+        label: 用户或组织
+        name: owner
+        required: true
+        type: string
+      - desc: '**组织与个人是两个不同的 GraphQL 查询**，认错会返回空列表而不是报错。留空自动试两次'
+        label: 是组织
+        name: is_org
+        type: boolean
+    label: 看板列表
+    outputs:
+      - fields:
+          - desc: 看板地址末尾那个数字，其他看板操作用它
+            goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - desc: GraphQL 的全局 ID（PVT_ 开头）；加卡片要它
+            label: 节点 ID
+            name: id
+            required: true
+            type: string
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 已关闭
+            name: closed
+            required: true
+            type: boolean
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - goType: int
+            label: 卡片数
+            name: items
+            required: true
+            type: number
+        goType: Project
+        label: 看板列表
+        name: projects
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+  - desc: 给 Issue/PR 或某条评论加一个表情——ChatOps 机器人回执「收到」的标准做法
+    id: reaction_add
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - default: comment
+        label: 加在哪
+        name: target
+        options:
+          - label: Issue 或 PR 本身
+            value: issue
+          - label: 某条评论
+            value: comment
+        type: enum
+      - desc: target=issue 时填 Issue/PR 编号；target=comment 时填评论 ID（发评论的出参里有）
+        goType: int
+        label: 编号或评论 ID
+        name: id
+        required: true
+        type: number
+      - default: eyes
+        desc: "\U0001F440 = 已看到在处理，\U0001F680 = 已执行，是 ChatOps 的通行约定"
+        label: 表情
+        name: content
+        options:
+          - label: "\U0001F44D"
+            value: "+1"
+          - label: "\U0001F44E"
+            value: "-1"
+          - label: "\U0001F604"
+            value: laugh
+          - label: "\U0001F615"
+            value: confused
+          - label: ❤️
+            value: heart
+          - label: "\U0001F389"
+            value: hooray
+          - label: "\U0001F680"
+            value: rocket
+          - label: "\U0001F440"
+            value: eyes
+        type: enum
+    label: 加表情
+    outputs:
+      - goType: int
+        label: 表情 ID
+        name: reaction_id
+        required: true
+        type: number
+      - desc: GitHub 对重复加表情回 200，不是错
+        label: 之前就加过
+        name: already
+        required: true
+        type: boolean
+  - desc: 创建一个 Release（可让 GitHub 自动生成发布说明）
+    id: release_create
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 如 v1.2.0。标签不存在会**按 target 自动创建**
+        label: 标签名
+        name: tag
+        required: true
+        type: string
+      - desc: 分支名或提交 sha；标签已存在时忽略；留空 = 默认分支
+        label: 基于
+        name: target
+        type: string
+      - desc: 留空 = 用标签名
+        label: 标题
+        name: name
+        type: string
+      - desc: 留空且打开了自动生成，就用 GitHub 生成的
+        label: 发布说明
+        name: body
+        type: text
+      - desc: GitHub 按上个标签以来的 PR 生成。**与手写正文可以并存**：生成的会接在正文后面
+        label: 自动生成发布说明
+        name: generate_notes
+        type: boolean
+      - label: 存为草稿
+        name: draft
+        type: boolean
+      - label: 标为预发布
+        name: prerelease
+        type: boolean
+    label: 发版
+    outputs:
+      - goType: int
+        label: 发布 ID
+        name: release_id
+        required: true
+        type: number
+      - label: 标签
+        name: tag
+        required: true
+        type: string
+      - label: 页面地址
+        name: url
+        required: true
+        type: string
+      - desc: 自动生成时这里是 GitHub 生成的全文
+        label: 最终的发布说明
+        name: body
+        required: true
+        type: text
+  - desc: 列出仓库的 Release
+    id: releases_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 发布列表
+    outputs:
+      - fields:
+          - goType: int
+            label: 发布 ID
+            name: id
+            required: true
+            type: number
+          - label: 标签
+            name: tag_name
+            required: true
+            type: string
+          - label: 标题
+            name: name
+            required: true
+            type: string
+          - label: 发布说明
+            name: body
+            required: true
+            type: string
+          - label: 草稿
+            name: draft
+            required: true
+            type: boolean
+          - label: 预发布
+            name: prerelease
+            required: true
+            type: boolean
+          - label: 发布者
+            name: author
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 创建时间
+            name: created_at
+            required: true
+            type: string
+          - desc: 草稿为空
+            label: 发布时间
+            name: published_at
+            required: true
+            type: string
+        goType: Release
+        label: 发布列表
+        name: releases
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 取单个仓库的元信息
+    id: repo_get
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+    label: 仓库详情
+    outputs:
+      - fields:
+          - desc: owner/repo 形态，其他操作的 repo 字段用它
+            label: 全名
+            name: full_name
+            required: true
+            type: string
+          - label: 名字
+            name: name
+            required: true
+            type: string
+          - label: 归属
+            name: owner
+            required: true
+            type: string
+          - label: 简介
+            name: description
+            required: true
+            type: string
+          - label: 私有
+            name: private
+            required: true
+            type: boolean
+          - label: 是 fork
+            name: fork
+            required: true
+            type: boolean
+          - desc: 归档仓库只读，写操作会 403
+            label: 已归档
+            name: archived
+            required: true
+            type: boolean
+          - label: 默认分支
+            name: default_branch
+            required: true
+            type: string
+          - goType: int
+            label: 星标数
+            name: stars
+            required: true
+            type: number
+          - desc: '**含 PR**——GitHub 这个计数把 PR 也算进去'
+            goType: int
+            label: 未关闭 Issue 数
+            name: open_issues
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+        goType: Repo
+        label: 仓库
+        name: repo
+        required: true
+        type: json
+      - itemType: string
+        label: 主题标签
+        name: topics
+        type: array
+  - desc: 列出某个用户或组织的仓库；留空则列当前令牌账号有权限的仓库
+    id: repos_list
+    inputs:
+      - desc: 留空 = 当前令牌自己的仓库（含私有）
+        label: 用户或组织
+        name: owner
+        type: string
+      - default: all
+        label: 范围
+        name: type
+        options:
+          - label: 全部
+            value: all
+          - label: 自己拥有的
+            value: owner
+          - label: 作为成员参与的
+            value: member
+          - label: 公开的
+            value: public
+          - label: 私有的
+            value: private
+        type: enum
+      - default: updated
+        label: 排序
+        name: sort
+        options:
+          - label: 最近更新
+            value: updated
+          - label: 创建时间
+            value: created
+          - label: 最近推送
+            value: pushed
+          - label: 名字
+            value: full_name
+        type: enum
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 仓库列表
+    outputs:
+      - fields:
+          - desc: owner/repo 形态，其他操作的 repo 字段用它
+            label: 全名
+            name: full_name
+            required: true
+            type: string
+          - label: 名字
+            name: name
+            required: true
+            type: string
+          - label: 归属
+            name: owner
+            required: true
+            type: string
+          - label: 简介
+            name: description
+            required: true
+            type: string
+          - label: 私有
+            name: private
+            required: true
+            type: boolean
+          - label: 是 fork
+            name: fork
+            required: true
+            type: boolean
+          - desc: 归档仓库只读，写操作会 403
+            label: 已归档
+            name: archived
+            required: true
+            type: boolean
+          - label: 默认分支
+            name: default_branch
+            required: true
+            type: string
+          - goType: int
+            label: 星标数
+            name: stars
+            required: true
+            type: number
+          - desc: '**含 PR**——GitHub 这个计数把 PR 也算进去'
+            goType: int
+            label: 未关闭 Issue 数
+            name: open_issues
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+        goType: Repo
+        label: 仓库列表
+        name: repos
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
+  - desc: 列出某次工作流运行里的作业与每一步的结果（定位是哪一步挂的）
+    id: run_jobs
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 从「工作流运行记录」拿
+        goType: int
+        label: 运行 ID
+        name: run_id
+        required: true
+        type: number
+    label: 运行的作业
+    outputs:
+      - fields:
+          - desc: 取日志要它
+            goType: int
+            label: 作业 ID
+            name: id
+            required: true
+            type: number
+          - label: 作业名
+            name: name
+            required: true
+            type: string
+          - label: 状态
+            name: status
+            required: true
+            type: string
+          - label: 结论
+            name: conclusion
+            required: true
+            type: string
+          - desc: 步骤名 → 结论，形如 build=success
+            itemType: string
+            label: 步骤
+            name: steps
+            required: true
+            type: array
+          - label: 开始时间
+            name: started_at
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+        goType: Job
+        label: 作业列表
+        name: jobs
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: 跨所有作业汇总成 作业名/步骤名，直接可以发进通知——不用调用方自己再遍历一遍
+        itemType: string
+        label: 失败的步骤
+        name: failed_steps
+        required: true
+        type: array
+  - desc: 搜 Issue/PR、代码或仓库（GitHub 搜索语法原样传）
+    id: search
+    inputs:
+      - default: issues
+        label: 搜什么
+        name: type
+        options:
+          - label: Issue 与 PR
+            value: issues
+          - label: 代码
+            value: code
+          - label: 仓库
+            value: repositories
+          - label: 提交
+            value: commits
+        type: enum
+      - desc: 'GitHub 搜索语法，如 `repo:owner/name is:open label:bug`、`org:foo is:pr review:required`。**限定符必须写在这里**——没有 repo: 的话是全站搜'
+        label: 搜索式
+        name: query
+        required: true
+        type: string
+      - desc: 默认 30，上限 100
+        goType: int
+        label: 最多返回
+        name: limit
+        type: number
+    label: 搜索
+    outputs:
+      - fields:
+          - label: 标题
+            name: title
+            required: true
+            type: string
+          - label: 仓库
+            name: repo
+            required: true
+            type: string
+          - desc: 仓库/代码搜索时为 0
+            goType: int
+            label: 编号
+            name: number
+            required: true
+            type: number
+          - label: 状态
+            name: state
+            required: true
+            type: string
+          - label: 作者
+            name: author
+            required: true
+            type: string
+          - desc: 只有代码搜索有
+            label: 文件路径
+            name: path
+            required: true
+            type: string
+          - desc: 截断过
+            label: 片段
+            name: snippet
+            required: true
+            type: string
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+        goType: SearchHit
+        label: 命中
+        name: results
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**搜索接口是少数会给总数的**（上限 1000，超过按 1000 算）'
+        goType: int
+        label: 总命中数
+        name: total
+        required: true
+        type: number
+      - desc: true = GitHub 搜索超时了只返回了部分——**别把它当成「就这么多」**
+        label: 结果不完整
+        name: incomplete
+        required: true
+        type: boolean
+  - desc: 手动跑一个 Actions 工作流（工作流得声明了 workflow_dispatch 才行）
+    id: workflow_dispatch
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 文件名（如 deploy.yml）或数字 ID
+        label: 工作流
+        name: workflow
+        required: true
+        type: string
+      - desc: 留空 = 默认分支
+        label: 分支或标签
+        name: ref
+        required: true
+        type: string
+      - desc: 对应工作流里的 inputs。**值必须是字符串**——GitHub 只收字符串，传数字会 422
+        label: 输入参数
+        name: inputs
+        type: json
+        valueType:
+          goType: string
+          name: ""
+          type: string
+    label: 触发工作流
+    outputs:
+      - label: 已发出
+        name: dispatched
+        required: true
+        type: boolean
+      - desc: '**GitHub 这个接口不返回运行 ID**（204 空响应）——要拿到 run_id 得隔几秒去查运行记录'
+        label: 说明
+        name: note
+        required: true
+        type: string
+  - desc: 列出 Actions 的运行记录（按工作流/分支/状态筛）
+    id: workflow_runs_list
+    inputs:
+      - desc: owner/repo 形态（如 sokel-dev/sokel-plugin-sdk，即仓库地址里域名后那段）
+        label: 仓库
+        name: repo
+        required: true
+        type: string
+      - desc: 文件名（如 ci.yml）或数字 ID；留空 = 全部工作流
+        label: 工作流
+        name: workflow
+        type: string
+      - label: 分支
+        name: branch
+        type: string
+      - label: 状态
+        name: status
+        options:
+          - label: 已完成
+            value: completed
+          - label: 进行中
+            value: in_progress
+          - label: 排队中
+            value: queued
+          - label: 失败
+            value: failure
+          - label: 成功
+            value: success
+        type: enum
+      - desc: 用户名
+        label: 触发者
+        name: actor
+        type: string
+      - desc: 默认 1；每页 50 条
+        goType: int
+        label: 页码
+        name: page
+        type: number
+    label: 工作流运行记录
+    outputs:
+      - fields:
+          - desc: 查作业与日志要它
+            goType: int
+            label: 运行 ID
+            name: id
+            required: true
+            type: number
+          - label: 工作流名
+            name: name
+            required: true
+            type: string
+          - desc: queued / in_progress / completed
+            label: 状态
+            name: status
+            required: true
+            type: string
+          - desc: success / failure / cancelled…；**未完成时为空**，别拿空当成功
+            label: 结论
+            name: conclusion
+            required: true
+            type: string
+          - label: 分支
+            name: branch
+            required: true
+            type: string
+          - label: 提交
+            name: sha
+            required: true
+            type: string
+          - desc: push / pull_request / workflow_dispatch…
+            label: 触发事件
+            name: event
+            required: true
+            type: string
+          - label: 触发者
+            name: actor
+            required: true
+            type: string
+          - goType: int
+            label: 第几次运行
+            name: run_number
+            required: true
+            type: number
+          - goType: int
+            label: 第几次重试
+            name: attempt
+            required: true
+            type: number
+          - label: 页面地址
+            name: url
+            required: true
+            type: string
+          - label: 开始时间
+            name: created_at
+            required: true
+            type: string
+          - label: 更新时间
+            name: updated_at
+            required: true
+            type: string
+        goType: WorkflowRun
+        label: 运行记录
+        name: runs
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: '**翻页看它**——GitHub 不回总数，正好 50 条并不代表翻完了'
+        label: 还有下一页
+        name: has_more
+        type: boolean
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-github:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-github:1.0.1@sha256:2dceef18cf4f90a4ac7452cc5fd1b773daabb55e86f6106584aa3db4c0905604
