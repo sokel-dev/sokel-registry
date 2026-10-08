@@ -14,7 +14,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-es:1.1.0@sha256:e90f4093654a654d7b0105213a0a2d9c57f1b547135eac7fcf5f1d680ac3ac9e
+    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-es:1.1.1@sha256:7952b53de63df7f8368b432b6d00d9f1d66e63d0f414664980a1f07a68d13590
 implements:
 - capability: vectorstore
   operations:
@@ -202,6 +202,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：按字段映射比较（数值按数值、日期按日期）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -403,6 +410,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：按字段映射比较（数值按数值、日期按日期）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -535,6 +549,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：按字段映射比较（数值按数值、日期按日期）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -683,4 +704,4 @@ plugin:
   label: 知识库存储（Elasticsearch）
   name: kbstore-es
   org: sokel
-  version: v1.1.0
+  version: v1.1.1

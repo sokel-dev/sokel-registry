@@ -1,6 +1,8 @@
 {
   "Elasticsearch 地址": "Elasticsearch address",
   "keyword / text / number / date；留空按 keyword": "keyword / text / number / date; empty means keyword",
+  "上限（含）": "Upper bound (inclusive)",
+  "下限（含）": "Lower bound (inclusive)",
   "为真时忽略 values": "When true, values is ignored",
   "元数据": "Metadata",
   "元数据字段声明": "Metadata field declarations",
@@ -39,6 +41,7 @@
   "知识库的存储与检索后端：写入分块、向量检索、BM25、混合检索（RRF 融合）。": "Storage and retrieval backend for knowledge bases: write chunks, vector search, BM25 and hybrid search (RRF fusion).",
   "类型": "Type",
   "索引命名空间": "Index namespace",
+  "范围过滤：按字段映射比较（数值按数值、日期按日期）": "Range filter: compared by the field mapping (numbers as numbers, dates as dates)",
   "角色": "Role",
   "说明": "Message",
   "资产": "Assets",
