@@ -6,7 +6,7 @@
 English · [简体中文](README.zh-CN.md)
 
 The catalog of plugins for the [Sokel](https://github.com/sokel-dev) workflow platform, and the page that shows it:
-**https://sokel-dev.github.io/sokel-registry/**
+**https://plugins.sokel.dev/**
 
 A plugin's code lives in its own repository. What lives here is its **manifest** — what each operation takes and
 returns, which credentials it asks for, how to run it — plus optional translations and a usage doc. Platforms read
@@ -38,7 +38,7 @@ The directory is the identity: `plugins/acme/foo` is `acme/foo`, and `.github/CO
 ## How platforms use it
 
 A platform ships a built-in snapshot of this catalog, which works offline. An administrator can add this site as a
-refresh source (**Platform settings → Plugin index source**, address `https://sokel-dev.github.io/sokel-registry`):
+refresh source (**Platform settings → Plugin index source**, address `https://plugins.sokel.dev`):
 the platform then fetches `index.json` and `advisories.json` every 12 hours, shows new plugins in its marketplace
 and installs them from the same origin, and flags installed versions that an advisory names. It is off by default —
 nothing is fetched until someone turns it on. Advisories also ship with every platform release (each image carries

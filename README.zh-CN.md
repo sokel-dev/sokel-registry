@@ -3,7 +3,7 @@
 [English](README.md) · 简体中文
 
 [Sokel](https://github.com/sokel-dev) 工作流平台的插件目录，以及展示它的页面：
-**https://sokel-dev.github.io/sokel-registry/**
+**https://plugins.sokel.dev/**
 
 插件代码在它自己的仓库里。这里放的是它的 **manifest**——每个操作收什么、出什么，要哪些凭证，怎么运行——
 加上可选的翻译和使用说明。平台读这份目录来填充自己的插件市场；这个页面读的也是同一批文件。
@@ -34,7 +34,7 @@ cmd/build-index/        # 准入检查与发布目录
 ## 平台怎么用它
 
 平台自带这份目录的内置快照，离线也能用。管理员可以把这个站点设为刷新源（**平台设置 → 插件索引源**，
-地址填 `https://sokel-dev.github.io/sokel-registry`）：平台每 12 小时拉一次 `index.json` 和 `advisories.json`，
+地址填 `https://plugins.sokel.dev`）：平台每 12 小时拉一次 `index.json` 和 `advisories.json`，
 新插件出现在市场里并从同一来源安装，已装版本命中安全通告时会标出来。默认关闭——没人打开就不会联网。安全通告也会随每个平台版本发布（镜像构建时带上当时的通告），
 离线部署升级平台即可拿到。
 
