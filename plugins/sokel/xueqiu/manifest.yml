@@ -1,121 +1,123 @@
-credential:
-    fields:
-        - desc: 浏览器里登录雪球后，F12 → Network → 任意请求 → 复制整条 Cookie 值粘进来。至少要含 xq_a_token / xqat / xq_id_token / u / device_id
-          label: Cookie
-          name: cookie
-          required: true
-          type: secret
-        - desc: 发帖接口要的防重放串。**留空则插件自己去页面上取**；取不到时会在错误里让你手工粘一次（F12 → Network → 发一条帖子 → 请求体里的 session_token）
-          label: 会话令牌（session_token）
-          name: session_token
-          type: secret
-        - desc: 网页请求 URL 上挂的那串。**先留空试**——多数情况下不带也能发；若报风控/403，把浏览器里那条完整值粘进来
-          label: 风控参数（md5__1038）
-          name: risk_param
-          type: text
-        - desc: 留空用一个常见的桌面 Chrome UA。与你取 cookie 的浏览器保持一致更稳
-          label: User-Agent
-          name: user_agent
-          type: text
-        - desc: 部署环境直连不了 xueqiu.com 时填
-          label: 出站代理
-          name: proxy
-          type: text
-operations:
-    - desc: 把一篇长文写进雪球草稿箱，可带图；**不会直接发布**，最后一步在网页上点
-      id: xq_article_draft
-      inputs:
-        - label: 标题
-          name: title
-          required: true
-          type: text
-        - desc: 纯文本/简单 markdown（**加粗**、空行分段）。已经是 HTML 的话原样透传
-          label: 正文
-          name: content
-          required: true
-          type: text
-        - desc: 传到雪球图床后按顺序附在文末
-          itemType: file
-          label: 图片
-          name: images
-          type: array
-        - desc: 已经在雪球图床上的地址；留空则没有封面
-          label: 封面图地址
-          name: cover_pic
-          type: string
-        - default: false
-          label: 仅自己可见
-          name: private
-          type: boolean
-      label: 写长文（存草稿）
-      outputs:
-        - label: 草稿 id
-          name: id
-          type: string
-        - desc: 打开它检查排版，确认无误再点发布
-          label: 继续编辑/发布的地址
-          name: edit_url
-          required: true
-          type: string
-    - desc: 读一次写作页判断登录态（无副作用），顺带带出 uid 与昵称。ok=false 表示 cookie 过期了
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 凭证可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-        - label: 用户 id
-          name: uid
-          type: string
-        - label: 昵称
-          name: name
-          type: string
-    - desc: 发一条雪球帖子，可带图。正文给纯文本或 markdown 皆可，插件转成雪球的 HTML
-      id: xq_post_create
-      inputs:
-        - desc: 纯文本/简单 markdown（**加粗**、空行分段）。已经是 HTML 的话原样透传
-          label: 正文
-          name: text
-          required: true
-          type: text
-        - desc: 先传到雪球图床再嵌进正文，按顺序附在文末
-          itemType: file
-          label: 图片
-          name: images
-          type: array
-        - default: false
-          desc: 内容经 LLM 改写/生成过就该打开——这是雪球的合规字段，不是可选项
-          label: 声明为 AI 生成
-          name: ai_disclose
-          type: boolean
-        - default: false
-          label: 允许打赏
-          name: allow_reward
-          type: boolean
-      label: 发帖
-      outputs:
-        - label: 帖子 id
-          name: id
-          required: true
-          type: string
-        - desc: 拼不出时为空，不是错误
-          label: 链接
-          name: url
-          required: true
-          type: string
 plugin:
-    desc: 发帖（可带图）+ 检查凭证。
-    doc: README.md
-    label: 雪球（非官方）
-    name: xueqiu
-    org: sokel
-    version: v1.0.0
+  desc: 发帖（可带图）+ 检查凭证。
+  doc: README.md
+  label: 雪球（非官方）
+  name: xueqiu
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 浏览器里登录雪球后，F12 → Network → 任意请求 → 复制整条 Cookie 值粘进来。至少要含 xq_a_token / xqat / xq_id_token / u / device_id
+      label: Cookie
+      name: cookie
+      required: true
+      type: secret
+    - desc: 发帖接口要的防重放串。**留空则插件自己去页面上取**；取不到时会在错误里让你手工粘一次（F12 → Network → 发一条帖子 → 请求体里的 session_token）
+      label: 会话令牌（session_token）
+      name: session_token
+      type: secret
+    - desc: 网页请求 URL 上挂的那串。**先留空试**——多数情况下不带也能发；若报风控/403，把浏览器里那条完整值粘进来
+      label: 风控参数（md5__1038）
+      name: risk_param
+      type: text
+    - desc: 留空用一个常见的桌面 Chrome UA。与你取 cookie 的浏览器保持一致更稳
+      label: User-Agent
+      name: user_agent
+      type: text
+    - desc: 部署环境直连不了 xueqiu.com 时填
+      label: 出站代理
+      name: proxy
+      type: text
+
+operations:
+  - desc: 把一篇长文写进雪球草稿箱，可带图；**不会直接发布**，最后一步在网页上点
+    id: xq_article_draft
+    inputs:
+      - label: 标题
+        name: title
+        required: true
+        type: text
+      - desc: 纯文本/简单 markdown（**加粗**、空行分段）。已经是 HTML 的话原样透传
+        label: 正文
+        name: content
+        required: true
+        type: text
+      - desc: 传到雪球图床后按顺序附在文末
+        itemType: file
+        label: 图片
+        name: images
+        type: array
+      - desc: 已经在雪球图床上的地址；留空则没有封面
+        label: 封面图地址
+        name: cover_pic
+        type: string
+      - default: false
+        label: 仅自己可见
+        name: private
+        type: boolean
+    label: 写长文（存草稿）
+    outputs:
+      - label: 草稿 id
+        name: id
+        type: string
+      - desc: 打开它检查排版，确认无误再点发布
+        label: 继续编辑/发布的地址
+        name: edit_url
+        required: true
+        type: string
+  - desc: 读一次写作页判断登录态（无副作用），顺带带出 uid 与昵称。ok=false 表示 cookie 过期了
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 凭证可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+      - label: 用户 id
+        name: uid
+        type: string
+      - label: 昵称
+        name: name
+        type: string
+  - desc: 发一条雪球帖子，可带图。正文给纯文本或 markdown 皆可，插件转成雪球的 HTML
+    id: xq_post_create
+    inputs:
+      - desc: 纯文本/简单 markdown（**加粗**、空行分段）。已经是 HTML 的话原样透传
+        label: 正文
+        name: text
+        required: true
+        type: text
+      - desc: 先传到雪球图床再嵌进正文，按顺序附在文末
+        itemType: file
+        label: 图片
+        name: images
+        type: array
+      - default: false
+        desc: 内容经 LLM 改写/生成过就该打开——这是雪球的合规字段，不是可选项
+        label: 声明为 AI 生成
+        name: ai_disclose
+        type: boolean
+      - default: false
+        label: 允许打赏
+        name: allow_reward
+        type: boolean
+    label: 发帖
+    outputs:
+      - label: 帖子 id
+        name: id
+        required: true
+        type: string
+      - desc: 拼不出时为空，不是错误
+        label: 链接
+        name: url
+        required: true
+        type: string
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-xueqiu:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-xueqiu:1.0.1@sha256:e07669797de5d2007048d0116afdaf3be9f62f25c0452544ce04a9ea68f577d3
