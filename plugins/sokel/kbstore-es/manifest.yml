@@ -14,7 +14,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-es:1.1.2@sha256:2705a79eb233715c0a5e46e41418577fce69acd343f995210f8618953c69d948
+    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-es:1.1.3@sha256:7be12c80e9114afb27fb9ab6a81d4888d8f25c9e45159f5f901e08b871fc7d68
 implements:
 - capability: vectorstore
   operations:
@@ -704,4 +704,4 @@ plugin:
   label: 知识库存储（Elasticsearch）
   name: kbstore-es
   org: sokel
-  version: v1.1.2
+  version: v1.1.3
