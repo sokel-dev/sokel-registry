@@ -1,3 +1,11 @@
+plugin:
+  desc: 搜帖子、读版块和用户的帖子、读评论；你的帖子下有新评论或关键词命中时触发工作流。走公开 feed，不需要 API key；不能发帖回复。
+  doc: README.md
+  label: Reddit
+  name: reddit
+  org: sokel
+  version: v0.1.1
+
 credential:
   fields:
     - desc: 你的 Reddit 账号，不带 u/。它最近发的帖子下有新评论时触发「有新评论」；留空 = 不监听
@@ -546,15 +554,7 @@ operations:
         required: true
         type: number
     timeoutSec: 150
-
-plugin:
-    desc: 搜帖子、读版块和用户的帖子、读评论；你的帖子下有新评论或关键词命中时触发工作流。走公开 feed，不需要 API key；不能发帖回复。
-    doc: README.md
-    label: Reddit
-    name: reddit
-    org: sokel
-    version: v0.1.0
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-reddit:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-reddit:0.1.1@sha256:5c7c078cff96ae84da3abbf474c038b8120d23ac866e11364876048bd39ccb91
