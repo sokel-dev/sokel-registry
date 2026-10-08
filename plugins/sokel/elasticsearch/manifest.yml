@@ -1,650 +1,652 @@
-credential:
-    fields:
-        - desc: 集群地址，如 https://es.internal:9200（带协议与端口）。多节点填其中一个即可
-          label: 地址
-          name: base_url
-          required: true
-          type: text
-        - desc: basic 认证；用 API Key 就留空
-          label: 用户名
-          name: username
-          type: text
-        - label: 密码
-          name: password
-          type: secret
-        - desc: Kibana → Stack Management → API Keys 生成的 encoded 值。填了它就不用用户名密码
-          label: API Key
-          name: api_key
-          type: secret
-        - desc: 自建集群用自签证书时选 on（连接仍加密，但不校验对端身份）。默认 off
-          label: 跳过证书校验
-          name: tls_insecure
-          options:
-            - label: "off"
-              value: "off"
-            - label: "on"
-              value: "on"
-          type: select
-operations:
-    - desc: 把别名原子地指向新索引（重建索引后的切换动作：查询方一直用别名，无感知）
-      id: alias_switch
-      inputs:
-        - label: 别名
-          name: alias
-          required: true
-          type: string
-        - desc: 切换后别名指向的索引
-          label: 指向索引
-          name: to_index
-          required: true
-          type: string
-        - desc: 默认关：把别名从其它索引上摘掉，只指向新的。开了则是追加
-          label: 保留原有指向
-          name: keep_others
-          type: boolean
-      label: 切别名
-      outputs:
-        - label: 已切换
-          name: ok
-          required: true
-          type: boolean
-        - itemType: string
-          label: 从这些索引上摘掉了
-          name: removed_from
-          required: true
-          type: array
-    - desc: 一次写入多篇（一个请求搞定，比逐条快一个量级）
-      id: bulk_index
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: 每个元素是一篇文档的 JSON
-          label: 文档数组
-          name: documents
-          opaque: true
-          required: true
-          type: array
-        - desc: 留空由 ES 生成 ID。**填上业务主键字段名就天然幂等**——重跑覆盖同一批而不是写出重复
-          label: 拿哪个字段当 ID
-          name: id_field
-          type: string
-        - desc: 整批写完刷一次；默认关
-          label: 立即可搜
-          name: refresh
-          type: boolean
-      label: 批量写入
-      outputs:
-        - goType: int
-          label: 成功条数
-          name: indexed
-          required: true
-          type: number
-        - goType: int
-          label: 失败条数
-          name: failed
-          required: true
-          type: number
-        - desc: 最多列前 10 条。**批量是部分成功的**：失败几条不会让整批回滚
-          itemType: string
-          label: 失败原因
-          name: errors
-          required: true
-          type: array
-        - goType: int
-          label: 耗时(ms)
-          name: took_ms
-          required: true
-          type: number
-    - desc: 直达任意 ES REST 接口（上面没覆盖的：_tasks、_ilm、_snapshot、_sql…）
-      id: call
-      inputs:
-        - label: 方法
-          name: method
-          options:
-            - label: GET
-              value: GET
-            - label: POST
-              value: POST
-            - label: PUT
-              value: PUT
-            - label: DELETE
-              value: DELETE
-            - label: HEAD
-              value: HEAD
-          type: enum
-        - desc: 以 / 开头，如 /_cat/nodes?format=json 或 /my-index/_settings
-          label: 路径
-          name: path
-          required: true
-          type: string
-        - desc: 请求体 JSON，键名照 ES 官方文档；GET 也可以带体（ES 允许）
-          label: 请求体
-          name: body
-          opaque: true
-          type: json
-      label: 通用调用
-      outputs:
-        - goType: int
-          label: HTTP 状态码
-          name: status
-          required: true
-          type: number
-        - desc: ES 应答 JSON，形状随接口而变，由官方文档定义
-          label: 应答
-          name: data
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-    - desc: 集群状态与分片情况（做巡检/告警的输入）
-      id: cluster_health
-      label: 集群健康
-      outputs:
-        - desc: green 都好 / yellow 副本没分配（单节点常态）/ red **有主分片丢了，数据不全**
-          label: 状态
-          name: status
-          required: true
-          type: string
-        - label: 集群名
-          name: cluster_name
-          required: true
-          type: string
-        - goType: int
-          label: 节点数
-          name: nodes
-          required: true
-          type: number
-        - goType: int
-          label: 活跃分片
-          name: active_shards
-          required: true
-          type: number
-        - goType: int
-          label: 未分配分片
-          name: unassigned_shards
-          required: true
-          type: number
-    - desc: 只数不取文档，且**总数是精确的**（不受搜索那 10000 上限影响）
-      id: count
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
-          label: 查询
-          name: query
-          opaque: true
-          type: json
-        - desc: Lucene 语法；与「查询」二选一
-          label: 简式查询
-          name: q
-          type: string
-      label: 统计条数
-      outputs:
-        - goType: int
-          label: 条数
-          name: count
-          required: true
-          type: number
-    - desc: 删掉匹配的文档（清理过期数据常用）。**必须给查询**——不给等于删光索引
-      id: delete_by_query
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: ES Query DSL 的 query 部分。**必填**：留空会被插件拒绝，要清空整个索引请用「删除索引」再重建
-          label: 查询
-          name: query
-          opaque: true
-          required: true
-          type: json
-      label: 按查询删除
-      outputs:
-        - goType: int
-          label: 删除条数
-          name: deleted
-          required: true
-          type: number
-        - goType: int
-          label: 耗时(ms)
-          name: took_ms
-          required: true
-          type: number
-    - desc: 按 ID 删一篇；文档本来就没有不是错误（deleted=false）
-      id: doc_delete
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - label: 文档 ID
-          name: id
-          required: true
-          type: string
-        - desc: 同「写入文档」
-          label: 立即生效
-          name: refresh
-          type: boolean
-      label: 删除文档
-      outputs:
-        - label: 已删除
-          name: deleted
-          required: true
-          type: boolean
-    - desc: 按 ID 取一篇文档；不存在不是错误（found=false）
-      id: doc_get
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - label: 文档 ID
-          name: id
-          required: true
-          type: string
-      label: 取文档
-      outputs:
-        - label: 找到了
-          name: found
-          required: true
-          type: boolean
-        - desc: 文档内容（_source），字段由文档本身决定
-          label: 内容
-          name: source
-          opaque: true
-          required: true
-          type: json
-        - goType: int
-          label: 版本号
-          name: version
-          type: number
-    - desc: 写一篇文档；给 ID 就是覆盖写，不给 ID 由 ES 生成
-      id: doc_index
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: 文档内容 JSON，字段名照索引 mapping
-          label: 文档
-          name: document
-          opaque: true
-          required: true
-          type: json
-        - desc: 留空由 ES 生成。**给业务主键当 ID 就天然幂等**——重跑不会写出两条
-          label: 文档 ID
-          name: id
-          type: string
-        - desc: 默认关（ES 约 1 秒后自动可搜）。开了这条写入立刻能被搜到，但**每次都强制刷新分片，批量写时很慢**
-          label: 立即可搜
-          name: refresh
-          type: boolean
-      label: 写入文档
-      outputs:
-        - label: 文档 ID
-          name: id
-          required: true
-          type: string
-        - desc: created 新建 / updated 覆盖
-          label: 结果
-          name: result
-          required: true
-          type: string
-        - goType: int
-          label: 版本号
-          name: version
-          required: true
-          type: number
-    - desc: 局部更新：只改给出的字段，其余不动（写入文档是整篇覆盖）
-      id: doc_update
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - label: 文档 ID
-          name: id
-          required: true
-          type: string
-        - desc: 要改的字段，如 {"status":"done"}
-          label: 字段
-          name: doc
-          opaque: true
-          required: true
-          type: json
-        - desc: 默认关：文档不存在时报错
-          label: 不存在就新建
-          name: upsert
-          type: boolean
-        - desc: 同「写入文档」
-          label: 立即可搜
-          name: refresh
-          type: boolean
-      label: 更新文档
-      outputs:
-        - desc: updated 改了 / noop 内容一样没动 / created 新建
-          label: 结果
-          name: result
-          required: true
-          type: string
-        - goType: int
-          label: 版本号
-          name: version
-          required: true
-          type: number
-    - desc: 连一下集群并报版本、发行版与健康状态
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 版本
-          name: version
-          required: true
-          type: string
-        - desc: elasticsearch / opensearch
-          label: 发行版
-          name: distribution
-          required: true
-          type: string
-        - label: 集群名
-          name: cluster_name
-          required: true
-          type: string
-        - label: 集群状态
-          name: status
-          type: string
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 建一个索引，可带 mapping 与 settings；已存在不是错误（created=false）
-      id: index_create
-      inputs:
-        - desc: 小写，不能含空格与大部分符号
-          label: 索引名
-          name: name
-          required: true
-          type: string
-        - desc: 字段类型定义，如 {"properties":{"title":{"type":"text"},"ts":{"type":"date"}}}；留空 = 由 ES 按首批文档猜（动态 mapping）
-          label: 字段定义
-          name: mappings
-          opaque: true
-          type: json
-        - desc: 索引设置，如 {"number_of_shards":1,"number_of_replicas":0}
-          label: 设置
-          name: settings
-          opaque: true
-          type: json
-      label: 建索引
-      outputs:
-        - label: 已创建
-          name: created
-          required: true
-          type: boolean
-        - label: 本来就有
-          name: existed
-          required: true
-          type: boolean
-    - desc: '**整个索引连数据一起删，不可恢复**。插件拒绝通配与 _all（那是删全集群）'
-      id: index_delete
-      inputs:
-        - desc: 必须是具体的一个名字，不接受 * 或 _all
-          label: 索引名
-          name: name
-          required: true
-          type: string
-      label: 删索引
-      outputs:
-        - label: 已删除
-          name: deleted
-          required: true
-          type: boolean
-    - desc: 列出索引及其健康、文档数与占用空间
-      id: indices_list
-      inputs:
-        - desc: 如 logs-*；留空 = 全部（不含系统索引）
-          label: 匹配模式
-          name: pattern
-          type: string
-      label: 索引列表
-      outputs:
-        - fields:
-            - label: 索引名
-              name: name
-              required: true
-              type: string
-            - desc: green / yellow / red
-              label: 健康
-              name: health
-              required: true
-              type: string
-            - desc: open / close
-              label: 状态
-              name: status
-              required: true
-              type: string
-            - goType: int
-              label: 文档数
-              name: docs
-              required: true
-              type: number
-            - label: 占用空间
-              name: store_size
-              required: true
-              type: string
-          goType: IndexInfo
-          label: 索引
-          name: indices
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-    - desc: 取索引的 mapping（排查「为什么这个字段搜不到」的第一步）
-      id: mapping_get
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-      label: 看字段定义
-      outputs:
-        - desc: 各索引的字段定义，键是索引名
-          label: 字段定义
-          name: mappings
-          opaque: true
-          required: true
-          type: json
-    - desc: 给已有索引**新增**字段定义。**已有字段的类型改不了**（ES 的硬限制，要改只能重建索引再切别名）
-      id: mapping_put
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: 新字段定义，如 {"tags":{"type":"keyword"}}
-          label: 字段
-          name: properties
-          opaque: true
-          required: true
-          type: json
-      label: 加字段定义
-      outputs:
-        - label: 已生效
-          name: ok
-          required: true
-          type: boolean
-    - desc: 把一个索引的数据灌进另一个（改字段类型的唯一办法）。大索引建议关掉「等它跑完」拿任务 id
-      id: reindex
-      inputs:
-        - label: 源索引
-          name: source
-          required: true
-          type: string
-        - desc: 要先建好（带新的 mapping），否则字段类型还是让 ES 猜
-          label: 目标索引
-          name: dest
-          required: true
-          type: string
-        - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
-          label: 查询
-          name: query
-          opaque: true
-          type: json
-        - desc: 默认同步等结果（超时会断，大索引慎用）。打开则立刻返回任务 id，用通用调用查 /_tasks/<id>
-          label: 后台跑
-          name: async
-          type: boolean
-      label: 重建索引
-      outputs:
-        - goType: int
-          label: 写入条数
-          name: created
-          required: true
-          type: number
-        - goType: int
-          label: 失败条数
-          name: failures
-          required: true
-          type: number
-        - desc: 后台跑时才有
-          label: 任务 ID
-          name: task
-          type: string
-        - goType: int
-          label: 耗时(ms)
-          name: took_ms
-          required: true
-          type: number
-    - desc: 按 Query DSL 或 Lucene 简式检索文档，可带排序、分页与聚合
-      id: search
-      inputs:
-        - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
-          label: 索引
-          name: index
-          required: true
-          type: string
-        - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
-          label: 查询
-          name: query
-          opaque: true
-          type: json
-        - desc: Lucene 语法，如 status:error AND host:a1。与「查询」二选一（都给时以「查询」为准）
-          label: 简式查询
-          name: q
-          type: string
-        - desc: 默认 10。给了「聚合」而这里留空 = 只回聚合不回文档
-          goType: int
-          label: 取几条
-          name: size
-          type: number
-        - desc: 分页用；ES 默认最多翻到第 10000 条
-          goType: int
-          label: 跳过几条
-          name: from
-          type: number
-        - desc: 字段:方向，如 @timestamp:desc。可给多个，先给的优先
-          itemType: string
-          label: 排序
-          name: sort
-          type: array
-        - desc: 留空 = 整个文档。字段多的索引里指定几个能省大量带宽
-          itemType: string
-          label: 只取这些字段
-          name: source_fields
-          type: array
-        - desc: ES 聚合定义，如 {"by_host":{"terms":{"field":"host.keyword"}}}
-          label: 聚合
-          name: aggs
-          opaque: true
-          type: json
-        - desc: 默认只精确到 10000 条（超出回下界）。要准确总数就打开，大索引上更慢
-          label: 精确总数
-          name: exact_total
-          type: boolean
-      label: 搜索
-      outputs:
-        - goType: int
-          label: 命中总数
-          name: total
-          required: true
-          type: number
-        - desc: true = 实际命中**不止**这么多（ES 默认统计上限 10000）。要准数打开「精确总数」
-          label: 总数是下界
-          name: total_is_lower_bound
-          required: true
-          type: boolean
-        - fields:
-            - label: 文档 ID
-              name: id
-              required: true
-              type: string
-            - label: 所在索引
-              name: index
-              required: true
-              type: string
-            - desc: 按字段排序时 ES 不算分，这里是 0
-              label: 相关性得分
-              name: score
-              required: true
-              type: number
-            - desc: 原始 _source，字段由索引里的文档决定
-              label: 文档内容
-              name: source
-              opaque: true
-              required: true
-              type: json
-          goType: Hit
-          label: 命中文档
-          name: hits
-          required: true
-          type: array
-        - goType: int
-          label: 本页条数
-          name: count
-          required: true
-          type: number
-        - desc: 聚合结果，形状由「聚合」定义决定
-          label: 聚合结果
-          name: aggregations
-          opaque: true
-          type: json
-        - goType: int
-          label: 耗时(ms)
-          name: took_ms
-          required: true
-          type: number
 plugin:
-    desc: 把 ES 接进工作流：查日志与文档、灌数据、管索引。ES 7/8/9 与 OpenSearch 都支持——
-    doc: README.md
-    label: Elasticsearch
-    name: elasticsearch
-    org: sokel
-    version: v1.0.0
+  desc: 把 ES 接进工作流：查日志与文档、灌数据、管索引。ES 7/8/9 与 OpenSearch 都支持——
+  doc: README.md
+  label: Elasticsearch
+  name: elasticsearch
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 集群地址，如 https://es.internal:9200（带协议与端口）。多节点填其中一个即可
+      label: 地址
+      name: base_url
+      required: true
+      type: text
+    - desc: basic 认证；用 API Key 就留空
+      label: 用户名
+      name: username
+      type: text
+    - label: 密码
+      name: password
+      type: secret
+    - desc: Kibana → Stack Management → API Keys 生成的 encoded 值。填了它就不用用户名密码
+      label: API Key
+      name: api_key
+      type: secret
+    - desc: 自建集群用自签证书时选 on（连接仍加密，但不校验对端身份）。默认 off
+      label: 跳过证书校验
+      name: tls_insecure
+      options:
+        - label: "off"
+          value: "off"
+        - label: "on"
+          value: "on"
+      type: select
+
+operations:
+  - desc: 把别名原子地指向新索引（重建索引后的切换动作：查询方一直用别名，无感知）
+    id: alias_switch
+    inputs:
+      - label: 别名
+        name: alias
+        required: true
+        type: string
+      - desc: 切换后别名指向的索引
+        label: 指向索引
+        name: to_index
+        required: true
+        type: string
+      - desc: 默认关：把别名从其它索引上摘掉，只指向新的。开了则是追加
+        label: 保留原有指向
+        name: keep_others
+        type: boolean
+    label: 切别名
+    outputs:
+      - label: 已切换
+        name: ok
+        required: true
+        type: boolean
+      - itemType: string
+        label: 从这些索引上摘掉了
+        name: removed_from
+        required: true
+        type: array
+  - desc: 一次写入多篇（一个请求搞定，比逐条快一个量级）
+    id: bulk_index
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: 每个元素是一篇文档的 JSON
+        label: 文档数组
+        name: documents
+        opaque: true
+        required: true
+        type: array
+      - desc: 留空由 ES 生成 ID。**填上业务主键字段名就天然幂等**——重跑覆盖同一批而不是写出重复
+        label: 拿哪个字段当 ID
+        name: id_field
+        type: string
+      - desc: 整批写完刷一次；默认关
+        label: 立即可搜
+        name: refresh
+        type: boolean
+    label: 批量写入
+    outputs:
+      - goType: int
+        label: 成功条数
+        name: indexed
+        required: true
+        type: number
+      - goType: int
+        label: 失败条数
+        name: failed
+        required: true
+        type: number
+      - desc: 最多列前 10 条。**批量是部分成功的**：失败几条不会让整批回滚
+        itemType: string
+        label: 失败原因
+        name: errors
+        required: true
+        type: array
+      - goType: int
+        label: 耗时(ms)
+        name: took_ms
+        required: true
+        type: number
+  - desc: 直达任意 ES REST 接口（上面没覆盖的：_tasks、_ilm、_snapshot、_sql…）
+    id: call
+    inputs:
+      - label: 方法
+        name: method
+        options:
+          - label: GET
+            value: GET
+          - label: POST
+            value: POST
+          - label: PUT
+            value: PUT
+          - label: DELETE
+            value: DELETE
+          - label: HEAD
+            value: HEAD
+        type: enum
+      - desc: 以 / 开头，如 /_cat/nodes?format=json 或 /my-index/_settings
+        label: 路径
+        name: path
+        required: true
+        type: string
+      - desc: 请求体 JSON，键名照 ES 官方文档；GET 也可以带体（ES 允许）
+        label: 请求体
+        name: body
+        opaque: true
+        type: json
+    label: 通用调用
+    outputs:
+      - goType: int
+        label: HTTP 状态码
+        name: status
+        required: true
+        type: number
+      - desc: ES 应答 JSON，形状随接口而变，由官方文档定义
+        label: 应答
+        name: data
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+  - desc: 集群状态与分片情况（做巡检/告警的输入）
+    id: cluster_health
+    label: 集群健康
+    outputs:
+      - desc: green 都好 / yellow 副本没分配（单节点常态）/ red **有主分片丢了，数据不全**
+        label: 状态
+        name: status
+        required: true
+        type: string
+      - label: 集群名
+        name: cluster_name
+        required: true
+        type: string
+      - goType: int
+        label: 节点数
+        name: nodes
+        required: true
+        type: number
+      - goType: int
+        label: 活跃分片
+        name: active_shards
+        required: true
+        type: number
+      - goType: int
+        label: 未分配分片
+        name: unassigned_shards
+        required: true
+        type: number
+  - desc: 只数不取文档，且**总数是精确的**（不受搜索那 10000 上限影响）
+    id: count
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
+        label: 查询
+        name: query
+        opaque: true
+        type: json
+      - desc: Lucene 语法；与「查询」二选一
+        label: 简式查询
+        name: q
+        type: string
+    label: 统计条数
+    outputs:
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+  - desc: 删掉匹配的文档（清理过期数据常用）。**必须给查询**——不给等于删光索引
+    id: delete_by_query
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: ES Query DSL 的 query 部分。**必填**：留空会被插件拒绝，要清空整个索引请用「删除索引」再重建
+        label: 查询
+        name: query
+        opaque: true
+        required: true
+        type: json
+    label: 按查询删除
+    outputs:
+      - goType: int
+        label: 删除条数
+        name: deleted
+        required: true
+        type: number
+      - goType: int
+        label: 耗时(ms)
+        name: took_ms
+        required: true
+        type: number
+  - desc: 按 ID 删一篇；文档本来就没有不是错误（deleted=false）
+    id: doc_delete
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - label: 文档 ID
+        name: id
+        required: true
+        type: string
+      - desc: 同「写入文档」
+        label: 立即生效
+        name: refresh
+        type: boolean
+    label: 删除文档
+    outputs:
+      - label: 已删除
+        name: deleted
+        required: true
+        type: boolean
+  - desc: 按 ID 取一篇文档；不存在不是错误（found=false）
+    id: doc_get
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - label: 文档 ID
+        name: id
+        required: true
+        type: string
+    label: 取文档
+    outputs:
+      - label: 找到了
+        name: found
+        required: true
+        type: boolean
+      - desc: 文档内容（_source），字段由文档本身决定
+        label: 内容
+        name: source
+        opaque: true
+        required: true
+        type: json
+      - goType: int
+        label: 版本号
+        name: version
+        type: number
+  - desc: 写一篇文档；给 ID 就是覆盖写，不给 ID 由 ES 生成
+    id: doc_index
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: 文档内容 JSON，字段名照索引 mapping
+        label: 文档
+        name: document
+        opaque: true
+        required: true
+        type: json
+      - desc: 留空由 ES 生成。**给业务主键当 ID 就天然幂等**——重跑不会写出两条
+        label: 文档 ID
+        name: id
+        type: string
+      - desc: 默认关（ES 约 1 秒后自动可搜）。开了这条写入立刻能被搜到，但**每次都强制刷新分片，批量写时很慢**
+        label: 立即可搜
+        name: refresh
+        type: boolean
+    label: 写入文档
+    outputs:
+      - label: 文档 ID
+        name: id
+        required: true
+        type: string
+      - desc: created 新建 / updated 覆盖
+        label: 结果
+        name: result
+        required: true
+        type: string
+      - goType: int
+        label: 版本号
+        name: version
+        required: true
+        type: number
+  - desc: 局部更新：只改给出的字段，其余不动（写入文档是整篇覆盖）
+    id: doc_update
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - label: 文档 ID
+        name: id
+        required: true
+        type: string
+      - desc: 要改的字段，如 {"status":"done"}
+        label: 字段
+        name: doc
+        opaque: true
+        required: true
+        type: json
+      - desc: 默认关：文档不存在时报错
+        label: 不存在就新建
+        name: upsert
+        type: boolean
+      - desc: 同「写入文档」
+        label: 立即可搜
+        name: refresh
+        type: boolean
+    label: 更新文档
+    outputs:
+      - desc: updated 改了 / noop 内容一样没动 / created 新建
+        label: 结果
+        name: result
+        required: true
+        type: string
+      - goType: int
+        label: 版本号
+        name: version
+        required: true
+        type: number
+  - desc: 连一下集群并报版本、发行版与健康状态
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 版本
+        name: version
+        required: true
+        type: string
+      - desc: elasticsearch / opensearch
+        label: 发行版
+        name: distribution
+        required: true
+        type: string
+      - label: 集群名
+        name: cluster_name
+        required: true
+        type: string
+      - label: 集群状态
+        name: status
+        type: string
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 建一个索引，可带 mapping 与 settings；已存在不是错误（created=false）
+    id: index_create
+    inputs:
+      - desc: 小写，不能含空格与大部分符号
+        label: 索引名
+        name: name
+        required: true
+        type: string
+      - desc: 字段类型定义，如 {"properties":{"title":{"type":"text"},"ts":{"type":"date"}}}；留空 = 由 ES 按首批文档猜（动态 mapping）
+        label: 字段定义
+        name: mappings
+        opaque: true
+        type: json
+      - desc: 索引设置，如 {"number_of_shards":1,"number_of_replicas":0}
+        label: 设置
+        name: settings
+        opaque: true
+        type: json
+    label: 建索引
+    outputs:
+      - label: 已创建
+        name: created
+        required: true
+        type: boolean
+      - label: 本来就有
+        name: existed
+        required: true
+        type: boolean
+  - desc: '**整个索引连数据一起删，不可恢复**。插件拒绝通配与 _all（那是删全集群）'
+    id: index_delete
+    inputs:
+      - desc: 必须是具体的一个名字，不接受 * 或 _all
+        label: 索引名
+        name: name
+        required: true
+        type: string
+    label: 删索引
+    outputs:
+      - label: 已删除
+        name: deleted
+        required: true
+        type: boolean
+  - desc: 列出索引及其健康、文档数与占用空间
+    id: indices_list
+    inputs:
+      - desc: 如 logs-*；留空 = 全部（不含系统索引）
+        label: 匹配模式
+        name: pattern
+        type: string
+    label: 索引列表
+    outputs:
+      - fields:
+          - label: 索引名
+            name: name
+            required: true
+            type: string
+          - desc: green / yellow / red
+            label: 健康
+            name: health
+            required: true
+            type: string
+          - desc: open / close
+            label: 状态
+            name: status
+            required: true
+            type: string
+          - goType: int
+            label: 文档数
+            name: docs
+            required: true
+            type: number
+          - label: 占用空间
+            name: store_size
+            required: true
+            type: string
+        goType: IndexInfo
+        label: 索引
+        name: indices
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+  - desc: 取索引的 mapping（排查「为什么这个字段搜不到」的第一步）
+    id: mapping_get
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+    label: 看字段定义
+    outputs:
+      - desc: 各索引的字段定义，键是索引名
+        label: 字段定义
+        name: mappings
+        opaque: true
+        required: true
+        type: json
+  - desc: 给已有索引**新增**字段定义。**已有字段的类型改不了**（ES 的硬限制，要改只能重建索引再切别名）
+    id: mapping_put
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: 新字段定义，如 {"tags":{"type":"keyword"}}
+        label: 字段
+        name: properties
+        opaque: true
+        required: true
+        type: json
+    label: 加字段定义
+    outputs:
+      - label: 已生效
+        name: ok
+        required: true
+        type: boolean
+  - desc: 把一个索引的数据灌进另一个（改字段类型的唯一办法）。大索引建议关掉「等它跑完」拿任务 id
+    id: reindex
+    inputs:
+      - label: 源索引
+        name: source
+        required: true
+        type: string
+      - desc: 要先建好（带新的 mapping），否则字段类型还是让 ES 猜
+        label: 目标索引
+        name: dest
+        required: true
+        type: string
+      - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
+        label: 查询
+        name: query
+        opaque: true
+        type: json
+      - desc: 默认同步等结果（超时会断，大索引慎用）。打开则立刻返回任务 id，用通用调用查 /_tasks/<id>
+        label: 后台跑
+        name: async
+        type: boolean
+    label: 重建索引
+    outputs:
+      - goType: int
+        label: 写入条数
+        name: created
+        required: true
+        type: number
+      - goType: int
+        label: 失败条数
+        name: failures
+        required: true
+        type: number
+      - desc: 后台跑时才有
+        label: 任务 ID
+        name: task
+        type: string
+      - goType: int
+        label: 耗时(ms)
+        name: took_ms
+        required: true
+        type: number
+  - desc: 按 Query DSL 或 Lucene 简式检索文档，可带排序、分页与聚合
+    id: search
+    inputs:
+      - desc: 索引名或别名；多个用逗号分隔，支持通配（如 logs-2026.*）
+        label: 索引
+        name: index
+        required: true
+        type: string
+      - desc: ES Query DSL 的 query 部分，如 {"bool":{"must":[{"match":{"message":"timeout"}}]}}；留空 = 全部
+        label: 查询
+        name: query
+        opaque: true
+        type: json
+      - desc: Lucene 语法，如 status:error AND host:a1。与「查询」二选一（都给时以「查询」为准）
+        label: 简式查询
+        name: q
+        type: string
+      - desc: 默认 10。给了「聚合」而这里留空 = 只回聚合不回文档
+        goType: int
+        label: 取几条
+        name: size
+        type: number
+      - desc: 分页用；ES 默认最多翻到第 10000 条
+        goType: int
+        label: 跳过几条
+        name: from
+        type: number
+      - desc: 字段:方向，如 @timestamp:desc。可给多个，先给的优先
+        itemType: string
+        label: 排序
+        name: sort
+        type: array
+      - desc: 留空 = 整个文档。字段多的索引里指定几个能省大量带宽
+        itemType: string
+        label: 只取这些字段
+        name: source_fields
+        type: array
+      - desc: ES 聚合定义，如 {"by_host":{"terms":{"field":"host.keyword"}}}
+        label: 聚合
+        name: aggs
+        opaque: true
+        type: json
+      - desc: 默认只精确到 10000 条（超出回下界）。要准确总数就打开，大索引上更慢
+        label: 精确总数
+        name: exact_total
+        type: boolean
+    label: 搜索
+    outputs:
+      - goType: int
+        label: 命中总数
+        name: total
+        required: true
+        type: number
+      - desc: true = 实际命中**不止**这么多（ES 默认统计上限 10000）。要准数打开「精确总数」
+        label: 总数是下界
+        name: total_is_lower_bound
+        required: true
+        type: boolean
+      - fields:
+          - label: 文档 ID
+            name: id
+            required: true
+            type: string
+          - label: 所在索引
+            name: index
+            required: true
+            type: string
+          - desc: 按字段排序时 ES 不算分，这里是 0
+            label: 相关性得分
+            name: score
+            required: true
+            type: number
+          - desc: 原始 _source，字段由索引里的文档决定
+            label: 文档内容
+            name: source
+            opaque: true
+            required: true
+            type: json
+        goType: Hit
+        label: 命中文档
+        name: hits
+        required: true
+        type: array
+      - goType: int
+        label: 本页条数
+        name: count
+        required: true
+        type: number
+      - desc: 聚合结果，形状由「聚合」定义决定
+        label: 聚合结果
+        name: aggregations
+        opaque: true
+        type: json
+      - goType: int
+        label: 耗时(ms)
+        name: took_ms
+        required: true
+        type: number
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-elasticsearch:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-elasticsearch:1.0.1@sha256:b70975e0530e33bd1ce7853994eebdab39e748ca714b4fca6f5b921162cc528f
