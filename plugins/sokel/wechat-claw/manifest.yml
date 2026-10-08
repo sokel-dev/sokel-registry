@@ -1,130 +1,134 @@
-credential:
-    auth:
-        kind: qr
-    fields:
-        - desc: 点凭证行的「登录/授权」扫码获取，无需手填
-          label: 会话（扫码登录获取）
-          name: session
-          type: secret
-events:
-    - fields:
-        - label: 对话（发信人 wxid）
-          name: chat_id
-          required: true
-          type: string
-        - label: 收信方（本 bot）
-          name: to
-          required: true
-          type: string
-        - label: 文本内容
-          name: text
-          type: text
-        - goType: int
-          label: 消息 ID
-          name: message_id
-          required: true
-          type: number
-        - desc: 消息附带图片（平台文件引用，可多张）
-          itemType: file
-          label: 图片
-          name: images
-          type: array
-        - desc: 消息附带文件（平台文件引用）
-          itemType: file
-          label: 文件
-          name: files
-          type: array
-        - desc: 消息语音（平台文件引用）
-          label: 语音
-          name: voice
-          type: file
-        - desc: 上游原始消息，形状由 clawbot 决定
-          label: 原始消息
-          name: raw
-          opaque: true
-          required: true
-          type: json
-          types:
-            - json
-            - array
-            - string
-            - number
-            - boolean
-      id: message
-      label: 收到消息
-events_common:
-    - chat_id
-operations:
-    - desc: 上传并发送文件附件
-      id: send_file
-      inputs:
-        - label: 对方 wxid
-          name: to
-          required: true
-          type: string
-        - label: 文件
-          name: file
-          required: true
-          type: file
-        - desc: 缺省用上游文件名
-          label: 文件名
-          name: filename
-          type: string
-        - label: 说明文字
-          name: caption
-          type: string
-      label: 发送文件
-      outputs:
-        - label: 是否成功
-          name: ok
-          required: true
-          type: boolean
-    - desc: 上传并发送图片（可带说明文字）
-      id: send_image
-      inputs:
-        - label: 对方 wxid
-          name: to
-          required: true
-          type: string
-        - label: 图片
-          name: image
-          required: true
-          type: file
-        - label: 说明文字
-          name: caption
-          type: string
-      label: 发送图片
-      outputs:
-        - label: 是否成功
-          name: ok
-          required: true
-          type: boolean
-    - desc: 向指定 wxid 发送文本消息
-      id: send_text
-      inputs:
-        - desc: 收信人（事件里的 chat_id）
-          label: 对方 wxid
-          name: to
-          required: true
-          type: string
-        - label: 文本内容
-          name: text
-          required: true
-          type: text
-      label: 发送文本
-      outputs:
-        - label: 是否成功
-          name: ok
-          required: true
-          type: boolean
 plugin:
-    desc: 接入微信官方 ClawBot（iLink Bot 接口）：你在微信里给 ClawBot 发消息即触发工作流，工作流可回复文本、图片、文件。只有扫码绑定的本人能与它对话。
-    doc: README.md
-    label: 微信 ClawBot
-    name: wechat-claw
-    org: sokel
-    version: v1.0.1
+  desc: 接入微信官方 ClawBot（iLink Bot 接口）：你在微信里给 ClawBot 发消息即触发工作流，工作流可回复文本、图片、文件。只有扫码绑定的本人能与它对话。
+  doc: README.md
+  label: 微信 ClawBot
+  name: wechat-claw
+  org: sokel
+  version: v1.0.2
+
+credential:
+  auth:
+    kind: qr
+  fields:
+    - desc: 点凭证行的「登录/授权」扫码获取，无需手填
+      label: 会话（扫码登录获取）
+      name: session
+      type: secret
+
+events_common:
+  - chat_id
+
+events:
+  - fields:
+      - label: 对话（发信人 wxid）
+        name: chat_id
+        required: true
+        type: string
+      - label: 收信方（本 bot）
+        name: to
+        required: true
+        type: string
+      - label: 文本内容
+        name: text
+        type: text
+      - goType: int
+        label: 消息 ID
+        name: message_id
+        required: true
+        type: number
+      - desc: 消息附带图片（平台文件引用，可多张）
+        itemType: file
+        label: 图片
+        name: images
+        type: array
+      - desc: 消息附带文件（平台文件引用）
+        itemType: file
+        label: 文件
+        name: files
+        type: array
+      - desc: 消息语音（平台文件引用）
+        label: 语音
+        name: voice
+        type: file
+      - desc: 上游原始消息，形状由 clawbot 决定
+        label: 原始消息
+        name: raw
+        opaque: true
+        required: true
+        type: json
+        types:
+          - json
+          - array
+          - string
+          - number
+          - boolean
+    id: message
+    label: 收到消息
+
+operations:
+  - desc: 上传并发送文件附件
+    id: send_file
+    inputs:
+      - label: 对方 wxid
+        name: to
+        required: true
+        type: string
+      - label: 文件
+        name: file
+        required: true
+        type: file
+      - desc: 缺省用上游文件名
+        label: 文件名
+        name: filename
+        type: string
+      - label: 说明文字
+        name: caption
+        type: string
+    label: 发送文件
+    outputs:
+      - label: 是否成功
+        name: ok
+        required: true
+        type: boolean
+  - desc: 上传并发送图片（可带说明文字）
+    id: send_image
+    inputs:
+      - label: 对方 wxid
+        name: to
+        required: true
+        type: string
+      - label: 图片
+        name: image
+        required: true
+        type: file
+      - label: 说明文字
+        name: caption
+        type: string
+    label: 发送图片
+    outputs:
+      - label: 是否成功
+        name: ok
+        required: true
+        type: boolean
+  - desc: 向指定 wxid 发送文本消息
+    id: send_text
+    inputs:
+      - desc: 收信人（事件里的 chat_id）
+        label: 对方 wxid
+        name: to
+        required: true
+        type: string
+      - label: 文本内容
+        name: text
+        required: true
+        type: text
+    label: 发送文本
+    outputs:
+      - label: 是否成功
+        name: ok
+        required: true
+        type: boolean
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-wechat-claw:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-wechat-claw:1.0.2@sha256:71fe85554fd8bce04de88478f0b19089b79824e9a28acfb1b3bb3b68a91a8685
