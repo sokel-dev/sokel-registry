@@ -12,7 +12,7 @@ credential:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-pgvector:0.2.0@sha256:af56c448dba34195b8e2af36580c5a7f5358d41be95f2c22c1c1124553070d30
+    ref: ghcr.io/sokel-dev/sokel-plugin-kbstore-pgvector:0.2.1@sha256:9728399bed181e5048d5d8c63fff1997bee3a9edfe7209ff30f7994b34884033
 implements:
 - capability: vectorstore
   operations:
@@ -200,6 +200,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：能解析成数字的按数值比，否则按文本比（日期是 YYYY-MM-DD）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -401,6 +408,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：能解析成数字的按数值比，否则按文本比（日期是 YYYY-MM-DD）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -533,6 +547,13 @@ implements:
         label: 反选
         name: exclude
         type: boolean
+      - desc: 范围过滤：能解析成数字的按数值比，否则按文本比（日期是 YYYY-MM-DD）
+        label: 下限（含）
+        name: gte
+        type: string
+      - label: 上限（含）
+        name: lte
+        type: string
       goType: Filter
       name: filters
       type: array
@@ -666,4 +687,4 @@ plugin:
   label: 知识库存储（pgvector）
   name: kbstore-pgvector
   org: sokel
-  version: v0.2.0
+  version: v0.2.1
