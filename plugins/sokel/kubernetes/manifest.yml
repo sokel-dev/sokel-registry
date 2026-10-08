@@ -1,726 +1,730 @@
-credential:
-    fields:
-        - desc: 整份 YAML 粘进来（ACK 用 aliyun 插件的「导出 kubeconfig」一键取；自建集群 ~/.kube/config）。它就是进集群的钥匙，只在插件内部使用
-          label: kubeconfig
-          name: kubeconfig
-          required: true
-          type: secret
-        - desc: 操作里没写命名空间时用它；留空 = default
-          label: 默认命名空间
-          name: namespace
-          type: text
-        - desc: 逗号分隔（如 prod,staging）。**填了才启动事件源**：Pod 被驱逐 / 调度失败 / 容器异常退出 / 节点不健康 会触发工作流（轮询，约 1 分钟延迟）。留空 = 不盯，只能用「事件列表」操作自己定时拉
-          label: 盯哪些命名空间
-          name: watch_namespaces
-          type: text
-events:
-    - desc: 节点 Ready 条件不为 True（失联 / 磁盘压力 / 内存压力）
-      fields:
-        - label: 命名空间
-          name: namespace
-          required: true
-          type: string
-        - label: 节点名
-          name: node
-          required: true
-          type: string
-        - desc: False = 明确不健康；Unknown = 失联（kubelet 不上报了）
-          label: Ready 状态
-          name: status
-          required: true
-          type: string
-        - label: 原文
-          name: message
-          type: text
-      id: node_not_ready
-      label: 节点不健康
-    - desc: 容器非正常结束（OOMKilled / 非零退出码），判据取自 Pod 状态而不是事件
-      fields:
-        - label: 命名空间
-          name: namespace
-          required: true
-          type: string
-        - desc: 如 Pod/web-abc123
-          label: 对象
-          name: object
-          required: true
-          type: string
-        - label: Pod 名
-          name: pod
-          required: true
-          type: string
-        - desc: OOMKilled = 内存不够，调 limits；Error = 进程自己挂了，看日志
-          label: 结束原因
-          name: reason
-          required: true
-          type: string
-        - desc: 137 = 被 SIGKILL（OOM 的典型特征）
-          goType: int
-          label: 退出码
-          name: exit_code
-          type: number
-        - goType: int
-          label: 累计重启次数
-          name: restarts
-          type: number
-        - label: 节点
-          name: node
-          type: string
-        - label: 结束时间
-          name: finished_at
-          required: true
-          type: string
-        - desc: Running 也可能挂过——它被拉起来了
-          label: Pod 状态
-          name: phase
-          type: string
-      id: pod_crashed
-      label: 容器异常退出
-    - desc: 节点资源不足时 kubelet 主动赶走了 Pod（Event reason=Evicted）
-      fields:
-        - label: 命名空间
-          name: namespace
-          required: true
-          type: string
-        - desc: 如 Pod/web-abc123
-          label: 对象
-          name: object
-          required: true
-          type: string
-        - label: Pod 名
-          name: pod
-          required: true
-          type: string
-        - desc: 'kubelet 给的原因，如 The node was low on resource: memory —— **缺哪种资源写在这里**'
-          label: 原文
-          name: message
-          required: true
-          type: text
-        - desc: 从原文里认出来的；认不出为空
-          label: 节点
-          name: node
-          type: string
-        - desc: 同一条事件被 k8s 累加的次数，>1 说明在反复发生
-          goType: int
-          label: 累计发生次数
-          name: count
-          type: number
-        - label: 最近发生
-          name: last_seen
-          type: string
-      id: pod_evicted
-      label: Pod 被驱逐
-    - desc: Pod 起不来，没有节点能放下它（Event reason=FailedScheduling）
-      fields:
-        - label: 命名空间
-          name: namespace
-          required: true
-          type: string
-        - desc: 如 Pod/web-abc123
-          label: 对象
-          name: object
-          required: true
-          type: string
-        - label: Pod 名
-          name: pod
-          required: true
-          type: string
-        - desc: '如 0/3 nodes are available: Insufficient cpu —— **差多少、差什么都在这句里**'
-          label: 原文
-          name: message
-          required: true
-          type: text
-        - goType: int
-          label: 累计发生次数
-          name: count
-          type: number
-        - label: 最近发生
-          name: last_seen
-          type: string
-      id: schedule_failed
-      label: 调度失败
-events_common:
-    - namespace
-operations:
-    - desc: kubectl apply 的通用兜底：Service/ConfigMap/CronJob/Ingress…专用操作没覆盖的资源都从这走。支持 --- 分隔的多文档；server-side apply（不存在则建，存在则改）
-      id: apply_manifest
-      inputs:
-        - desc: 整份 YAML，可含多个 --- 分隔的文档
-          label: YAML 清单
-          name: manifest
-          required: true
-          type: text
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-      label: 应用 YAML 清单
-      outputs:
-        - label: 成功
-          name: ok
-          required: true
-          type: boolean
-        - goType: int
-          label: 应用数
-          name: applied
-          required: true
-          type: number
-        - desc: 每行一条：kind/name → created|configured
-          label: 明细
-          name: items
-          required: true
-          type: text
-    - desc: 删除一个资源对象（Deployment/Job/Service/ConfigMap…）。**不可逆**，名字与命名空间核对清楚
-      id: delete_object
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - desc: 如 Deployment / Job / Service / ConfigMap（区分大小写）
-          label: 资源类型
-          name: kind
-          required: true
-          type: string
-        - label: 名称
-          name: name
-          required: true
-          type: string
-        - desc: 留空自动探测（apps/v1 → batch/v1 → v1 → networking.k8s.io/v1）
-          label: apiVersion
-          name: api_version
-          type: string
-      label: 删除对象
-      outputs:
-        - label: 已删除
-          name: ok
-          required: true
-          type: boolean
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 创建或更新一个 Deployment（server-side apply：不存在则建，存在则按给的字段改）。典型用法：把插件副本/自有服务拉起来，配合「就绪状态」确认起没起来
-      id: deploy_workload
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - desc: Deployment 名，也是 app 标签值（选择器锚它，建后不可改）
-          label: 名称
-          name: name
-          required: true
-          type: string
-        - desc: 如 registry.example.com/app:v1
-          label: 镜像
-          name: image
-          required: true
-          type: string
-        - default: 1
-          goType: int
-          label: 副本数
-          name: replicas
-          type: number
-        - desc: 键值对；值里可绑上游变量
-          label: 环境变量
-          name: env
-          type: json
-          valueType:
-            goType: string
-            name: ""
-            type: string
-        - desc: app 标签平台自动打，别在这里覆盖
-          label: 附加标签
-          name: labels
-          type: json
-          valueType:
-            goType: string
-            name: ""
-            type: string
-        - desc: 覆盖镜像入口（含参数，逐项一个元素）；留空 = 用镜像默认
-          itemType: string
-          label: 启动命令
-          name: command
-          type: array
-        - desc: 私有镜像仓库的 imagePullSecret 名（需已在目标命名空间建好）
-          label: 拉取密钥
-          name: image_pull_secret
-          type: string
-        - desc: 如 500m；留空不设
-          label: CPU 上限
-          name: cpu_limit
-          type: string
-        - desc: 如 512Mi；留空不设
-          label: 内存上限
-          name: memory_limit
-          type: string
-      label: 部署工作负载
-      outputs:
-        - label: 成功
-          name: ok
-          required: true
-          type: boolean
-        - desc: false = 更新了已有的
-          label: 是否新建
-          name: created
-          required: true
-          type: boolean
-        - label: 名称
-          name: name
-          required: true
-          type: string
-        - label: 命名空间
-          name: namespace
-          required: true
-          type: string
-    - desc: 滚动重启（等价 kubectl rollout restart）：改 pod 模板注解触发滚动替换，不中断服务
-      id: deployment_restart
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - label: Deployment 名
-          name: name
-          required: true
-          type: string
-      label: 重启 Deployment
-      outputs:
-        - label: 已触发
-          name: ok
-          required: true
-          type: boolean
-        - label: 触发时间
-          name: restarted_at
-          required: true
-          type: string
-    - desc: 把副本数调到指定值（等价 kubectl scale）。缩到 0 = 停掉这个服务，确认想清楚
-      id: deployment_scale
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - label: Deployment 名
-          name: name
-          required: true
-          type: string
-        - goType: int
-          label: 目标副本数
-          name: replicas
-          required: true
-          type: number
-      label: 扩缩 Deployment
-      outputs:
-        - label: 成功
-          name: ok
-          required: true
-          type: boolean
-        - goType: int
-          label: 原副本数
-          name: previous
-          required: true
-          type: number
-    - desc: 一个 Deployment 起没起来：期望/就绪/可用副本数与镜像。部署后接它判断是否就绪
-      id: deployment_status
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - label: Deployment 名
-          name: name
-          required: true
-          type: string
-      label: 就绪状态
-      outputs:
-        - desc: 就绪副本数 = 期望副本数且 ≥1
-          label: 已就绪
-          name: ready
-          required: true
-          type: boolean
-        - goType: int
-          label: 期望副本
-          name: desired
-          required: true
-          type: number
-        - goType: int
-          label: 就绪副本
-          name: ready_replicas
-          required: true
-          type: number
-        - goType: int
-          label: 可用副本
-          name: available
-          required: true
-          type: number
-        - label: 当前镜像
-          name: image
-          required: true
-          type: string
-        - desc: 未就绪时给出最近的 condition 原因
-          label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 列出命名空间里的 deployment（期望/就绪副本数、镜像）
-      id: deployments
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-      label: Deployment 列表
-      outputs:
-        - fields:
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - goType: int
-              label: 期望副本
-              name: replicas
-              required: true
-              type: number
-            - goType: int
-              label: 就绪副本
-              name: ready
-              required: true
-              type: number
-            - goType: int
-              label: 可用副本
-              name: available
-              type: number
-            - itemType: string
-              label: 镜像
-              name: images
-              type: array
-          goType: Deployment
-          label: Deployment 列表
-          name: deployments
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-    - desc: 命名空间最近的事件（调度失败/OOMKilled/探针失败…），Warning 在前
-      id: events
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - default: true
-          label: 只看 Warning
-          name: only_warning
-          type: boolean
-        - desc: 默认 50
-          goType: int
-          label: 最多几条
-          name: limit
-          type: number
-        - desc: RFC3339（如 2026-08-28T10:00:00Z）。**轮询场景必填**：把上一轮的 checked_at 传进来，否则每轮都会把同一批告警再查一遍。按事件的「最近发生」时间比，不是首次发生
-          label: 只要这个时间之后的
-          name: since
-          type: string
-        - desc: 如 Evicted / FailedScheduling / BackOff / Unhealthy；留空 = 全部。关注特定异常时用它，比拿回来自己过滤省一半篇幅
-          itemType: string
-          label: 只看这些原因
-          name: reasons
-          type: array
-      label: 事件列表
-      outputs:
-        - fields:
-            - desc: Normal/Warning
-              label: 级别
-              name: type
-              required: true
-              type: string
-            - label: 原因
-              name: reason
-              required: true
-              type: string
-            - desc: 如 Pod/web-abc123
-              label: 对象
-              name: object
-              required: true
-              type: string
-            - label: 内容
-              name: message
-              required: true
-              type: string
-            - goType: int
-              label: 发生次数
-              name: count
-              type: number
-            - label: 最近发生
-              name: last_seen
-              type: string
-            - label: 首次发生
-              name: first_seen
-              type: string
-          goType: Event
-          label: 事件列表
-          name: events
-          required: true
-          type: array
-        - goType: int
-          label: 条数
-          name: count
-          required: true
-          type: number
-        - desc: true = 命中的比 limit 多，**还有没返回的**。轮询时看到它就该调大 limit 或缩短间隔——此前静默截断，集群一忙就会悄悄漏掉告警
-          label: 被截断了
-          name: truncated
-          type: boolean
-        - desc: RFC3339。下一轮把它填进 since，就是一条不重不漏的游标
-          label: 本次查询时刻
-          name: checked_at
-          type: string
-    - desc: 解析 kubeconfig 并调 /version——通了会显示集群版本
-      id: health_check
-      label: 检查凭证
-      outputs:
-        - label: 可用
-          name: ok
-          required: true
-          type: boolean
-        - label: 集群版本
-          name: version
-          required: true
-          type: string
-        - label: 说明
-          name: message
-          required: true
-          type: string
-    - desc: 集群节点与健康状态（Ready 条件、K8s 版本、容量）
-      id: nodes
-      label: 节点列表
-      outputs:
-        - fields:
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - label: 就绪
-              name: ready
-              required: true
-              type: boolean
-            - desc: True / False / Unknown
-              label: Ready 原值
-              name: ready_status
-              type: string
-            - desc: 如 KubeletNotReady / NodeStatusUnknown
-              label: 原因
-              name: reason
-              type: string
-            - label: kubelet 版本
-              name: version
-              type: string
-            - label: CPU 容量
-              name: cpu
-              type: string
-            - label: 内存容量
-              name: memory
-              type: string
-            - goType: int
-              label: 污点数
-              name: taints
-              type: number
-          goType: Node
-          label: 节点列表
-          name: nodes
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-        - desc: Ready 条件非 True 的个数——告警判断直接用它
-          goType: int
-          label: 异常节点数
-          name: not_ready
-          required: true
-          type: number
-    - desc: 取一个 pod 的日志尾部（多容器要指定容器名）
-      id: pod_logs
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - label: Pod 名
-          name: pod
-          required: true
-          type: string
-        - desc: 单容器 pod 留空
-          label: 容器名
-          name: container
-          type: string
-        - desc: 默认 200，上限 5000
-          goType: int
-          label: 最后几行
-          name: tail_lines
-          type: number
-        - default: false
-          desc: 容器刚重启过时看上一世的日志——排查 CrashLoop 用
-          label: 上一次崩溃的日志
-          name: previous
-          type: boolean
-      label: Pod 日志
-      outputs:
-        - label: 日志
-          name: logs
-          required: true
-          type: text
-        - goType: int
-          label: 行数
-          name: lines
-          required: true
-          type: number
-    - desc: 列出命名空间里的 pod（状态/重启次数/所在节点），可按标签过滤
-      id: pods
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - desc: 如 app=web,tier!=cache
-          label: 标签过滤
-          name: label_selector
-          type: string
-        - default: false
-          desc: 只留非 Running/Succeeded 或有容器在重启的
-          label: 只看异常
-          name: only_abnormal
-          type: boolean
-      label: Pod 列表
-      outputs:
-        - fields:
-            - label: 名称
-              name: name
-              required: true
-              type: string
-            - desc: Running/Pending/Failed/…
-              label: 状态
-              name: phase
-              required: true
-              type: string
-            - desc: 如 2/2
-              label: 就绪
-              name: ready
-              required: true
-              type: string
-            - goType: int
-              label: 重启次数
-              name: restarts
-              required: true
-              type: number
-            - label: 节点
-              name: node
-              type: string
-            - label: 存活时长
-              name: age
-              type: string
-            - desc: CrashLoopBackOff / ImagePullBackOff 等；正常为空
-              label: 异常原因
-              name: reason
-              type: string
-            - desc: OOMKilled / Error / Completed…；从没重启过则为空
-              label: 上次结束原因
-              name: last_terminated_reason
-              type: string
-            - desc: 137 常见于 OOM 或被 SIGKILL；0 = 正常退出
-              goType: int
-              label: 上次退出码
-              name: last_exit_code
-              type: number
-            - desc: 用它判断是刚刚发生还是历史遗留
-              label: 上次结束时间
-              name: last_terminated_at
-              type: string
-          goType: Pod
-          label: Pod 列表
-          name: pods
-          required: true
-          type: array
-        - goType: int
-          label: 个数
-          name: count
-          required: true
-          type: number
-    - desc: 起一个 Job 跑一次性任务（数据处理/脚本/迁移）。默认等它跑完并带回日志尾部；失败不重试（backoffLimit=0），跑完 1 小时后自动清理
-      id: run_job
-      inputs:
-        - desc: 留空用凭证里的默认命名空间（再没有则 default）
-          label: 命名空间
-          name: namespace
-          type: string
-        - desc: 实际 Job 名 = 前缀-时间戳（避免重名）
-          label: 任务名前缀
-          name: name_prefix
-          required: true
-          type: string
-        - label: 镜像
-          name: image
-          required: true
-          type: string
-        - desc: 含参数，逐项一个元素；留空 = 用镜像默认入口
-          itemType: string
-          label: 命令
-          name: command
-          type: array
-        - label: 环境变量
-          name: env
-          type: json
-          valueType:
-            goType: string
-            name: ""
-            type: string
-        - default: true
-          desc: 关掉 = 提交就返回，不带回结果与日志
-          label: 等待完成
-          name: wait
-          type: boolean
-        - default: 300
-          desc: 最大 570；超时不杀任务，只是不再等
-          goType: int
-          label: 等待上限（秒）
-          name: timeout_sec
-          type: number
-      label: 运行一次性任务
-      outputs:
-        - label: Job 名
-          name: job
-          required: true
-          type: string
-        - desc: wait 关掉时恒为 false，表示「未等到结果」而非失败
-          label: 成功
-          name: succeeded
-          required: true
-          type: boolean
-        - desc: succeeded / failed / running / submitted
-          label: 状态
-          name: status
-          required: true
-          type: string
-        - desc: 等待完成时带回（最后 200 行）
-          label: 日志尾部
-          name: logs
-          required: true
-          type: text
 plugin:
-    desc: 在画布上操作 K8s 集群：查 pod、看容器日志、滚动重启、扩缩副本、看事件与节点健康。
-    doc: README.md
-    label: Kubernetes
-    name: kubernetes
-    org: sokel
-    version: v1.0.0
+  desc: 在画布上操作 K8s 集群：查 pod、看容器日志、滚动重启、扩缩副本、看事件与节点健康。
+  doc: README.md
+  label: Kubernetes
+  name: kubernetes
+  org: sokel
+  version: v1.0.1
+
+credential:
+  fields:
+    - desc: 整份 YAML 粘进来（ACK 用 aliyun 插件的「导出 kubeconfig」一键取；自建集群 ~/.kube/config）。它就是进集群的钥匙，只在插件内部使用
+      label: kubeconfig
+      name: kubeconfig
+      required: true
+      type: secret
+    - desc: 操作里没写命名空间时用它；留空 = default
+      label: 默认命名空间
+      name: namespace
+      type: text
+    - desc: 逗号分隔（如 prod,staging）。**填了才启动事件源**：Pod 被驱逐 / 调度失败 / 容器异常退出 / 节点不健康 会触发工作流（轮询，约 1 分钟延迟）。留空 = 不盯，只能用「事件列表」操作自己定时拉
+      label: 盯哪些命名空间
+      name: watch_namespaces
+      type: text
+
+events_common:
+  - namespace
+
+events:
+  - desc: 节点 Ready 条件不为 True（失联 / 磁盘压力 / 内存压力）
+    fields:
+      - label: 命名空间
+        name: namespace
+        required: true
+        type: string
+      - label: 节点名
+        name: node
+        required: true
+        type: string
+      - desc: False = 明确不健康；Unknown = 失联（kubelet 不上报了）
+        label: Ready 状态
+        name: status
+        required: true
+        type: string
+      - label: 原文
+        name: message
+        type: text
+    id: node_not_ready
+    label: 节点不健康
+  - desc: 容器非正常结束（OOMKilled / 非零退出码），判据取自 Pod 状态而不是事件
+    fields:
+      - label: 命名空间
+        name: namespace
+        required: true
+        type: string
+      - desc: 如 Pod/web-abc123
+        label: 对象
+        name: object
+        required: true
+        type: string
+      - label: Pod 名
+        name: pod
+        required: true
+        type: string
+      - desc: OOMKilled = 内存不够，调 limits；Error = 进程自己挂了，看日志
+        label: 结束原因
+        name: reason
+        required: true
+        type: string
+      - desc: 137 = 被 SIGKILL（OOM 的典型特征）
+        goType: int
+        label: 退出码
+        name: exit_code
+        type: number
+      - goType: int
+        label: 累计重启次数
+        name: restarts
+        type: number
+      - label: 节点
+        name: node
+        type: string
+      - label: 结束时间
+        name: finished_at
+        required: true
+        type: string
+      - desc: Running 也可能挂过——它被拉起来了
+        label: Pod 状态
+        name: phase
+        type: string
+    id: pod_crashed
+    label: 容器异常退出
+  - desc: 节点资源不足时 kubelet 主动赶走了 Pod（Event reason=Evicted）
+    fields:
+      - label: 命名空间
+        name: namespace
+        required: true
+        type: string
+      - desc: 如 Pod/web-abc123
+        label: 对象
+        name: object
+        required: true
+        type: string
+      - label: Pod 名
+        name: pod
+        required: true
+        type: string
+      - desc: 'kubelet 给的原因，如 The node was low on resource: memory —— **缺哪种资源写在这里**'
+        label: 原文
+        name: message
+        required: true
+        type: text
+      - desc: 从原文里认出来的；认不出为空
+        label: 节点
+        name: node
+        type: string
+      - desc: 同一条事件被 k8s 累加的次数，>1 说明在反复发生
+        goType: int
+        label: 累计发生次数
+        name: count
+        type: number
+      - label: 最近发生
+        name: last_seen
+        type: string
+    id: pod_evicted
+    label: Pod 被驱逐
+  - desc: Pod 起不来，没有节点能放下它（Event reason=FailedScheduling）
+    fields:
+      - label: 命名空间
+        name: namespace
+        required: true
+        type: string
+      - desc: 如 Pod/web-abc123
+        label: 对象
+        name: object
+        required: true
+        type: string
+      - label: Pod 名
+        name: pod
+        required: true
+        type: string
+      - desc: '如 0/3 nodes are available: Insufficient cpu —— **差多少、差什么都在这句里**'
+        label: 原文
+        name: message
+        required: true
+        type: text
+      - goType: int
+        label: 累计发生次数
+        name: count
+        type: number
+      - label: 最近发生
+        name: last_seen
+        type: string
+    id: schedule_failed
+    label: 调度失败
+
+operations:
+  - desc: kubectl apply 的通用兜底：Service/ConfigMap/CronJob/Ingress…专用操作没覆盖的资源都从这走。支持 --- 分隔的多文档；server-side apply（不存在则建，存在则改）
+    id: apply_manifest
+    inputs:
+      - desc: 整份 YAML，可含多个 --- 分隔的文档
+        label: YAML 清单
+        name: manifest
+        required: true
+        type: text
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+    label: 应用 YAML 清单
+    outputs:
+      - label: 成功
+        name: ok
+        required: true
+        type: boolean
+      - goType: int
+        label: 应用数
+        name: applied
+        required: true
+        type: number
+      - desc: 每行一条：kind/name → created|configured
+        label: 明细
+        name: items
+        required: true
+        type: text
+  - desc: 删除一个资源对象（Deployment/Job/Service/ConfigMap…）。**不可逆**，名字与命名空间核对清楚
+    id: delete_object
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - desc: 如 Deployment / Job / Service / ConfigMap（区分大小写）
+        label: 资源类型
+        name: kind
+        required: true
+        type: string
+      - label: 名称
+        name: name
+        required: true
+        type: string
+      - desc: 留空自动探测（apps/v1 → batch/v1 → v1 → networking.k8s.io/v1）
+        label: apiVersion
+        name: api_version
+        type: string
+    label: 删除对象
+    outputs:
+      - label: 已删除
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 创建或更新一个 Deployment（server-side apply：不存在则建，存在则按给的字段改）。典型用法：把插件副本/自有服务拉起来，配合「就绪状态」确认起没起来
+    id: deploy_workload
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - desc: Deployment 名，也是 app 标签值（选择器锚它，建后不可改）
+        label: 名称
+        name: name
+        required: true
+        type: string
+      - desc: 如 registry.example.com/app:v1
+        label: 镜像
+        name: image
+        required: true
+        type: string
+      - default: 1
+        goType: int
+        label: 副本数
+        name: replicas
+        type: number
+      - desc: 键值对；值里可绑上游变量
+        label: 环境变量
+        name: env
+        type: json
+        valueType:
+          goType: string
+          name: ""
+          type: string
+      - desc: app 标签平台自动打，别在这里覆盖
+        label: 附加标签
+        name: labels
+        type: json
+        valueType:
+          goType: string
+          name: ""
+          type: string
+      - desc: 覆盖镜像入口（含参数，逐项一个元素）；留空 = 用镜像默认
+        itemType: string
+        label: 启动命令
+        name: command
+        type: array
+      - desc: 私有镜像仓库的 imagePullSecret 名（需已在目标命名空间建好）
+        label: 拉取密钥
+        name: image_pull_secret
+        type: string
+      - desc: 如 500m；留空不设
+        label: CPU 上限
+        name: cpu_limit
+        type: string
+      - desc: 如 512Mi；留空不设
+        label: 内存上限
+        name: memory_limit
+        type: string
+    label: 部署工作负载
+    outputs:
+      - label: 成功
+        name: ok
+        required: true
+        type: boolean
+      - desc: false = 更新了已有的
+        label: 是否新建
+        name: created
+        required: true
+        type: boolean
+      - label: 名称
+        name: name
+        required: true
+        type: string
+      - label: 命名空间
+        name: namespace
+        required: true
+        type: string
+  - desc: 滚动重启（等价 kubectl rollout restart）：改 pod 模板注解触发滚动替换，不中断服务
+    id: deployment_restart
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - label: Deployment 名
+        name: name
+        required: true
+        type: string
+    label: 重启 Deployment
+    outputs:
+      - label: 已触发
+        name: ok
+        required: true
+        type: boolean
+      - label: 触发时间
+        name: restarted_at
+        required: true
+        type: string
+  - desc: 把副本数调到指定值（等价 kubectl scale）。缩到 0 = 停掉这个服务，确认想清楚
+    id: deployment_scale
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - label: Deployment 名
+        name: name
+        required: true
+        type: string
+      - goType: int
+        label: 目标副本数
+        name: replicas
+        required: true
+        type: number
+    label: 扩缩 Deployment
+    outputs:
+      - label: 成功
+        name: ok
+        required: true
+        type: boolean
+      - goType: int
+        label: 原副本数
+        name: previous
+        required: true
+        type: number
+  - desc: 一个 Deployment 起没起来：期望/就绪/可用副本数与镜像。部署后接它判断是否就绪
+    id: deployment_status
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - label: Deployment 名
+        name: name
+        required: true
+        type: string
+    label: 就绪状态
+    outputs:
+      - desc: 就绪副本数 = 期望副本数且 ≥1
+        label: 已就绪
+        name: ready
+        required: true
+        type: boolean
+      - goType: int
+        label: 期望副本
+        name: desired
+        required: true
+        type: number
+      - goType: int
+        label: 就绪副本
+        name: ready_replicas
+        required: true
+        type: number
+      - goType: int
+        label: 可用副本
+        name: available
+        required: true
+        type: number
+      - label: 当前镜像
+        name: image
+        required: true
+        type: string
+      - desc: 未就绪时给出最近的 condition 原因
+        label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 列出命名空间里的 deployment（期望/就绪副本数、镜像）
+    id: deployments
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+    label: Deployment 列表
+    outputs:
+      - fields:
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - goType: int
+            label: 期望副本
+            name: replicas
+            required: true
+            type: number
+          - goType: int
+            label: 就绪副本
+            name: ready
+            required: true
+            type: number
+          - goType: int
+            label: 可用副本
+            name: available
+            type: number
+          - itemType: string
+            label: 镜像
+            name: images
+            type: array
+        goType: Deployment
+        label: Deployment 列表
+        name: deployments
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+  - desc: 命名空间最近的事件（调度失败/OOMKilled/探针失败…），Warning 在前
+    id: events
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - default: true
+        label: 只看 Warning
+        name: only_warning
+        type: boolean
+      - desc: 默认 50
+        goType: int
+        label: 最多几条
+        name: limit
+        type: number
+      - desc: RFC3339（如 2026-08-28T10:00:00Z）。**轮询场景必填**：把上一轮的 checked_at 传进来，否则每轮都会把同一批告警再查一遍。按事件的「最近发生」时间比，不是首次发生
+        label: 只要这个时间之后的
+        name: since
+        type: string
+      - desc: 如 Evicted / FailedScheduling / BackOff / Unhealthy；留空 = 全部。关注特定异常时用它，比拿回来自己过滤省一半篇幅
+        itemType: string
+        label: 只看这些原因
+        name: reasons
+        type: array
+    label: 事件列表
+    outputs:
+      - fields:
+          - desc: Normal/Warning
+            label: 级别
+            name: type
+            required: true
+            type: string
+          - label: 原因
+            name: reason
+            required: true
+            type: string
+          - desc: 如 Pod/web-abc123
+            label: 对象
+            name: object
+            required: true
+            type: string
+          - label: 内容
+            name: message
+            required: true
+            type: string
+          - goType: int
+            label: 发生次数
+            name: count
+            type: number
+          - label: 最近发生
+            name: last_seen
+            type: string
+          - label: 首次发生
+            name: first_seen
+            type: string
+        goType: Event
+        label: 事件列表
+        name: events
+        required: true
+        type: array
+      - goType: int
+        label: 条数
+        name: count
+        required: true
+        type: number
+      - desc: true = 命中的比 limit 多，**还有没返回的**。轮询时看到它就该调大 limit 或缩短间隔——此前静默截断，集群一忙就会悄悄漏掉告警
+        label: 被截断了
+        name: truncated
+        type: boolean
+      - desc: RFC3339。下一轮把它填进 since，就是一条不重不漏的游标
+        label: 本次查询时刻
+        name: checked_at
+        type: string
+  - desc: 解析 kubeconfig 并调 /version——通了会显示集群版本
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 集群版本
+        name: version
+        required: true
+        type: string
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 集群节点与健康状态（Ready 条件、K8s 版本、容量）
+    id: nodes
+    label: 节点列表
+    outputs:
+      - fields:
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - label: 就绪
+            name: ready
+            required: true
+            type: boolean
+          - desc: True / False / Unknown
+            label: Ready 原值
+            name: ready_status
+            type: string
+          - desc: 如 KubeletNotReady / NodeStatusUnknown
+            label: 原因
+            name: reason
+            type: string
+          - label: kubelet 版本
+            name: version
+            type: string
+          - label: CPU 容量
+            name: cpu
+            type: string
+          - label: 内存容量
+            name: memory
+            type: string
+          - goType: int
+            label: 污点数
+            name: taints
+            type: number
+        goType: Node
+        label: 节点列表
+        name: nodes
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+      - desc: Ready 条件非 True 的个数——告警判断直接用它
+        goType: int
+        label: 异常节点数
+        name: not_ready
+        required: true
+        type: number
+  - desc: 取一个 pod 的日志尾部（多容器要指定容器名）
+    id: pod_logs
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - label: Pod 名
+        name: pod
+        required: true
+        type: string
+      - desc: 单容器 pod 留空
+        label: 容器名
+        name: container
+        type: string
+      - desc: 默认 200，上限 5000
+        goType: int
+        label: 最后几行
+        name: tail_lines
+        type: number
+      - default: false
+        desc: 容器刚重启过时看上一世的日志——排查 CrashLoop 用
+        label: 上一次崩溃的日志
+        name: previous
+        type: boolean
+    label: Pod 日志
+    outputs:
+      - label: 日志
+        name: logs
+        required: true
+        type: text
+      - goType: int
+        label: 行数
+        name: lines
+        required: true
+        type: number
+  - desc: 列出命名空间里的 pod（状态/重启次数/所在节点），可按标签过滤
+    id: pods
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - desc: 如 app=web,tier!=cache
+        label: 标签过滤
+        name: label_selector
+        type: string
+      - default: false
+        desc: 只留非 Running/Succeeded 或有容器在重启的
+        label: 只看异常
+        name: only_abnormal
+        type: boolean
+    label: Pod 列表
+    outputs:
+      - fields:
+          - label: 名称
+            name: name
+            required: true
+            type: string
+          - desc: Running/Pending/Failed/…
+            label: 状态
+            name: phase
+            required: true
+            type: string
+          - desc: 如 2/2
+            label: 就绪
+            name: ready
+            required: true
+            type: string
+          - goType: int
+            label: 重启次数
+            name: restarts
+            required: true
+            type: number
+          - label: 节点
+            name: node
+            type: string
+          - label: 存活时长
+            name: age
+            type: string
+          - desc: CrashLoopBackOff / ImagePullBackOff 等；正常为空
+            label: 异常原因
+            name: reason
+            type: string
+          - desc: OOMKilled / Error / Completed…；从没重启过则为空
+            label: 上次结束原因
+            name: last_terminated_reason
+            type: string
+          - desc: 137 常见于 OOM 或被 SIGKILL；0 = 正常退出
+            goType: int
+            label: 上次退出码
+            name: last_exit_code
+            type: number
+          - desc: 用它判断是刚刚发生还是历史遗留
+            label: 上次结束时间
+            name: last_terminated_at
+            type: string
+        goType: Pod
+        label: Pod 列表
+        name: pods
+        required: true
+        type: array
+      - goType: int
+        label: 个数
+        name: count
+        required: true
+        type: number
+  - desc: 起一个 Job 跑一次性任务（数据处理/脚本/迁移）。默认等它跑完并带回日志尾部；失败不重试（backoffLimit=0），跑完 1 小时后自动清理
+    id: run_job
+    inputs:
+      - desc: 留空用凭证里的默认命名空间（再没有则 default）
+        label: 命名空间
+        name: namespace
+        type: string
+      - desc: 实际 Job 名 = 前缀-时间戳（避免重名）
+        label: 任务名前缀
+        name: name_prefix
+        required: true
+        type: string
+      - label: 镜像
+        name: image
+        required: true
+        type: string
+      - desc: 含参数，逐项一个元素；留空 = 用镜像默认入口
+        itemType: string
+        label: 命令
+        name: command
+        type: array
+      - label: 环境变量
+        name: env
+        type: json
+        valueType:
+          goType: string
+          name: ""
+          type: string
+      - default: true
+        desc: 关掉 = 提交就返回，不带回结果与日志
+        label: 等待完成
+        name: wait
+        type: boolean
+      - default: 300
+        desc: 最大 570；超时不杀任务，只是不再等
+        goType: int
+        label: 等待上限（秒）
+        name: timeout_sec
+        type: number
+    label: 运行一次性任务
+    outputs:
+      - label: Job 名
+        name: job
+        required: true
+        type: string
+      - desc: wait 关掉时恒为 false，表示「未等到结果」而非失败
+        label: 成功
+        name: succeeded
+        required: true
+        type: boolean
+      - desc: succeeded / failed / running / submitted
+        label: 状态
+        name: status
+        required: true
+        type: string
+      - desc: 等待完成时带回（最后 200 行）
+        label: 日志尾部
+        name: logs
+        required: true
+        type: text
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-kubernetes:latest
+    ref: ghcr.io/sokel-dev/sokel-plugin-kubernetes:1.0.1@sha256:1f1bf4da443790133350cdf1d4ec56964a8f289eb8e795fdbdfcd50fa4c3c6e4
