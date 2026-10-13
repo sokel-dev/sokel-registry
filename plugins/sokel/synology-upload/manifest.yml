@@ -4,7 +4,7 @@ plugin:
   label: 群晖上传
   name: synology-upload
   org: sokel
-  version: v0.1.0
+  version: v0.1.2
 
 credential:
   fields:
@@ -112,4 +112,4 @@ deployment:
   note: 部署在能访问到 DSM 地址的机器上即可，不需要挂载 NAS 目录。
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-synology-upload:0.1.0@sha256:83e45b58be246d0b12a0aa36a880a8286faaafcb81c2b5e53bce97d1783f7ed4
+    ref: ghcr.io/sokel-dev/sokel-plugin-synology-upload:0.1.2@sha256:c02ba79403de62046c04825a39984c6b4df82ef2740873170b0c308488b386a9
