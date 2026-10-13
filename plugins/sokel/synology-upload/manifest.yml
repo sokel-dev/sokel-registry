@@ -1,0 +1,115 @@
+plugin:
+  desc: 把工作流里的文件上传到群晖 NAS 的文件夹，走 DSM 的 FileStation 接口，Synology Drive / Cloud Sync 能照常同步。**需自行部署插件进程**，部署在能访问到 DSM 的机器上即可。
+  doc: README.md
+  label: 群晖上传
+  name: synology-upload
+  org: sokel
+  version: v0.1.0
+
+credential:
+  fields:
+    - desc: 浏览器里打开 DSM 的地址，带协议和端口，如 https://nas.example.com:5001 或 http://nas.local:5000
+      label: DSM 地址
+      name: url
+      required: true
+      type: text
+    - desc: 建议单独建一个只对目标共享文件夹有读写权限的账号；**不能开两步验证**（接口登录没法输验证码）
+      label: 账号
+      name: username
+      required: true
+      type: text
+    - label: 密码
+      name: password
+      required: true
+      type: secret
+    - desc: 填 true 时不校验 HTTPS 证书，仅用于局域网里 DSM 的自签证书；走公网请保持留空
+      label: 跳过证书校验
+      name: insecure_tls
+      type: text
+
+operations:
+  - desc: 用账号密码登录一次 DSM。ok=false 时 message 说明是地址不通、证书、密码还是两步验证的问题
+    id: health_check
+    label: 检查凭证
+    outputs:
+      - label: 凭证可用
+        name: ok
+        required: true
+        type: boolean
+      - label: 说明
+        name: message
+        required: true
+        type: string
+  - desc: 经 DSM 的 FileStation 接口把文件传到群晖某个文件夹，Synology Drive / Cloud Sync 能照常感知并同步
+    id: upload_file
+    inputs:
+      - desc: 一个或多个平台文件，按原文件名存放
+        itemType: file
+        label: 文件
+        name: files
+        required: true
+        type: array
+      - desc: DSM 里看到的路径，以共享文件夹开头，如 /research/入库/2026（不是容器或 SSH 里的 /volume1/...）
+        label: 目标文件夹
+        name: dir
+        required: true
+        type: string
+      - default: error
+        desc: 目标文件夹里已有同名文件时怎么办；跳过的文件在结果里标出
+        label: 同名文件
+        name: on_conflict
+        options:
+          - label: 报错
+            value: error
+          - label: 覆盖
+            value: overwrite
+          - label: 跳过
+            value: skip
+        type: enum
+      - default: true
+        desc: 目标文件夹不存在时逐级创建
+        label: 自动创建文件夹
+        name: create_parents
+        type: boolean
+    label: 上传文件
+    outputs:
+      - desc: 与输入的文件一一对应
+        fields:
+          - label: 文件名
+            name: name
+            required: true
+            type: string
+          - label: NAS 路径
+            name: path
+            required: true
+            type: string
+          - goType: int64
+            label: 大小（字节）
+            name: size
+            required: true
+            type: number
+          - label: 已跳过
+            name: skipped
+            required: true
+            type: boolean
+        goType: Uploaded
+        label: 结果
+        name: files
+        required: true
+        type: array
+      - goType: int
+        label: 上传数
+        name: uploaded
+        required: true
+        type: number
+      - desc: 「同名文件」选跳过时，已存在而没有上传的数量
+        goType: int
+        label: 跳过数
+        name: skipped
+        required: true
+        type: number
+deployment:
+  note: 部署在能访问到 DSM 地址的机器上即可，不需要挂载 NAS 目录。
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-synology-upload:0.1.0@sha256:83e45b58be246d0b12a0aa36a880a8286faaafcb81c2b5e53bce97d1783f7ed4
