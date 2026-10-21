@@ -3,7 +3,7 @@ plugin:
   doc: README.md
   label: YouTube
   name: youtube
-  version: v0.3.2
+  version: v0.4.1
   org: sokel
 
 credential:
@@ -43,6 +43,24 @@ operations:
         label: 返回条数
         name: limit
         type: number
+      - default: all
+        desc: 仅按上游明确标记筛选；未知权限不会归入公开，空结果不代表没有公开视频。
+        label: 访问权限筛选
+        name: access_filter
+        options:
+          - label: 全部
+            value: all
+          - label: 仅明确公开
+            value: public
+          - label: 仅会员专享
+            value: members_only
+        type: enum
+      - default: 50
+        desc: 1 到 50；筛选或本批时间排序时必须不小于返回条数。仅处理该范围，结果可能不足返回条数。
+        goType: int
+        label: 扫描上限
+        name: scan_limit
+        type: number
     label: 获取账号最新发布
     outputs:
       - label: 频道名称
@@ -60,6 +78,16 @@ operations:
         name: count
         required: true
         type: number
+      - desc: 本次扫描范围内去重后的有效视频数，不是全站总数
+        goType: int
+        label: 已检查视频数
+        name: scanned_count
+        type: number
+      - desc: 已检查视频中权限未明确标记的数量；筛选公开或会员时排除
+        goType: int
+        label: 权限未知数
+        name: unknown_access_count
+        type: number
       - fields:
           - label: 视频 ID
             name: id
@@ -72,7 +100,7 @@ operations:
             name: url
             required: true
             type: string
-          - desc: YYYY-MM-DD；上游列表未提供时为空，不推测日期
+          - desc: YYYY-MM-DD；可能由相对时间估算，请结合时间精度字段；缺失为空
             label: 发布日期
             name: upload_date
             type: string
@@ -90,8 +118,179 @@ operations:
           - label: 直播状态
             name: live_status
             type: string
+          - desc: public=公开；subscriber_only=频道会员；premium_only=Premium；private=私密；unlisted=不公开列出；needs_auth=需登录；unknown=未知。不保证当前账号可播放。
+            label: 访问权限
+            name: availability
+            type: string
+          - desc: ISO 8601 UTC；由列表相对时间估算，不是精确发布时间；缺失为空
+            label: 估算发布时间
+            name: published_at
+            type: string
+          - desc: approximate=相对时间估算；date=仅日期；unknown=未知
+            label: 发布时间精度
+            name: published_time_precision
+            type: string
+          - desc: ISO 8601 UTC；可能是未来预约时间，不等同于上传时间；缺失为空
+            label: 直播或首映时间
+            name: release_at
+            type: string
+          - desc: false 时 duration_seconds 的 0 只是缺省值
+            label: 时长是否已知
+            name: duration_known
+            type: boolean
+          - desc: false 时 view_count 的 0 只是缺省值
+            label: 播放量是否已知
+            name: view_count_known
+            type: boolean
+          - desc: 上游列表提供的摘要，可能截断或为空
+            label: 简介
+            name: description
+            type: string
+          - label: 频道名称
+            name: channel_name
+            type: string
+          - label: 频道 ID
+            name: channel_id
+            type: string
+          - label: 频道链接
+            name: channel_url
+            type: string
         goType: ChannelVideo
         label: 发布列表
+        name: videos
+        type: array
+    timeoutSec: 120
+  - desc: 按关键词搜索全站视频；可保留相关度顺序，或在扫描范围内按发布时间排序。仅取元数据，不下载媒体。
+    id: search
+    inputs:
+      - desc: 1 到 500 个字符；作为完整关键词搜索，不执行输入中的链接或指令
+        label: 搜索关键词
+        name: query
+        required: true
+        type: string
+      - default: relevance
+        label: 排序方式
+        name: sort
+        options:
+          - label: 相关度
+            value: relevance
+          - label: 本批按发布时间
+            value: date
+        type: enum
+      - default: 10
+        desc: 1 到 50；默认 10 条
+        goType: int
+        label: 返回条数
+        name: limit
+        type: number
+      - default: all
+        desc: 仅按上游明确标记筛选；未知权限不会归入公开，空结果不代表没有公开视频。
+        label: 访问权限筛选
+        name: access_filter
+        options:
+          - label: 全部
+            value: all
+          - label: 仅明确公开
+            value: public
+          - label: 仅会员专享
+            value: members_only
+        type: enum
+      - default: 50
+        desc: 1 到 50；筛选或本批时间排序时必须不小于返回条数。仅处理该范围，结果可能不足返回条数。
+        goType: int
+        label: 扫描上限
+        name: scan_limit
+        type: number
+    label: 全站搜索视频
+    outputs:
+      - label: 搜索关键词
+        name: query
+        required: true
+        type: string
+      - goType: int
+        label: 返回数量
+        name: count
+        required: true
+        type: number
+      - desc: 本次扫描范围内去重后的有效视频数，不是全站总数
+        goType: int
+        label: 已检查视频数
+        name: scanned_count
+        type: number
+      - desc: 已检查视频中权限未明确标记的数量；筛选公开或会员时排除
+        goType: int
+        label: 权限未知数
+        name: unknown_access_count
+        type: number
+      - fields:
+          - label: 视频 ID
+            name: id
+            required: true
+            type: string
+          - label: 标题
+            name: title
+            type: string
+          - label: 视频链接
+            name: url
+            required: true
+            type: string
+          - desc: YYYY-MM-DD；可能由相对时间估算，请结合时间精度字段；缺失为空
+            label: 发布日期
+            name: upload_date
+            type: string
+          - goType: int
+            label: 时长(秒)
+            name: duration_seconds
+            type: number
+          - goType: int
+            label: 播放量
+            name: view_count
+            type: number
+          - label: 封面链接
+            name: thumbnail
+            type: string
+          - label: 直播状态
+            name: live_status
+            type: string
+          - desc: public=公开；subscriber_only=频道会员；premium_only=Premium；private=私密；unlisted=不公开列出；needs_auth=需登录；unknown=未知。不保证当前账号可播放。
+            label: 访问权限
+            name: availability
+            type: string
+          - desc: ISO 8601 UTC；由列表相对时间估算，不是精确发布时间；缺失为空
+            label: 估算发布时间
+            name: published_at
+            type: string
+          - desc: approximate=相对时间估算；date=仅日期；unknown=未知
+            label: 发布时间精度
+            name: published_time_precision
+            type: string
+          - desc: ISO 8601 UTC；可能是未来预约时间，不等同于上传时间；缺失为空
+            label: 直播或首映时间
+            name: release_at
+            type: string
+          - desc: false 时 duration_seconds 的 0 只是缺省值
+            label: 时长是否已知
+            name: duration_known
+            type: boolean
+          - desc: false 时 view_count 的 0 只是缺省值
+            label: 播放量是否已知
+            name: view_count_known
+            type: boolean
+          - desc: 上游列表提供的摘要，可能截断或为空
+            label: 简介
+            name: description
+            type: string
+          - label: 频道名称
+            name: channel_name
+            type: string
+          - label: 频道 ID
+            name: channel_id
+            type: string
+          - label: 频道链接
+            name: channel_url
+            type: string
+        goType: ChannelVideo
+        label: 视频列表
         name: videos
         type: array
     timeoutSec: 120
@@ -370,4 +569,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.3.2@sha256:7fb20c0583cf7f19cc42c45fb9cb0d44f4d0fc87b3449405313c35e286d60fbd
+    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.4.1@sha256:ff93601081dbf5f1c7392a44cf7680afdd4ed9b9d691cf91b04adae3c6fefd93
