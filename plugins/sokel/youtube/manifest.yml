@@ -3,7 +3,7 @@ plugin:
   doc: README.md
   label: YouTube
   name: youtube
-  version: v0.3.1
+  version: v0.3.2
   org: sokel
 
 credential:
@@ -370,4 +370,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.3.1@sha256:8c73bc2198faf3583141c8dcb980bf9c3a78cc4c903c7d7409cda3ba20af05d6
+    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.3.2@sha256:7fb20c0583cf7f19cc42c45fb9cb0d44f4d0fc87b3449405313c35e286d60fbd
