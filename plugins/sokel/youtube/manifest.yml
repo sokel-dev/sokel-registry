@@ -3,10 +3,98 @@ plugin:
   doc: README.md
   label: YouTube
   name: youtube
-  version: v0.2.1
+  version: v0.3.1
   org: sokel
 
+credential:
+  fields:
+    - help: 粘贴 Netscape 格式 cookies.txt 的完整内容；留空使用部署配置或匿名访问。
+      label: 登录 Cookies
+      name: cookies
+      type: secret
+    - help: 可选，填写插件进程可访问的代理地址；留空使用 YTDLP_PROXY。
+      label: 代理地址
+      name: proxy
+      type: secret
+
 operations:
+  - desc: 按频道列表顺序获取最近的视频、Shorts 或直播记录，仅取元数据，不下载媒体；可选 cookies 与代理凭证。
+    id: channel_latest
+    inputs:
+      - desc: 频道链接或 @账号，例如 https://www.youtube.com/@YouTube
+        label: 频道账号
+        name: channel
+        required: true
+        type: string
+      - default: videos
+        label: 发布类型
+        name: content_type
+        options:
+          - label: 视频
+            value: videos
+          - label: Shorts
+            value: shorts
+          - label: 直播记录
+            value: streams
+        type: enum
+      - default: 10
+        desc: 1 到 50；默认最近 10 条
+        goType: int
+        label: 返回条数
+        name: limit
+        type: number
+    label: 获取账号最新发布
+    outputs:
+      - label: 频道名称
+        name: channel_name
+        type: string
+      - label: 频道 ID
+        name: channel_id
+        type: string
+      - label: 频道链接
+        name: channel_url
+        required: true
+        type: string
+      - goType: int
+        label: 返回数量
+        name: count
+        required: true
+        type: number
+      - fields:
+          - label: 视频 ID
+            name: id
+            required: true
+            type: string
+          - label: 标题
+            name: title
+            type: string
+          - label: 视频链接
+            name: url
+            required: true
+            type: string
+          - desc: YYYY-MM-DD；上游列表未提供时为空，不推测日期
+            label: 发布日期
+            name: upload_date
+            type: string
+          - goType: int
+            label: 时长(秒)
+            name: duration_seconds
+            type: number
+          - goType: int
+            label: 播放量
+            name: view_count
+            type: number
+          - label: 封面链接
+            name: thumbnail
+            type: string
+          - label: 直播状态
+            name: live_status
+            type: string
+        goType: ChannelVideo
+        label: 发布列表
+        name: videos
+        type: array
+    timeoutSec: 120
   - desc: 只读元数据，不下载。用来在下载前判断时长/体积，或只需要标题与简介时。
     id: video_info
     inputs:
@@ -264,7 +352,7 @@ operations:
         required: true
         type: number
     timeoutSec: 300
-  - desc: 平台约定的保留 id。这里没有凭证，检的是 yt-dlp 与 ffmpeg 在不在、以及出网通不通。
+  - desc: 检查 cookies 格式、本地工具和代理出网；登录状态是否有效需通过具体视频试调用确认。
     id: health_check
     label: 凭证体检
     outputs:
@@ -282,4 +370,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.2.1@sha256:8bb513ccc0b973c0e9b70a0c7d6f162dacdf4348df5e76c158aff03b03388638
+    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.3.1@sha256:8c73bc2198faf3583141c8dcb980bf9c3a78cc4c903c7d7409cda3ba20af05d6
