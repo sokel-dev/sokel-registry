@@ -3,7 +3,7 @@ plugin:
   doc: README.md
   label: YouTube
   name: youtube
-  version: v0.2.0
+  version: v0.2.1
   org: sokel
 
 operations:
@@ -282,4 +282,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.2.0@sha256:d29e090a6dc0d5820aaf047a50a8268b047b971f4be54bf6b1f985fd196f7c97
+    ref: ghcr.io/sokel-dev/sokel-plugin-youtube:0.2.1@sha256:8bb513ccc0b973c0e9b70a0c7d6f162dacdf4348df5e76c158aff03b03388638
