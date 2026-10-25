@@ -5,7 +5,7 @@ plugin:
   label: X（免费读写）
   name: x-free
   org: sokel
-  version: v0.1.0
+  version: v0.2.0
 
 credential:
   fields:
@@ -155,6 +155,221 @@ operations:
         required: true
         type: number
     timeoutSec: 120
+  - desc: 读取当前登录账号的 Lists 管理页，返回列表名称、ID 和链接，便于选择监控目标。
+    id: my_lists
+    inputs:
+      - default: 20
+        desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
+        goType: int
+        label: 每页请求条数
+        name: limit
+        type: number
+      - desc: 首次留空；继续翻页时传入上次返回的 next_cursor。
+        label: 分页游标
+        name: cursor
+        type: string
+    label: 获取我的 Lists
+    outputs:
+      - fields:
+          - label: List ID
+            name: id
+            required: true
+            type: string
+          - label: List 名称
+            name: name
+            required: true
+            type: string
+          - label: 简介
+            name: description
+            type: text
+          - desc: public 或 private；未知时为空。
+            label: 可见性
+            name: mode
+            type: string
+          - goType: int
+            label: 成员数
+            name: member_count
+            type: number
+          - goType: int
+            label: 订阅者数
+            name: subscriber_count
+            type: number
+          - label: 创建者 ID
+            name: owner_id
+            type: string
+          - label: 创建者账号
+            name: owner_username
+            type: string
+          - label: List 链接
+            name: url
+            required: true
+            type: string
+        goType: ListSummary
+        label: Lists 列表
+        name: lists
+        required: true
+        type: array
+      - goType: int
+        label: 返回数量
+        name: count
+        required: true
+        type: number
+      - label: 下一页游标
+        name: next_cursor
+        required: true
+        type: string
+      - label: 可继续翻页
+        name: has_more
+        required: true
+        type: boolean
+    timeoutSec: 60
+  - desc: 读取指定 List 的一页推文并返回分页游标，适合在定时工作流中按推文 ID 去重。
+    id: list_timeline
+    inputs:
+      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+        label: List 链接或 ID
+        name: list_id
+        required: true
+        type: string
+      - default: 20
+        desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
+        goType: int
+        label: 每页请求条数
+        name: limit
+        type: number
+      - desc: 每轮定时任务首次留空；同一轮继续翻页时传入 next_cursor。
+        label: 分页游标
+        name: cursor
+        type: string
+    label: 获取 List 推文
+    outputs:
+      - label: List ID
+        name: list_id
+        required: true
+        type: string
+      - fields:
+          - label: 推文 ID
+            name: id
+            required: true
+            type: string
+          - label: 正文
+            name: text
+            required: true
+            type: text
+          - label: 推文链接
+            name: url
+            required: true
+            type: string
+          - desc: 上游提供的发布时间；缺失时为空。
+            label: 发布时间
+            name: created_at
+            type: string
+          - label: 作者 ID
+            name: author_id
+            type: string
+          - label: 作者账号
+            name: author_username
+            type: string
+          - label: 回复目标 ID
+            name: reply_to_id
+            type: string
+          - goType: int
+            label: 点赞数
+            name: like_count
+            type: number
+          - goType: int
+            label: 转帖数
+            name: repost_count
+            type: number
+          - goType: int
+            label: 回复数
+            name: reply_count
+            type: number
+        goType: Post
+        label: 推文列表
+        name: posts
+        required: true
+        type: array
+      - goType: int
+        label: 返回数量
+        name: count
+        required: true
+        type: number
+      - label: 下一页游标
+        name: next_cursor
+        required: true
+        type: string
+      - label: 可继续翻页
+        name: has_more
+        required: true
+        type: boolean
+    timeoutSec: 60
+  - desc: 将指定账号加入有管理权限的 List；失败不会自动重试。
+    id: add_list_member
+    inputs:
+      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+        label: List 链接或 ID
+        name: list_id
+        required: true
+        type: string
+      - desc: 账号名，可带 @；不要填写个人主页链接。
+        label: 用户账号
+        name: username
+        required: true
+        type: string
+    label: 添加 List 成员
+    outputs:
+      - label: List ID
+        name: list_id
+        required: true
+        type: string
+      - label: 用户 ID
+        name: user_id
+        required: true
+        type: string
+      - label: 用户账号
+        name: username
+        required: true
+        type: string
+      - desc: X 已接受操作；不代表成员此前一定不存在或存在。
+        label: 操作成功
+        name: changed
+        required: true
+        type: boolean
+    timeoutSec: 60
+  - desc: 将指定账号从有管理权限的 List 中移除；失败不会自动重试。
+    id: remove_list_member
+    inputs:
+      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+        label: List 链接或 ID
+        name: list_id
+        required: true
+        type: string
+      - desc: 账号名，可带 @；不要填写个人主页链接。
+        label: 用户账号
+        name: username
+        required: true
+        type: string
+    label: 移除 List 成员
+    outputs:
+      - label: List ID
+        name: list_id
+        required: true
+        type: string
+      - label: 用户 ID
+        name: user_id
+        required: true
+        type: string
+      - label: 用户账号
+        name: username
+        required: true
+        type: string
+      - desc: X 已接受操作；不代表成员此前一定不存在或存在。
+        label: 操作成功
+        name: changed
+        required: true
+        type: boolean
+    timeoutSec: 60
   - desc: 按推文 ID 读取正文、作者与互动数量。
     id: get_post
     inputs:
@@ -343,4 +558,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-x-free:0.1.0@sha256:5b6ca8d2e092582a61bfb1c305da37410859cc5d519e6b1ce9956bf78a3a2885
+    ref: ghcr.io/sokel-dev/sokel-plugin-x-free:0.2.0@sha256:9a3c661e701d81ed1393726b3fe85dce79704f752879acd1893fd0557764d4f1
