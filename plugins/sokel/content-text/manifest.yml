@@ -1,0 +1,260 @@
+plugin:
+  org: sokel
+  name: content-text
+  label: 文本内容处理
+  version: v1.0.0
+  desc: 将纯文本和 Markdown 转换为带原件与字符定位的标准内容块
+transports:
+  - kind: nats
+implements:
+  - capability: content/process
+    operations:
+      - desc: 将文本和多模态输入转换为带来源定位的标准内容块
+        id: process
+        inputs:
+          - desc: 原生文件数组，可直接上传或绑定上游文件；与 text 至少提供一个，最多 100 个且 MIME 一致
+            fields:
+              - desc: 已上传且属于当前空间的真实文件 ID；输出来源的 fileId 保留此值。
+                label: 平台文件 ID
+                name: id
+                required: true
+                type: string
+              - desc: 平台授权后提供的读取地址；不要用短期地址代替长期文件 ID。
+                label: 读取地址
+                name: url
+                required: true
+                type: string
+              - desc: 原始文件名，可作为内容标题；不用于判断权限。
+                label: 文件名
+                name: name
+                required: true
+                type: string
+              - desc: 文件实际 MIME，例如 image/png；由平台文件记录核实。
+                label: 媒体类型
+                name: mime
+                required: true
+                type: string
+              - desc: 字节数，用于处理限制和展示；不是字符数。
+                goType: int64
+                label: 文件大小
+                name: size
+                required: true
+                type: number
+              - desc: SDK 支持的可选内联数据；知识库录入使用已授权的文件 ID，无须用户填写二进制 JSON。
+                itemType: number
+                label: 内联文件数据
+                name: data
+                required: true
+                type: array
+            goType: File
+            label: 输入文件
+            name: files
+            type: array
+          - desc: 待处理原文；与 files 至少提供一个，不要把二进制文件写成文本
+            label: 内联文本
+            name: text
+            type: string
+          - desc: 内联文本默认 text/plain，也支持 text/markdown；文件 MIME 读取各文件自身的 mime
+            label: 文本媒体类型
+            name: mime
+            type: string
+          - desc: 仅兼容旧调用；与顶层 files、text、mime 不能混用，新实现优先使用原生文件和文本参数
+            fields:
+              - desc: 与 files 至少提供一个；上传文件时通常省略。
+                label: 内联原文
+                name: text
+                type: string
+              - desc: 由平台核实；内联文本默认为 text/plain。
+                label: 输入媒体类型
+                name: mime
+                type: string
+              - desc: 已授权的平台文件引用，最多 100 个且 MIME 一致；保留 id 作为 sources.fileId，使用授权地址读取原件。
+                itemType: file
+                label: 输入文件
+                name: files
+                type: array
+            goType: Input
+            label: 旧版输入
+            name: input
+            type: json
+          - desc: 处理器专属参数，由所选实现声明并校验；文本实现只接受空对象
+            label: 处理选项
+            name: options
+            opaque: true
+            type: json
+        label: 处理内容
+        outputs:
+          - desc: 带原件和块级来源的内容对象；schemaVersion 固定为 1，平台将校验后入库
+            fields:
+              - desc: 固定为 1；用于校验内容结构版本。
+                goType: int
+                label: 结构版本
+                name: schemaVersion
+                required: true
+                type: number
+              - desc: 可选的人类可读标题，例如图片文件名或文章标题。
+                label: 内容标题
+                name: title
+                type: string
+              - desc: 1–10,000 个原件或原文；来源 id 在本次内容内唯一。
+                fields:
+                  - desc: 本次内容内唯一，例如 source-1；供 locators.sourceId 与 assetIds 引用。
+                    label: 来源 ID
+                    name: id
+                    required: true
+                    type: string
+                  - desc: text / pdf / image / audio / video / file / web；按原始内容类型填写。
+                    label: 来源类型
+                    name: kind
+                    required: true
+                    type: string
+                  - desc: 取自 files 的真实 id（旧版 input.files）；与 url、非空 text 至少提供一项，不能虚构。
+                    label: 平台原件 ID
+                    name: fileId
+                    type: string
+                  - desc: HTTP(S) 原文或原件地址；不得带用户名密码；与 fileId、非空 text 至少一项。
+                    label: 原始地址
+                    name: url
+                    type: string
+                  - desc: 原件的 MIME，例如 image/png；优先保留平台传入的文件元数据。
+                    label: 媒体类型
+                    name: mime
+                    type: string
+                  - desc: 字符定位的基准；与 fileId、url 至少一项非空。
+                    label: 原始文本
+                    name: text
+                    type: string
+                  - desc: 每页声明 number、width、height；使用 pageNo 或 bbox 时必须声明对应页。
+                    fields:
+                      - desc: 从 1 开始，同一来源中不重复；单张图片使用第 1 页。
+                        goType: int
+                        label: 页码
+                        name: number
+                        required: true
+                        type: number
+                      - desc: 正数，PDF 单位 point，图片单位 pixel；使用原件真实尺寸。
+                        label: 页面宽度
+                        name: width
+                        required: true
+                        type: number
+                      - desc: 正数，与 width 使用相同单位；用于校验定位区域边界。
+                        label: 页面高度
+                        name: height
+                        required: true
+                        type: number
+                    label: 页面尺寸
+                    name: pages
+                    type: array
+                  - desc: 音视频长度，单位毫秒，非负；声明后时间定位不得超出此范围。
+                    goType: int64
+                    label: 总时长
+                    name: durationMs
+                    type: number
+                label: 原始来源
+                name: sources
+                required: true
+                type: array
+              - desc: 1–10,000 个可检索、可引用的块；text 与 html 合计不超过 16 MiB UTF-8 字节。
+                fields:
+                  - desc: 本次内容内唯一，例如 block-1；供 derivedFrom 关联。
+                    label: 块 ID
+                    name: id
+                    required: true
+                    type: string
+                  - desc: text / title / list / quote / code / formula / table / image / audio / video / file / header / footer / page_number。
+                    label: 块类型
+                    name: type
+                    required: true
+                    type: string
+                  - desc: OCR 文字、转写或段落正文；与非空 html、assetIds 至少一项。
+                    label: 可检索正文
+                    name: text
+                    type: string
+                  - desc: 表格等富文本表达；建议同时提供 text 便于检索。
+                    label: HTML 内容
+                    name: html
+                    type: string
+                  - desc: 填写 sources 的 id，不是平台文件 ID；对应来源须有 fileId 或 url。
+                    itemType: string
+                    label: 引用原件
+                    name: assetIds
+                    type: array
+                  - desc: 指向原件的页、区域、时间或文字范围；与 derivedFrom 至少一项非空。
+                    fields:
+                      - desc: 必须匹配 sources 中的 id；仅提供此字段表示定位到整份来源。
+                        label: 来源 ID
+                        name: sourceId
+                        required: true
+                        type: string
+                      - desc: 从 1 开始，必须在对应来源的 pages 中声明；有 bbox 时必填。
+                        goType: int
+                        label: 定位页码
+                        name: pageNo
+                        type: number
+                      - desc: 矩形 {llx,lly,urx,ury}，非负、宽高为正且不越界；只使用真实坐标，同时提供 pageNo。
+                        fields:
+                          - desc: 矩形的 X 下界，须 ≥ 0 且小于 urx；单位由 coordinateSpace 指定。
+                            label: 左下角 X 坐标
+                            name: llx
+                            required: true
+                            type: number
+                          - desc: 矩形的 Y 下界，须 ≥ 0 且小于 ury；先按原件的坐标约定转换。
+                            label: 左下角 Y 坐标
+                            name: lly
+                            required: true
+                            type: number
+                          - desc: 矩形的 X 上界，须大于 llx 且不超过页面 width。
+                            label: 右上角 X 坐标
+                            name: urx
+                            required: true
+                            type: number
+                          - desc: 矩形的 Y 上界，须大于 lly 且不超过页面 height。
+                            label: 右上角 Y 坐标
+                            name: ury
+                            required: true
+                            type: number
+                        label: 定位区域
+                        name: bbox
+                        type: json
+                      - desc: 有 bbox 时必填：PDF 用 pdf_points，其他来源用 pixels；无 bbox 时省略。
+                        label: 坐标单位
+                        name: coordinateSpace
+                        type: string
+                      - desc: 音视频片段开始位置，单位毫秒；与 endMs 同时提供，0 ≤ startMs < endMs。
+                        goType: int64
+                        label: 开始时间
+                        name: startMs
+                        type: number
+                      - desc: 音视频片段结束位置，单位毫秒；大于 startMs 且不超过已声明的 durationMs。
+                        goType: int64
+                        label: 结束时间
+                        name: endMs
+                        type: number
+                      - desc: '[start,end) 的两个整数；按 Unicode 字符计数且位于 source.text 内，不是字节或 UTF-16 单元。'
+                        itemType: number
+                        label: 文本范围
+                        name: textRange
+                        type: array
+                    label: 来源定位
+                    name: locators
+                    type: array
+                  - desc: 摘要或合并内容引用已有块 id；必须存在且不能形成循环；与 locators 至少一项非空。
+                    itemType: string
+                    label: 派生自哪些块
+                    name: derivedFrom
+                    type: array
+                label: 内容块
+                name: blocks
+                required: true
+                type: array
+            goType: Item
+            label: 标准内容
+            name: content
+            required: true
+            type: json
+          - desc: 非致命处理提示；没有提示时返回空数组，不能用提示掩盖处理失败
+            itemType: string
+            label: 处理提示
+            name: warnings
+            required: true
+            type: array
