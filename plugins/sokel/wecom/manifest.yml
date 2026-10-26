@@ -1125,3 +1125,9 @@ deployment:
   targets:
   - kind: container
     ref: ghcr.io/sokel-dev/sokel-plugin-wecom:0.3.0@sha256:64c1554a20adf308356c8b0b8e90f4dd64a2e4cfe7f32220fe549fbccee26391
+  env:
+  - name: SOKEL_DATA_DIR
+    default: /var/lib/sokel/wecom
+    required: true
+    desc: Writable data directory on a persistent volume
+  note: Run one replica and mount a persistent volume at /var/lib/sokel. Use the persistent Docker, Compose or Kubernetes examples in the plugin documentation.
