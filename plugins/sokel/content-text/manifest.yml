@@ -10,7 +10,6 @@ deployment:
       ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-base-plugins@sha256:0b4544b4913a6448edce349946b969204065406659f35a6a92fd6a0291c7ea42
   env:
     - name: SOKEL_BASE_PLUGINS
-      desc: 仅启动文本内容处理插件，避免单插件凭证被其他基础插件共用
       required: false
       default: content-text
 transports:

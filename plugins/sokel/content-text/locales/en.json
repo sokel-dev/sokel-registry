@@ -97,6 +97,5 @@
   "内容块": "Content blocks",
   "标准内容": "Standard content",
   "非致命处理提示；没有提示时返回空数组，不能用提示掩盖处理失败": "Nonfatal processing messages; return an empty array when absent and never hide processing failures as warnings",
-  "处理提示": "Processing warnings",
-  "仅启动文本内容处理插件，避免单插件凭证被其他基础插件共用": "Start only the text content processor so other base plugins do not share its single-plugin credential"
+  "处理提示": "Processing warnings"
 }
