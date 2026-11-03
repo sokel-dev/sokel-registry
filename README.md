@@ -35,6 +35,11 @@ cmd/build-index/        # admission checks and the published tree
 
 The directory is the identity: `plugins/acme/foo` is `acme/foo`, and `.github/CODEOWNERS` says who maintains each org.
 
+Entries outside the `sokel` publisher namespace carry a third-party publisher label. Their detail page and
+installation dialog remind users to verify the publisher, code source and requested permissions before granting
+access to data or credentials. This source notice is separate from version-specific security advisories;
+Sokel publication does not imply that every upstream integration uses a service's official API.
+
 ## How platforms use it
 
 A platform ships a built-in snapshot of this catalog, which works offline. An administrator can add this site as a
@@ -46,11 +51,46 @@ the advisories current at build time), so offline deployments get them by upgrad
 
 ## Run it locally
 
+To preview only the registry UI with the live official catalog (no platform or login required):
+
+```bash
+python3 scripts/preview.py
+# Open http://127.0.0.1:5180/?base=https://plugins.sokel.dev/&lang=en
+```
+
+The preview server disables browser caching so edits cannot mix new markup with stale styles. When updating
+the published UI, bump the shared asset revision in `site/index.html` and the token import in `site/style.css`.
+
+To build and preview the catalog from this checkout:
+
 ```bash
 go run ./cmd/build-index -site _site .             # admission + the published tree
 go run ./cmd/build-index -base ../main-checkout .  # the pull request version check
 cd _site && python3 -m http.server                 # then open http://localhost:8000
 ```
+
+The directory supports cross-language search, independent use-case/capability/publisher filters, event and
+deployment filters, sorting, and grid/list views. URLs retain the filters, page and view. Pages render 24, 48 or
+96 entries; plugin details load only when opened, and operation fields only when expanded.
+
+The home page keeps the registry's headline and brand cloud, with at most six plugin cards per discovery section.
+Its search and category links open the full catalog at `#/plugins`; detail navigation returns to the originating view.
+
+`site/catalog.js` contains the discovery model. Explicit `categories` from the index take precedence over its
+exact-ref compatibility table for older official entries; unknown plugins without categories are uncategorized.
+The browser still downloads the complete compact index, so pagination bounds rendered content, not index transfer
+size. No popularity or recency ranking is inferred from metadata that the index does not provide.
+
+Run the dependency-free UI tests with `node --test tests/*.test.cjs`. Optional browser coverage (2,000-entry fixture
+and live-index smoke check) uses an existing Playwright installation:
+
+```bash
+PLAYWRIGHT_MODULE=/path/to/node_modules/@playwright/test node tests/catalog-browser.mjs
+PLAYWRIGHT_MODULE=/path/to/node_modules/@playwright/test node tests/publisher-risk-browser.mjs
+```
+
+The publisher-risk check uses browser-local fixtures for third-party entries, including misleading display metadata,
+and verifies the existing install handoff, English copy, mobile layout and separate security advisories.
 
 ## License
 

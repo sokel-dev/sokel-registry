@@ -26,7 +26,8 @@ Everything here changes through pull requests. CI checks the mechanics; a code o
    Without an icon the plugin shows a letter.
 5. **First plugin of a new org:** in the same pull request, add `/plugins/<org>/ @your-handle` to
    `.github/CODEOWNERS`. From then on, changes under your org need your approval.
-6. **Check locally:** `go run ./cmd/build-index -site _site .` must pass.
+6. **Check locally:** `go run ./cmd/build-index -site _site .` must pass. For registry page changes, also run
+   `node --test tests/*.test.cjs` (Node.js 20+).
 7. **Open the pull request** and fill in the template.
 
 What reviewers look at, beyond CI:

@@ -22,7 +22,7 @@
    平台自己提供这份文件，不会去别人的服务器加载。不配图标时显示首字母。
 5. **新 org 的第一个插件：** 在同一个 PR 里往 `.github/CODEOWNERS` 加一行 `/plugins/<org>/ @你的账号`。
    之后这个 org 下的改动都需要你批准。
-6. **本地检查：** `go run ./cmd/build-index -site _site .` 必须通过。
+6. **本地检查：** `go run ./cmd/build-index -site _site .` 必须通过。修改目录页面时还需运行 `node --test tests/*.test.cjs`（Node.js 20+）。
 7. **提 PR**，按模板填写。
 
 CI 之外，审核会看：

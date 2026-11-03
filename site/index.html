@@ -6,14 +6,16 @@
 <title>Sokel Plugin Registry</title>
 <meta name="description" content="Plugins for the Sokel workflow platform: what each one does, which credentials it needs, and how to run it.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-<link rel="stylesheet" href="./style.css">
+<!-- Change this revision with coordinated markup/style/script updates so cached assets cannot cross UI versions. -->
+<link rel="stylesheet" href="./style.css?v=directory-20261104-5">
 </head>
 <body>
-<nav class="nav">
+<nav class="nav" aria-label="Main navigation">
   <div class="navin">
-    <a class="brand" href="#"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 16.5 L7.5 13 L10.5 18 L15 6.5 L21 12"/><circle cx="15" cy="6.5" r="2"/></svg></span><b>Sokel</b><span class="brandsub" data-t="插件目录"></span></a>
+    <a class="brand" href="#/home"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 16.5 L7.5 13 L10.5 18 L15 6.5 L21 12"/><circle cx="15" cy="6.5" r="2"/></svg></span><b>Sokel</b><span class="brandsub" data-t="插件目录"></span></a>
     <span class="navlinks">
-      <a href="#" data-nav="list" data-t="插件"></a>
+      <a href="#/home" data-nav="home" data-t="首页"></a>
+      <a href="#/plugins" data-nav="list" data-t="全部插件"></a>
       <a href="#/advisories" data-nav="advisories" data-t="安全通告"></a>
       <a id="contribute" class="gh" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span data-t="提交插件"></span></a>
       <button id="lang" class="langbtn" type="button"></button>
@@ -21,32 +23,67 @@
   </div>
 </nav>
 
-<!-- The hero belongs to the list view only: on a detail view the plugin itself is the subject. -->
+<!-- The home page keeps the registry's original visual identity. Full discovery lives in the catalog. -->
 <header id="masthead" class="hero">
   <div class="wrap herogrid">
     <div class="herotext">
       <div class="eyebrow" data-t="Sokel 插件目录"></div>
       <h1 id="headline"></h1>
       <p class="lede" id="lede"></p>
-      <label class="herosearch">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="q" type="search" autocomplete="off">
-        <kbd>/</kbd>
-      </label>
+      <form id="home-search" role="search">
+        <label class="herosearch">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="home-q" type="search" autocomplete="off" aria-label="Search plugins">
+          <button type="submit" class="home-search-submit" aria-label="Search"><span aria-hidden="true">↗</span></button>
+        </label>
+      </form>
+      <div class="home-actions"><a class="install" href="#/plugins" data-open-catalog="" data-t="浏览全部插件"></a><a class="home-secondary" href="#/advisories" data-t="安全通告"></a></div>
       <dl class="stats" id="stats"></dl>
     </div>
-    <!-- A cloud of real plugin marks: decoration, so it is hidden from assistive tech and on narrow screens. -->
     <div class="cloud" id="cloud" aria-hidden="true"></div>
   </div>
 </header>
 
 <div class="wrap page">
   <div id="err"></div>
-  <div id="list" class="layout">
-    <aside class="side" id="side"></aside>
-    <main class="main">
+  <main id="home-view">
+    <div id="home-shelves"></div>
+  </main>
+  <header id="catalog-heading" class="catalog-heading" hidden>
+    <div class="eyebrow" data-t="Sokel 插件目录"></div>
+    <h1 id="catalog-title" data-t="全部插件"></h1>
+    <p id="catalog-description" class="lede" data-t="按用途发现插件，按能力缩小范围。安装前查看操作、凭证与部署方式。"></p>
+  </header>
+  <div id="list" class="layout" hidden>
+    <details id="filter-panel" class="filter-panel" open>
+      <summary id="filter-summary">Filters</summary>
+      <aside class="side" id="side" aria-label="Plugin filters"></aside>
+    </details>
+    <main id="catalog-main" class="main">
+      <div class="catalog-toolbar">
+        <label class="searchbox">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" autocomplete="off" aria-label="Search plugins">
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <select id="sort" aria-label="Sort plugins">
+          <option value="relevance">Relevance</option>
+          <option value="name">Name</option>
+          <option value="operations">Operations</option>
+        </select>
+        <div id="view-toggle" class="view-toggle" role="group" aria-label="Catalogue view">
+          <button type="button" data-view="grid" aria-label="Grid view" title="Grid view" aria-pressed="true">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="12" y="3" width="5" height="5" rx="1"/><rect x="3" y="12" width="5" height="5" rx="1"/><rect x="12" y="12" width="5" height="5" rx="1"/></svg>
+          </button>
+          <button type="button" data-view="list" aria-label="List view" title="List view" aria-pressed="false">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10"/><path d="M3 5h.1M3 10h.1M3 15h.1" stroke-width="2.5"/></svg>
+          </button>
+        </div>
+      </div>
       <div class="resulthead" id="resulthead"></div>
+      <div id="active-filters" class="active-filters"></div>
       <div id="grid"></div>
+      <nav id="pagination" class="pagination" aria-label="Plugin pages"></nav>
     </main>
   </div>
   <!-- Detail and advisories views: switched by the hash, so refresh and shared links work. -->
@@ -55,10 +92,10 @@
 </div>
 <!-- Install dialog: filled by app.js when "Install" is clicked. -->
 <div id="dlg" class="dlgwrap" hidden></div>
-<!-- Markdown parser for plugin docs (they are full of tables). If it fails to load, docs fall back to plain text:
-     a CDN never decides whether this page is readable, so it loads before app.js and without defer. -->
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<script src="./brands.js"></script>
-<script src="./app.js"></script>
+<!-- Catalogue loading never waits for the optional Markdown parser. -->
+<script async src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="./brands.js?v=directory-20261104-5"></script>
+<script src="./catalog.js?v=directory-20261104-5"></script>
+<script src="./app.js?v=directory-20261104-5"></script>
 </body>
 </html>
