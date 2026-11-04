@@ -1,10 +1,11 @@
 plugin:
   name: crawl4ai
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Crawl4AI
   desc: Crawl pages and extract Markdown with a self-hosted Crawl4AI server
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Self-hosted server API token or an existing JWT; no cloud account is required.
@@ -203,7 +204,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-crawl4ai:0.1.0@sha256:3f6fae09f8e5ee1f690d19ffccd8f8b032c493cbd7edbfd1f7463d861c7cbe90
+    ref: ghcr.io/sokel-dev/sokel-plugin-crawl4ai:0.1.1@sha256:ba1a657ffb958e5a982621bdeb6657da31192a643d1bb90a92094b167a8c74fe
   env:
   - name: SOKEL_CRAWL4AI_URL
     desc: HTTP(S) root URL of your Crawl4AI service; internal hosts and reverse-proxy prefixes are supported. No public fallback.

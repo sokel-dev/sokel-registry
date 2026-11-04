@@ -1,10 +1,11 @@
 plugin:
   name: box
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Box
   desc: Read, search and transfer Box files with explicit pagination
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Supply a current access token. Refresh it outside this plugin before expiry.
@@ -361,4 +362,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-box:0.1.0@sha256:9b2b5c84dcd9c60b998a183c6286a6efb6e0d1972df28a1927b3bc727c1124ff
+    ref: ghcr.io/sokel-dev/sokel-plugin-box:0.1.1@sha256:2b220da9f1d3381f3d3f5dd796244753c038f70ba149c672f667dcc0a5af59fb
