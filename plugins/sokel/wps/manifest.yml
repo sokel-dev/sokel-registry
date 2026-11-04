@@ -1,0 +1,371 @@
+plugin:
+  desc: Manage WPS365 cloud file metadata and folders
+  doc: README.md
+  label: WPS365 Cloud Documents
+  name: wps
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: WPS365 application or user token; obtain and refresh outside this plugin
+    label: Access token
+    name: access_token
+    required: true
+    type: secret
+  - label: Application ID for signing
+    name: app_id
+    type: text
+  - desc: Set both signing fields only when API signing is enabled in WPS; otherwise leave both empty
+    label: Application key for signing
+    name: app_key
+    type: secret
+operations:
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List folder children
+  id: list_files
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - desc: Use 0 for the root folder
+    label: Parent folder ID
+    name: parent_id
+    required: true
+    type: string
+  - goType: int64
+    label: Page size
+    name: page_size
+    type: number
+  - label: Page token
+    name: page_token
+    type: string
+  label: List folder children
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Drive ID
+      name: drive_id
+      required: true
+      type: string
+    - label: Parent folder ID
+      name: parent_id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: File type
+      name: type
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - goType: int64
+      label: Version
+      name: version
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: ctime
+      required: true
+      type: number
+    - goType: int64
+      label: Modified timestamp
+      name: mtime
+      required: true
+      type: number
+    goType: File
+    label: Files
+    name: files
+    required: true
+    type: array
+  - label: Next page token
+    name: next_page_token
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get file metadata
+  id: get_file
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: Get file metadata
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Drive ID
+      name: drive_id
+      required: true
+      type: string
+    - label: Parent folder ID
+      name: parent_id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: File type
+      name: type
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - goType: int64
+      label: Version
+      name: version
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: ctime
+      required: true
+      type: number
+    - goType: int64
+      label: Modified timestamp
+      name: mtime
+      required: true
+      type: number
+    goType: File
+    label: File metadata
+    name: file
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Create a folder and fail on an existing name; no automatic retries
+  id: create_folder
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - desc: Use 0 for the root folder
+    label: Parent folder ID
+    name: parent_id
+    required: true
+    type: string
+  - label: Folder name
+    name: name
+    required: true
+    type: string
+  label: Create folder
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Drive ID
+      name: drive_id
+      required: true
+      type: string
+    - label: Parent folder ID
+      name: parent_id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: File type
+      name: type
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - goType: int64
+      label: Version
+      name: version
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: ctime
+      required: true
+      type: number
+    - goType: int64
+      label: Modified timestamp
+      name: mtime
+      required: true
+      type: number
+    goType: File
+    label: File metadata
+    name: file
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Rename file or folder
+  id: rename_file
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  - label: New name
+    name: name
+    required: true
+    type: string
+  label: Rename file or folder
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Drive ID
+      name: drive_id
+      required: true
+      type: string
+    - label: Parent folder ID
+      name: parent_id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: File type
+      name: type
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - goType: int64
+      label: Version
+      name: version
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: ctime
+      required: true
+      type: number
+    - goType: int64
+      label: Modified timestamp
+      name: mtime
+      required: true
+      type: number
+    goType: File
+    label: File metadata
+    name: file
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Get file path
+  id: get_file_path
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: Get file path
+  outputs:
+  - label: Location ID
+    name: location_id
+    required: true
+    type: string
+  - label: Location type
+    name: location_type
+    required: true
+    type: string
+  - fields:
+    - label: File ID
+      name: file_id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    goType: PathSegment
+    label: Path segments
+    name: paths
+    required: true
+    type: array
+  timeoutSec: 60
+- desc: Get download information
+  id: get_download_info
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: Get download information
+  outputs:
+  - desc: Sensitive download metadata only; the plugin never fetches this URL
+    label: Temporary download URL
+    name: url
+    required: true
+    type: string
+  - fields:
+    - label: Hash algorithm
+      name: type
+      required: true
+      type: string
+    - label: Hash value
+      name: sum
+      required: true
+      type: string
+    goType: ContentHash
+    label: Content hashes
+    name: hashes
+    required: true
+    type: array
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-wps:0.1.0@sha256:b07558197735b26839ae59fa94e511ef38bfc93d9fa8a0086d412a33e683c8a8
