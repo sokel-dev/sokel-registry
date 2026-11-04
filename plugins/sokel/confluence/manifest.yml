@@ -1,10 +1,11 @@
 plugin:
   name: confluence
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Confluence Cloud
   desc: Read spaces and publish version-checked Confluence Cloud pages
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: 'For tokens without scopes: https://your-site.atlassian.net'
@@ -401,4 +402,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-confluence:0.1.0@sha256:708a63131c3056d665e0806d379b177209df7dae4fe3527611dd45794fbe64a4
+    ref: ghcr.io/sokel-dev/sokel-plugin-confluence:0.1.1@sha256:8ab56878e334b3649c40e0942e26f708147fc84c066336bb8c4a238e2093edb9
