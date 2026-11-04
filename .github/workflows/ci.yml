@@ -40,7 +40,10 @@ jobs:
 
       - name: 对比 base 分支：改过的条目必须升版本
         if: github.event_name == 'pull_request'
+        # Parallel PRs must compare against the base commit of their test snapshot.
+        env:
+          REGISTRY_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git fetch --depth=1 origin "${{ github.base_ref }}"
-          git worktree add ../base FETCH_HEAD
+          git fetch --depth=1 origin "$REGISTRY_BASE_SHA"
+          git worktree add --detach ../base "$REGISTRY_BASE_SHA"
           go run ./cmd/build-index -base ../base .
