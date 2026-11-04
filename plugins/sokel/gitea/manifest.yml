@@ -1,10 +1,11 @@
 plugin:
   name: gitea
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Gitea
   desc: Work with repositories, issues, comments and pull requests on a self-hosted Gitea instance.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a token issued by your configured self-hosted service. The token is sent only to that service.
@@ -502,7 +503,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-gitea:0.1.0@sha256:331b510d4a379d40ee3bcef08c4cccc0caac0969dcc51a929428414182f78edc
+    ref: ghcr.io/sokel-dev/sokel-plugin-gitea:0.1.1@sha256:ec201b4539274e96be528c20c0d90c6bb0c4c8b2418129717e225d49a0fbca40
   env:
   - name: SOKEL_GITEA_URL
     desc: Required self-hosted Gitea site root, including any reverse-proxy path prefix; HTTP and HTTPS are supported.
