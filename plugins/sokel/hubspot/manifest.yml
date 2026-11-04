@@ -1,0 +1,392 @@
+plugin:
+  desc: Read and manage contacts, companies and deals with a private-app token
+  doc: README.md
+  label: HubSpot CRM
+  name: hubspot
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: Private-app access token
+    name: token
+    required: true
+    type: secret
+operations:
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List CRM records
+  id: list_records
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  - label: Pagination cursor
+    name: after
+    type: string
+  - itemType: string
+    label: Returned properties
+    name: properties
+    type: array
+  label: List CRM records
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - desc: HubSpot properties are account-defined string or null values
+      label: Property values
+      name: properties
+      opaque: true
+      required: true
+      type: json
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Archived
+      name: archived
+      required: true
+      type: boolean
+    goType: CRMRecord
+    label: Records
+    name: records
+    required: true
+    type: array
+  - label: Next cursor
+    name: next_after
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Search CRM records
+  id: search_records
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  - label: Pagination cursor
+    name: after
+    type: string
+  - itemType: string
+    label: Returned properties
+    name: properties
+    type: array
+  - label: Search query
+    name: query
+    type: string
+  - fields:
+    - label: Property name
+      name: property_name
+      required: true
+      type: string
+    - label: Filter operator
+      name: operator
+      options:
+      - value: EQ
+      - value: NEQ
+      - value: LT
+      - value: LTE
+      - value: GT
+      - value: GTE
+      - value: IN
+      - value: NOT_IN
+      - value: HAS_PROPERTY
+      - value: NOT_HAS_PROPERTY
+      - value: CONTAINS_TOKEN
+      - value: NOT_CONTAINS_TOKEN
+      required: true
+      type: enum
+    - label: Filter value
+      name: value
+      type: string
+    - itemType: string
+      label: Filter values
+      name: values
+      type: array
+    goType: SearchFilter
+    label: All conditions
+    name: filters
+    type: array
+  label: Search CRM records
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - desc: HubSpot properties are account-defined string or null values
+      label: Property values
+      name: properties
+      opaque: true
+      required: true
+      type: json
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Archived
+      name: archived
+      required: true
+      type: boolean
+    goType: CRMRecord
+    label: Records
+    name: records
+    required: true
+    type: array
+  - label: Next cursor
+    name: next_after
+    required: true
+    type: string
+  - goType: int64
+    label: Matching record count
+    name: total
+    required: true
+    type: number
+  timeoutSec: 60
+- desc: Get CRM record
+  id: get_record
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  - label: Record ID
+    name: record_id
+    required: true
+    type: string
+  - itemType: string
+    label: Returned properties
+    name: properties
+    type: array
+  label: Get CRM record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - desc: HubSpot properties are account-defined string or null values
+      label: Property values
+      name: properties
+      opaque: true
+      required: true
+      type: json
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Archived
+      name: archived
+      required: true
+      type: boolean
+    goType: CRMRecord
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Create CRM record
+  id: create_record
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  - desc: HubSpot property names are defined by each account; values must be strings and an empty string clears a property
+    label: Property values
+    name: properties
+    opaque: true
+    required: true
+    type: json
+  label: Create CRM record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - desc: HubSpot properties are account-defined string or null values
+      label: Property values
+      name: properties
+      opaque: true
+      required: true
+      type: json
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Archived
+      name: archived
+      required: true
+      type: boolean
+    goType: CRMRecord
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Update CRM record
+  id: update_record
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  - label: Record ID
+    name: record_id
+    required: true
+    type: string
+  - desc: HubSpot property names are defined by each account; values must be strings and an empty string clears a property
+    label: Property values
+    name: properties
+    opaque: true
+    required: true
+    type: json
+  label: Update CRM record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - desc: HubSpot properties are account-defined string or null values
+      label: Property values
+      name: properties
+      opaque: true
+      required: true
+      type: json
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Archived
+      name: archived
+      required: true
+      type: boolean
+    goType: CRMRecord
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List property metadata
+  id: list_properties
+  inputs:
+  - label: Object type
+    name: object_type
+    options:
+    - value: contacts
+    - value: companies
+    - value: deals
+    required: true
+    type: enum
+  label: List property metadata
+  outputs:
+  - fields:
+    - label: Property name
+      name: name
+      required: true
+      type: string
+    - label: Property label
+      name: label
+      required: true
+      type: string
+    - label: Data type
+      name: type
+      required: true
+      type: string
+    - label: Field type
+      name: field_type
+      required: true
+      type: string
+    - label: Property group
+      name: group_name
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    - fields:
+      - label: Option label
+        name: label
+        required: true
+        type: string
+      - label: Option value
+        name: value
+        required: true
+        type: string
+      - label: Hidden
+        name: hidden
+        required: true
+        type: boolean
+      goType: PropertyOption
+      label: Options
+      name: options
+      required: true
+      type: array
+    goType: PropertyDefinition
+    label: Property definitions
+    name: properties
+    required: true
+    type: array
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-hubspot:0.1.0@sha256:e93200c80be2d8284afbd46c5a3c95dc1f58409b57d9af9530fe3c4a6a18c93d
