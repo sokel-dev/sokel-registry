@@ -4,7 +4,8 @@ plugin:
   label: Browser Use Cloud
   name: browser-use
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Browser Use Cloud project API key; sent only to api.browser-use.com
@@ -374,4 +375,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-browser-use:0.1.0@sha256:59bab9c48b39b2921eb7600bea2c6079322865fa480e016c8085151b003bb4bf
+    ref: ghcr.io/sokel-dev/sokel-plugin-browser-use:0.1.1@sha256:0063395bca4e167d50b1bd0421b6a019ff7bc46c03fad2c9ed317d5ad8e116f7
