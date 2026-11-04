@@ -4,7 +4,8 @@ plugin:
   label: DingTalk
   name: dingtalk
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - label: App key
@@ -155,4 +156,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-dingtalk:0.1.0@sha256:09fbecfdf8af988c12544ea9d73ed9b44ccc9ded6b4be31a3af1b378686d2c96
+    ref: ghcr.io/sokel-dev/sokel-plugin-dingtalk:0.1.1@sha256:ab2a4f40d1caba146823ae187dffcb6f8983cc849d78dd3477dcfe780dad5904
