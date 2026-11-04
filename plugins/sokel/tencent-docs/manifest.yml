@@ -1,0 +1,339 @@
+plugin:
+  desc: Tencent Docs
+  doc: README.md
+  label: Tencent Docs
+  name: tencent-docs
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: Access token
+    name: access_token
+    required: true
+    type: secret
+  - label: Client ID
+    name: client_id
+    required: true
+    type: text
+  - label: Open ID
+    name: open_id
+    required: true
+    type: text
+operations:
+- desc: List files
+  id: files_list
+  inputs:
+  - label: Folder ID
+    name: folder_id
+    type: string
+  - default: 0
+    goType: int
+    label: Offset
+    name: offset
+    type: number
+  - default: 20
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  label: List files
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Title
+      name: title
+      type: string
+    - label: File type
+      name: type
+      type: string
+    - label: File URL
+      name: url
+      type: string
+    goType: DocFile
+    label: Files
+    name: files
+    type: array
+  - goType: int
+    label: Next offset
+    name: next
+    type: number
+  timeoutSec: 30
+- desc: Search files
+  id: files_search
+  inputs:
+  - label: Search query
+    name: query
+    required: true
+    type: string
+  - default: 0
+    goType: int
+    label: Offset
+    name: offset
+    type: number
+  - default: 20
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  label: Search files
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Title
+      name: title
+      type: string
+    - label: File type
+      name: type
+      type: string
+    - label: File URL
+      name: url
+      type: string
+    goType: DocFile
+    label: Files
+    name: files
+    type: array
+  - goType: int
+    label: Next offset
+    name: next
+    type: number
+  - label: Has more
+    name: has_more
+    type: boolean
+  - goType: int
+    label: Total
+    name: total
+    type: number
+  timeoutSec: 30
+- desc: Get file metadata
+  id: file_get
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: Get file metadata
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Title
+      name: title
+      type: string
+    - label: File type
+      name: type
+      type: string
+    - label: File URL
+      name: url
+      type: string
+    goType: DocFile
+    label: File
+    name: file
+    type: json
+  timeoutSec: 30
+- desc: Create a document or spreadsheet
+  id: file_create
+  inputs:
+  - label: Title
+    name: title
+    required: true
+    type: string
+  - label: File type
+    name: file_type
+    options:
+    - value: doc
+    - value: sheet
+    - value: smartsheet
+    required: true
+    type: enum
+  - label: Folder ID
+    name: folder_id
+    type: string
+  label: Create a document or spreadsheet
+  outputs:
+  - fields:
+    - label: File ID
+      name: id
+      required: true
+      type: string
+    - label: Title
+      name: title
+      type: string
+    - label: File type
+      name: type
+      type: string
+    - label: File URL
+      name: url
+      type: string
+    goType: DocFile
+    label: File
+    name: file
+    type: json
+  timeoutSec: 30
+- desc: List worksheets
+  id: sheets_list
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: List worksheets
+  outputs:
+  - fields:
+    - label: Sheet ID
+      name: sheet_id
+      type: string
+    - label: Worksheet title
+      name: title
+      type: string
+    - goType: int
+      label: Row count
+      name: row_count
+      type: number
+    - goType: int
+      label: Column count
+      name: column_count
+      type: number
+    goType: Worksheet
+    label: Worksheets
+    name: sheets
+    type: array
+  timeoutSec: 30
+- desc: Read spreadsheet range
+  id: sheet_range_get
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  - label: Sheet ID
+    name: sheet_id
+    required: true
+    type: string
+  - label: Cell range
+    name: range
+    required: true
+    type: string
+  label: Read spreadsheet range
+  outputs:
+  - desc: Preserves recursive document nodes or polymorphic spreadsheet cells defined by Tencent Docs.
+    label: Grid data
+    name: grid_data
+    opaque: true
+    type: json
+  timeoutSec: 30
+- desc: Write spreadsheet text
+  id: sheet_text_write
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  - label: Sheet ID
+    name: sheet_id
+    required: true
+    type: string
+  - default: 0
+    goType: int
+    label: Start row (zero based)
+    name: start_row
+    type: number
+  - default: 0
+    goType: int
+    label: Start column (zero based)
+    name: start_column
+    type: number
+  - fields:
+    - itemType: string
+      label: Text cells
+      name: values
+      required: true
+      type: array
+    goType: TextRow
+    label: Text rows
+    name: rows
+    required: true
+    type: array
+  label: Write spreadsheet text
+  outputs:
+  - label: All cells updated
+    name: updated
+    type: boolean
+  - goType: int
+    label: Updated cell count
+    name: updated_cells
+    required: true
+    type: number
+  timeoutSec: 30
+- desc: Read online document
+  id: document_get
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  label: Read online document
+  outputs:
+  - desc: Preserves recursive document nodes or polymorphic spreadsheet cells defined by Tencent Docs.
+    label: Document tree
+    name: document
+    opaque: true
+    type: json
+  - goType: int
+    label: Document version
+    name: version
+    type: number
+  timeoutSec: 30
+- desc: Insert document text
+  id: document_insert_text
+  inputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  - label: Text to insert
+    name: text
+    required: true
+    type: string
+  - default: 0
+    goType: int
+    label: Insert index
+    name: index
+    type: number
+  - goType: int
+    label: Document version
+    name: version
+    required: true
+    type: number
+  label: Insert document text
+  outputs:
+  - label: Updated
+    name: updated
+    type: boolean
+  timeoutSec: 30
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Usable
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 30
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-tencent-docs:0.1.0@sha256:791d91f175fe8bd127ee2ba5dcaedbce6ade01c6b70cbde77afc84ba472bc152
