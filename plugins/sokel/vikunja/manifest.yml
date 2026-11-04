@@ -1,10 +1,11 @@
 plugin:
   name: vikunja
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Vikunja
   desc: Manage projects, tasks and comments on a self-hosted Vikunja API v2 service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a scoped API token with permission to read projects and perform the requested task operations. Manage expiry and rotation outside this plugin.
@@ -429,7 +430,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-vikunja:0.1.0@sha256:0b4e1192c450db23113635586004bb79974384e811419be964724a551ac81ab7
+    ref: ghcr.io/sokel-dev/sokel-plugin-vikunja:0.1.1@sha256:ea7cca1035bf96ba9286c5ab04b4d67fec83f46a61a72c3f3810b375974aa64f
   env:
   - name: SOKEL_VIKUNJA_URL
     desc: HTTP(S) root URL of your Vikunja service; internal hosts and reverse-proxy prefixes are supported. No public fallback.
