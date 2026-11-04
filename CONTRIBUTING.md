@@ -24,6 +24,9 @@ Everything here changes through pull requests. CI checks the mechanics; a code o
    The file is checked by CI: SVG with no scripts, event handlers or external references, at most 32 KB; PNG at least
    128×128 and at most 64 KB; about square. Platforms serve it themselves, so it never loads from anyone else's server.
    Without an icon the plugin shows a letter.
+   Keep artwork attribution and applicable license text in an optional sibling file such as
+   `icon.svg.license` or `icon.png.license` (a regular file, at most 64 KB); it is published and
+   downloaded with the icon.
 5. **First plugin of a new org:** in the same pull request, add `/plugins/<org>/ @your-handle` to
    `.github/CODEOWNERS`. From then on, changes under your org need your approval.
 6. **Check locally:** `go run ./cmd/build-index -site _site .` must pass. For registry page changes, also run
