@@ -1,10 +1,11 @@
 plugin:
   name: calendly
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Calendly
   desc: Read Calendly events and availability and create single-use scheduling links
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a Calendly personal access token. Refresh or replace it outside this plugin.
@@ -437,4 +438,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-calendly:0.1.0@sha256:a77c4a40cde0faf7f01771d67b8d79d775025be593cac126dbe9bfd62ebc92d0
+    ref: ghcr.io/sokel-dev/sokel-plugin-calendly:0.1.1@sha256:cf0327c7798b6283fa0c47c07931ff10b938026018ba9096daa26414fed94b8b
