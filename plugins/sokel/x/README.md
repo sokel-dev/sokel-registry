@@ -25,7 +25,7 @@
 - User authentication settings 里打开 **OAuth 2.0**；
 - **Type of App 选 Web App / Automated App**（保密客户端，才会给你 Client Secret）；
 - **App permissions 选 Read and write**（要发私信就选 Read and write and Direct message）；
-- Callback URI 填平台的回调地址，**与下面 `SOKEL_X_OAUTH_REDIRECT_URL` 一字不差**：
+- Callback URI 填平台的回调地址，**与下面 `X_OAUTH_REDIRECT_URL` 一字不差**：
   `https://<你的平台域名>/api/v1/credentials/oauth/callback`
 
 > ⚠️ App permissions 改了之后**必须重新授权**，光改设置对已有令牌无效——
@@ -34,10 +34,10 @@
 **2）平台侧配置**（管理员做一次，所有工作空间共用）
 
 ```
-SOKEL_X_OAUTH_CLIENT_ID=...
-SOKEL_X_OAUTH_CLIENT_SECRET=...
-SOKEL_X_OAUTH_REDIRECT_URL=https://<平台域名>/api/v1/credentials/oauth/callback
-SOKEL_X_OAUTH_PROXY=http://127.0.0.1:7897   # 平台连不上 x.com 时必填
+X_OAUTH_CLIENT_ID=...
+X_OAUTH_CLIENT_SECRET=...
+X_OAUTH_REDIRECT_URL=https://<平台域名>/api/v1/credentials/oauth/callback
+X_OAUTH_PROXY=http://127.0.0.1:7897   # 平台连不上 x.com 时必填
 ```
 
 **3）建凭证 → 点「授权」**，在 X 的同意页上点 Authorize app 即可。
@@ -74,7 +74,7 @@ SOKEL_X_OAUTH_PROXY=http://127.0.0.1:7897   # 平台连不上 x.com 时必填
 ### 增量拉取：游标存数据表
 
 四个列表型读操作（搜索 / 用户时间线 / 提及 / 列表时间线）是**增量流形状**，
-和 cninfo、sec-edgar 那几个插件完全一致：
+和其它增量流插件（公告、监管文件等）完全一致：
 
 ```
 [定时触发] → [数据表·取游标] → [搜索推文] → [随便你接下游] → [数据表·写回游标]
