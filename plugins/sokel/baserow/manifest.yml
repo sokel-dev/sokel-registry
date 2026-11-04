@@ -1,10 +1,11 @@
 plugin:
   name: baserow
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Baserow
   desc: Discover tables and manage dynamic rows on a self-hosted Baserow service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a database token with the required table permissions; JWT account tokens are not supported.
@@ -257,7 +258,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-baserow:0.1.0@sha256:22087f6b25b042ab0bc33dba5e65ff06a23c4f6633d097b2e3695e20db64f450
+    ref: ghcr.io/sokel-dev/sokel-plugin-baserow:0.1.1@sha256:2d50e0dc868dc5efce4669812806bc09d410d0877d004e250886a6af7bf5cb63
   env:
   - name: SOKEL_BASEROW_URL
     desc: HTTP(S) root URL of your Baserow service; internal hosts and reverse-proxy prefixes are supported. No public fallback.
