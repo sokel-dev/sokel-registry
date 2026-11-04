@@ -1,10 +1,11 @@
 plugin:
   name: bocha-search
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Bocha Search
   desc: Search the web with freshness filters and optional summaries.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Bocha API key
@@ -105,4 +106,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-bocha-search:0.1.0@sha256:6d5cfb6c0c1ea3417a81803da338fdd33be57726f3f42e77ef220a4f3a7030d3
+    ref: ghcr.io/sokel-dev/sokel-plugin-bocha-search:0.1.1@sha256:a8e1b8189ae2b8b30be6057959c573e1aa9b857fe6c5d97245b187ef426cf9a8
