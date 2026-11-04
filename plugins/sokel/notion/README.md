@@ -57,16 +57,19 @@ Notion 的集成默认**什么都看不到**，哪怕令牌是对的。没做这
 3. 把该页给的 **OAuth client ID / client secret** 配进平台后端的环境变量，然后重启后端：
 
    ```bash
-   SOKEL_NOTION_OAUTH_CLIENT_ID=...
-   SOKEL_NOTION_OAUTH_CLIENT_SECRET=...
-   SOKEL_NOTION_OAUTH_REDIRECT_URL=https://你的域名/api/v1/credentials/oauth/callback   # 与第 2 步同一个值
-   SOKEL_NOTION_OAUTH_PROXY=http://127.0.0.1:7897    # 选填：平台连不上 Notion 时（境内部署）
+   NOTION_OAUTH_CLIENT_ID=...
+   NOTION_OAUTH_CLIENT_SECRET=...
+   NOTION_OAUTH_REDIRECT_URL=https://你的域名/api/v1/credentials/oauth/callback   # 与第 2 步同一个值
+   NOTION_OAUTH_PROXY=http://127.0.0.1:7897    # 选填：平台连不上 Notion 时（境内部署）
    ```
 
    没配这几项时点「授权」会明确报 `平台未配置 Notion OAuth 应用`，不是静默失败。
 
 **注意**：Notion 的公开集成里，「用户能给这个集成哪些页面」是用户在同意页上勾的，
 **没有作用域（scope）可申请**——所以授权后能读到什么，取决于那个人勾了什么。
+
+凭证行的 **「检查」** 读一次集成自己的身份，回集成名与工作空间——它只回答「令牌活着吗、
+连的是哪个工作空间」，**不代表读得到某一页**：页面还得按上面第一步「连接」给这个集成。
 
 两种都填时以密钥优先。
 
