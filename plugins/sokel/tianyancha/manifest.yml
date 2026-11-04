@@ -1,10 +1,11 @@
 plugin:
   name: tianyancha
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Tianyancha
   desc: Commercial company information and registration change queries.
   doc: README.md
+  icon: icon.png
 credential:
   fields:
   - desc: Obtain a token and enable each required API in the Tianyancha data console
@@ -158,4 +159,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-tianyancha:0.1.0@sha256:83aa79925f31f4783b6b51f5a1732998028e9c9ac186eb1de37d3bb48d5dd15d
+    ref: ghcr.io/sokel-dev/sokel-plugin-tianyancha:0.1.1@sha256:3366e2b48b5f574cfc57ff3c1ccb55165c2eea1e613ce6ee44ef3ddad02dd0e8
