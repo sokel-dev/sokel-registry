@@ -1,10 +1,11 @@
 plugin:
   name: linkding
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: linkding
   desc: Search, save and organize bookmarks on a self-hosted linkding service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Copy the token from your own linkding settings. Configure the service address with SOKEL_LINKDING_URL.
@@ -459,7 +460,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-linkding:0.1.0@sha256:538fbfee272dd03a535ed01b646c608e928eaadd4e6d27ba26b3d320a009a4dd
+    ref: ghcr.io/sokel-dev/sokel-plugin-linkding:0.1.1@sha256:9a92d959197dd9b79da960ad061966fe4e63eacc1cee5456360eafa0860e6cde
   env:
   - name: SOKEL_LINKDING_URL
     desc: HTTP(S) installation root of your self-hosted linkding service.
