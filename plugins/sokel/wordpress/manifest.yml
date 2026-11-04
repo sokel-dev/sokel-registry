@@ -4,7 +4,8 @@ plugin:
   label: WordPress
   name: wordpress
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - label: Username
@@ -441,4 +442,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-wordpress:0.1.0@sha256:a0896ff528aff34a74c5da7593a51518700d8a8e947b2901965ee72d76f9374e
+    ref: ghcr.io/sokel-dev/sokel-plugin-wordpress:0.1.1@sha256:6ddb75e7a6382e9450fe5b3df2ae9c92e2b27a7050d32f3622c3b75ddb979c3c
