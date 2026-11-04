@@ -1,10 +1,11 @@
 plugin:
   name: amap
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: AMap
   desc: Geocoding, place search, routes, weather and administrative districts.
   doc: README.md
+  icon: icon.png
 credential:
   fields:
   - label: Web Service API key
@@ -579,4 +580,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-amap:0.1.0@sha256:939caf032693ac6d9bd5d1c1c835d906683f04318b8a3b6820c351b0bfee2134
+    ref: ghcr.io/sokel-dev/sokel-plugin-amap:0.1.1@sha256:13875b5215af34aae1d673883bb40510514da95e351b9406f5091f568991de81
