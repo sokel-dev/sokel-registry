@@ -4,7 +4,8 @@ plugin:
   label: Airtable tables
   name: airtable
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Requires data.records:read/write and schema.bases:read, with access to the target base
@@ -356,4 +357,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-airtable:0.1.0@sha256:79144fdd09163172b366167ead7052ff2e72259483ae9381f7db670e6b81b9a5
+    ref: ghcr.io/sokel-dev/sokel-plugin-airtable:0.1.1@sha256:c72282051735161f58fd5c30cf948e88fdd1421a64a84688fef234076aabba1e
