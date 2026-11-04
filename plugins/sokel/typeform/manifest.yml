@@ -1,10 +1,11 @@
 plugin:
   name: typeform
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Typeform
   desc: Read Typeform workspaces, forms and completed responses with explicit pagination
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a personal access token with accounts:read, forms:read, responses:read and workspaces:read as needed.
@@ -336,4 +337,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-typeform:0.1.0@sha256:f88471e562db7f72e6e6d0ba0b2f9b16e9a981ca5dea4c370d9b0a8d9af1a78c
+    ref: ghcr.io/sokel-dev/sokel-plugin-typeform:0.1.1@sha256:aa63ceca22003412ecd0127f87902a32a2de96da37e56d31c2a6ba71dd421d24
