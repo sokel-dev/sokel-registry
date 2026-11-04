@@ -4,7 +4,8 @@ plugin:
   label: Microsoft SharePoint
   name: microsoft-sharepoint
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Obtain and refresh externally; include User.Read for health checks
@@ -357,4 +358,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-sharepoint:0.1.0@sha256:9db8ab51c9b6bd818af378536d6512a11b86e99edba01956be5baec8580aa73c
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-sharepoint:0.1.1@sha256:6f9d2ee9f3e13b176800006bd9961c1020b207418dfa891799718b94515d589a
