@@ -4,7 +4,8 @@ plugin:
   label: Supabase
   name: supabase
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - label: Project API key
@@ -369,4 +370,4 @@ deployment:
     required: true
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-supabase:0.1.0@sha256:ecd664d978a889db91b8ea776aecaad25bbac15ed8af6ea17722350cc729b294
+    ref: ghcr.io/sokel-dev/sokel-plugin-supabase:0.1.1@sha256:9f6a6725fda7f74223b7809e89da84f11d92d4d8f7efe6e483128b1fce0af7a6
