@@ -1,10 +1,11 @@
 plugin:
   name: pipedrive
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Pipedrive
   desc: Manage CRM persons, organizations and deals with Pipedrive API v2
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a personal API token. Rotating it invalidates integrations using the previous token.
@@ -497,4 +498,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-pipedrive:0.1.0@sha256:23149ecf24fc3f487129704e0bab2d99859e4f146602003e0d83dd112dea7d40
+    ref: ghcr.io/sokel-dev/sokel-plugin-pipedrive:0.1.1@sha256:6f0ccdb052c40d866aa6ba383f082d065a9333845c3cf8e9f72e2715b56120d0
