@@ -1,10 +1,11 @@
 plugin:
   name: zendesk
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Zendesk
   desc: Read, search and manage Zendesk Support tickets and comments
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use the account name before .zendesk.com, without a URL
@@ -526,4 +527,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-zendesk:0.1.0@sha256:b1cd7813b56a784ce40889fa65c2b13ade5bd424d00f92033b2f05ccedeea00d
+    ref: ghcr.io/sokel-dev/sokel-plugin-zendesk:0.1.1@sha256:b9ca5864d8051523f9ef0abdec3a3ccd8361c02918229183f2c6f4dd93d88024
