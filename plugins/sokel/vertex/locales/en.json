@@ -177,5 +177,8 @@
   "音频秒数": "Audio seconds",
   "额外 body": "Extra body",
   "风格指令": "Style instructions",
-  "高": "Height"
+  "高": "Height",
+  "GCP 控制台 → IAM → 服务账号 → 密钥 → 新建 JSON 密钥，整个文件内容粘进来（需 Vertex AI User 角色）": "In the GCP console, go to IAM → Service Accounts → Keys and create a JSON key. Paste the entire file contents here (requires the Vertex AI User role).",
+  "如 us-central1 / asia-northeast1；区域主机名与 global 不同，填错会 404": "For example, us-central1 or asia-northeast1. Regional hostnames differ from global; an incorrect region returns 404.",
+  "留空则取凭证 JSON 里的 project_id": "Leave blank to use project_id from the credential JSON"
 }

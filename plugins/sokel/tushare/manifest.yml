@@ -4,8 +4,7 @@ plugin:
   label: Tushare Pro
   name: tushare
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: tushare.pro 个人主页的接口 token。能调哪些接口取决于账号积分

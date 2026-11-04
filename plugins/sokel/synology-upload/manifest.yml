@@ -4,8 +4,7 @@ plugin:
   label: 群晖上传
   name: synology-upload
   org: sokel
-  version: v0.1.2
-
+  version: v0.1.3
 credential:
   fields:
     - desc: 浏览器里打开 DSM 的地址，带协议和端口，如 https://nas.example.com:5001 或 http://nas.local:5000

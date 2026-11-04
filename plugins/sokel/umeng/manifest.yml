@@ -4,8 +4,7 @@ plugin:
   label: 友盟推送
   name: umeng
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 友盟控制台 Android 应用的 AppKey。只推 iOS 可留空

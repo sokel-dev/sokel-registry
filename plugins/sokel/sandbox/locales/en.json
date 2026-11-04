@@ -37,5 +37,11 @@
   "退出非零 / 超时 / 结果超限时的人话摘要": "Plain-language summary when the exit is non-zero, timed out, or the result exceeds limits",
   "错因": "Error",
   "错误输出": "Stderr",
-  "隔离档": "Isolation tier"
+  "隔离档": "Isolation tier",
+  "与 files 逐项对应的相对目录路径；省略时沿用文件名，不接受绝对路径或上级目录": "Relative paths corresponding to each entry in files; omitted paths use the original filenames. Absolute paths and parent-directory traversal are not accepted.",
+  "与 files 逐项对应，保留 $SOKEL_OUT/files/ 下的目录结构": "Corresponds to each entry in files and preserves the directory structure under $SOKEL_OUT/files/",
+  "产出相对路径": "Output relative paths",
+  "同一个键的调用复用常驻进程（python 每次 fork、node 同进程），省掉解释器启动；平台传「工作空间 + 运行 id」，跨运行、跨空间不共用。只对 python / node 的 main(args) 模式且没有输入文件时生效，其余照常每次新起进程": "Calls with the same key reuse a resident process (Python forks for each call; Node uses the same process), avoiding interpreter startup. The platform supplies the workspace and run ID, so processes are not shared across runs or workspaces. Applies only to Python/Node main(args) mode without input files; other calls start a new process each time.",
+  "复用键": "Reuse key",
+  "输入相对路径": "Input relative paths"
 }

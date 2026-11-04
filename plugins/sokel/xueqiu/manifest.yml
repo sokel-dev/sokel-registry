@@ -4,8 +4,7 @@ plugin:
   label: 雪球（非官方）
   name: xueqiu
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 浏览器里登录雪球后，F12 → Network → 任意请求 → 复制整条 Cookie 值粘进来。至少要含 xq_a_token / xqat / xq_id_token / u / device_id

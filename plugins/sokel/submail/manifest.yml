@@ -4,8 +4,7 @@ plugin:
   label: 赛邮短信
   name: submail
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 控制台「短信」应用的 AppID（纯数字）。只用国际短信可留空

@@ -4,8 +4,7 @@ plugin:
   label: 飞书群机器人
   name: feishu-webhook
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 群设置 → 群机器人 → 添加「自定义机器人」后复制（open.feishu.cn/open-apis/bot/v2/hook/…）。它本身就是钥匙，按密钥保管

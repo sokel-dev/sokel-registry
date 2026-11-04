@@ -4,8 +4,7 @@ plugin:
   label: GitLab
   name: gitlab
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 自建实例填根地址（如 https://git.example.com）；留空 = gitlab.com

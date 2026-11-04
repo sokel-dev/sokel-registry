@@ -4,8 +4,7 @@ plugin:
   label: Threads
   name: threads
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   auth:
     kind: oauth

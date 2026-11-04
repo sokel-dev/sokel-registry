@@ -4,8 +4,7 @@ plugin:
   label: Elasticsearch
   name: elasticsearch
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 集群地址，如 https://es.internal:9200（带协议与端口）。多节点填其中一个即可

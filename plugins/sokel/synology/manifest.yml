@@ -4,8 +4,7 @@ plugin:
   label: 群晖 NAS
   name: synology
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 容器内路径（挂载点下子目录），如 /watch/研报入库

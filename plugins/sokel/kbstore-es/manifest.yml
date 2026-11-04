@@ -704,4 +704,4 @@ plugin:
   label: 知识库存储（Elasticsearch）
   name: kbstore-es
   org: sokel
-  version: v1.1.3
+  version: v1.1.4

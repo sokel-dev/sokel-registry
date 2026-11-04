@@ -168,5 +168,6 @@
   "音频秒数": "Audio seconds",
   "额外 body": "Extra body",
   "风格指令": "Style instruction",
-  "高": "Height"
+  "高": "Height",
+  "该厂商的 OpenAI 兼容地址": "The provider's OpenAI-compatible endpoint"
 }

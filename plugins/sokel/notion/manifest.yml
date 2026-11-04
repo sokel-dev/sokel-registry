@@ -4,8 +4,7 @@ plugin:
   label: Notion
   name: notion
   org: sokel
-  version: v1.0.3
-
+  version: v1.0.4
 credential:
   auth:
     kind: oauth

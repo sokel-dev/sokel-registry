@@ -2,7 +2,7 @@ plugin:
   name: sandbox
   org: sokel
   label: 沙箱运行时
-  version: v1.1.0
+  version: v1.1.1
   desc: 在受限进程里执行 python / node / bash：无网络、内存与 CPU 上限、一次性工作目录、每次执行降权。code 节点的 python / bash 与 skill 的脚本执行都路由到它；本期网络策略只有 none。
 deployment:
   targets:
