@@ -12,11 +12,11 @@
 2. **Products 里加两个自助产品**：`Sign In with LinkedIn using OpenID Connect` 和
    **`Share on LinkedIn`**。两个都是点了就有，不用审批；
 3. Auth 页里把回调地址填成平台的：`https://<你的平台域名>/api/v1/credentials/oauth/callback`，
-   与平台环境变量 `SOKEL_LINKEDIN_OAUTH_REDIRECT_URL` **一字不差**；
+   与平台环境变量 `LINKEDIN_OAUTH_REDIRECT_URL` **一字不差**；
 4. 平台管理员配好这几个环境变量：
    ```
-   SOKEL_LINKEDIN_OAUTH_CLIENT_ID / SOKEL_LINKEDIN_OAUTH_CLIENT_SECRET
-   SOKEL_LINKEDIN_OAUTH_REDIRECT_URL / SOKEL_LINKEDIN_OAUTH_PROXY（连不上时填）
+   LINKEDIN_OAUTH_CLIENT_ID / LINKEDIN_OAUTH_CLIENT_SECRET
+   LINKEDIN_OAUTH_REDIRECT_URL / LINKEDIN_OAUTH_PROXY（连不上时填）
    ```
 5. 建凭证 → 点「授权」，作用域是 `openid profile w_member_social`。
 
