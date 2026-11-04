@@ -1,10 +1,11 @@
 plugin:
   name: monday
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Monday
   desc: Discover Monday boards and manage items, column values and updates with versioned GraphQL
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Provide a personal API token with access to the target boards; manage renewal outside this plugin.
@@ -495,4 +496,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-monday:0.1.0@sha256:3be15d127ea5f15032e4f9fbe7ebfcefc6e7d6ee2b31eb71ee1193b065387c9b
+    ref: ghcr.io/sokel-dev/sokel-plugin-monday:0.1.1@sha256:e7bb6213e2455054dac808b070f93eb22715a8f21bdc7f1c4d53f79a96bf48a0
