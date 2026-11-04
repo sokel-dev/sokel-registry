@@ -4,7 +4,8 @@ plugin:
   label: Microsoft Excel 365
   name: microsoft-excel
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Obtain and refresh externally; include User.Read for health checks
@@ -375,4 +376,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-excel:0.1.0@sha256:9193ca64420d5b5256f41c957437ee2108af00aed4fdbde320f9ed3f65165f98
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-excel:0.1.1@sha256:d576fc310c1ce6d8a0eb87ccc215f2f8962faf527ab06fe47eed17e88916ff66
