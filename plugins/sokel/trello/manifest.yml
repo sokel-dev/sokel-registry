@@ -1,10 +1,11 @@
 plugin:
   name: trello
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Trello
   desc: Discover Trello boards and manage cards and comments with header authentication
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Trello Power-Up API key used with the user token.
@@ -436,4 +437,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-trello:0.1.0@sha256:4330c7da76e7d5e57f26dedf277ad9263fdff562dd03abfad6b43f9709f6938f
+    ref: ghcr.io/sokel-dev/sokel-plugin-trello:0.1.1@sha256:bcd1ace5c5dc87d93a4a4bc8d160a0383be20cced36c3527ae53d4c8ece8b42e
