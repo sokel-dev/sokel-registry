@@ -1,10 +1,11 @@
 plugin:
   name: intercom
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Intercom
   desc: Manage contacts and conversations with regional Intercom API access
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a private app access token with the required contact and conversation permissions.
@@ -494,4 +495,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-intercom:0.1.0@sha256:389f604eff318eabd903e46ded266295d2d669ff76cf9061a40810373af2d105
+    ref: ghcr.io/sokel-dev/sokel-plugin-intercom:0.1.1@sha256:ff3c9d19e54f35e53348f10c03f058fdf57ef2cac40c5d015de895278e1e1b54
