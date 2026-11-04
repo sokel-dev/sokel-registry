@@ -1,10 +1,11 @@
 plugin:
   name: pocketbase
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: PocketBase
   desc: Read and manage records in a self-hosted PocketBase service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Preobtained auth record token; replace it outside this plugin when expired. Do not use a superuser token.
@@ -268,7 +269,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-pocketbase:0.1.0@sha256:fa31e0fe3f10cafd0b854df68f8332cd1169a5d1ace2040336b65327083bd28e
+    ref: ghcr.io/sokel-dev/sokel-plugin-pocketbase:0.1.1@sha256:039c3773b6f90b84deece7e0708101eb96ddecfa0914a04fc4d9b70af2393aeb
   env:
   - name: SOKEL_POCKETBASE_URL
     desc: HTTP(S) root URL of your PocketBase service; internal hosts and reverse-proxy prefixes are supported. No public fallback.
