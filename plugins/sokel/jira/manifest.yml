@@ -1,10 +1,11 @@
 plugin:
   name: jira
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Jira Cloud
   desc: Search and manage Jira Cloud issues, transitions and comments
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: 'For tokens without scopes: https://your-site.atlassian.net'
@@ -426,4 +427,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-jira:0.1.0@sha256:90d3dbaf204d8e239c81c0df128f5b0c9659349fdfb7e00171ff794d9168c626
+    ref: ghcr.io/sokel-dev/sokel-plugin-jira:0.1.1@sha256:9ef582a0fe1e87d5aaff3b072c87f300375f58183e3e01c94b1a0d9452be4b80
