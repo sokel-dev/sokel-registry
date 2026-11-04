@@ -5,557 +5,554 @@ plugin:
   label: X（免费读写）
   name: x-free
   org: sokel
-  version: v0.2.1
-
+  version: v0.2.2
 credential:
   fields:
-    - help: 在已登录的 x.com 页面打开开发者工具，在 Application → Cookies 中复制 auth_token 的值。
-      label: 登录令牌
-      name: auth_token
-      required: true
-      type: secret
-    - help: 复制同一次登录会话的 ct0 Cookie 值；不要填写整个 Cookie 请求头。
-      label: CSRF 令牌
-      name: ct0
-      required: true
-      type: secret
-    - help: 可选，填写插件容器可访问的 HTTP 或 HTTPS 代理地址。
-      label: 代理地址
-      name: proxy
-      type: secret
-
+  - help: 在已登录的 x.com 页面打开开发者工具，在 Application → Cookies 中复制 auth_token 的值。
+    label: 登录令牌
+    name: auth_token
+    required: true
+    type: secret
+  - help: 复制同一次登录会话的 ct0 Cookie 值；不要填写整个 Cookie 请求头。
+    label: CSRF 令牌
+    name: ct0
+    required: true
+    type: secret
+  - help: 可选，填写插件容器可访问的 HTTP 或 HTTPS 代理地址。
+    label: 代理地址
+    name: proxy
+    type: secret
 operations:
-  - desc: 按 X 搜索语法读取最新匹配推文，返回有界批次；结果可能少于请求数量。
-    id: search
-    inputs:
-      - desc: 支持 from:账号、关键词等 X 搜索语法，最多 500 个字符。
-        label: 搜索内容
-        name: query
-        required: true
-        type: string
-      - default: 20
-        desc: 1 到 100，默认 20；不提供跨次调用的分页游标。
-        goType: int
-        label: 返回条数
-        name: limit
-        type: number
-    label: 搜索推文
-    outputs:
-      - fields:
-          - label: 推文 ID
-            name: id
-            required: true
-            type: string
-          - label: 正文
-            name: text
-            required: true
-            type: text
-          - label: 推文链接
-            name: url
-            required: true
-            type: string
-          - desc: 上游提供的发布时间；缺失时为空。
-            label: 发布时间
-            name: created_at
-            type: string
-          - label: 作者 ID
-            name: author_id
-            type: string
-          - label: 作者账号
-            name: author_username
-            type: string
-          - label: 回复目标 ID
-            name: reply_to_id
-            type: string
-          - goType: int
-            label: 点赞数
-            name: like_count
-            type: number
-          - goType: int
-            label: 转帖数
-            name: repost_count
-            type: number
-          - goType: int
-            label: 回复数
-            name: reply_count
-            type: number
-        goType: Post
-        label: 推文列表
-        name: posts
-        required: true
-        type: array
-      - goType: int
-        label: 返回数量
-        name: count
-        required: true
-        type: number
-    timeoutSec: 120
-  - desc: 读取指定账号最近的推文；用于定时监控时，请按推文 ID 在工作流中去重。
-    id: user_timeline
-    inputs:
-      - desc: 账号名，可带 @；不要填写个人主页链接。
-        label: 用户账号
-        name: username
-        required: true
-        type: string
-      - default: 20
-        desc: 1 到 100，默认 20；不提供跨次调用的分页游标。
-        goType: int
-        label: 返回条数
-        name: limit
-        type: number
-    label: 获取用户推文
-    outputs:
-      - fields:
-          - label: 推文 ID
-            name: id
-            required: true
-            type: string
-          - label: 正文
-            name: text
-            required: true
-            type: text
-          - label: 推文链接
-            name: url
-            required: true
-            type: string
-          - desc: 上游提供的发布时间；缺失时为空。
-            label: 发布时间
-            name: created_at
-            type: string
-          - label: 作者 ID
-            name: author_id
-            type: string
-          - label: 作者账号
-            name: author_username
-            type: string
-          - label: 回复目标 ID
-            name: reply_to_id
-            type: string
-          - goType: int
-            label: 点赞数
-            name: like_count
-            type: number
-          - goType: int
-            label: 转帖数
-            name: repost_count
-            type: number
-          - goType: int
-            label: 回复数
-            name: reply_count
-            type: number
-        goType: Post
-        label: 推文列表
-        name: posts
-        required: true
-        type: array
-      - goType: int
-        label: 返回数量
-        name: count
-        required: true
-        type: number
-    timeoutSec: 120
-  - desc: 读取当前登录账号创建和关注的 Lists，排除推荐列表，返回名称、ID 和链接。
-    id: my_lists
-    inputs:
-      - default: 20
-        desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
-        goType: int
-        label: 每页请求条数
-        name: limit
-        type: number
-      - desc: 首次留空；继续翻页时传入上次返回的 next_cursor。
-        label: 分页游标
-        name: cursor
-        type: string
-    label: 获取我的 Lists
-    outputs:
-      - fields:
-          - label: List ID
-            name: id
-            required: true
-            type: string
-          - label: List 名称
-            name: name
-            required: true
-            type: string
-          - label: 简介
-            name: description
-            type: text
-          - desc: public 或 private；未知时为空。
-            label: 可见性
-            name: mode
-            type: string
-          - goType: int
-            label: 成员数
-            name: member_count
-            type: number
-          - goType: int
-            label: 订阅者数
-            name: subscriber_count
-            type: number
-          - label: 创建者 ID
-            name: owner_id
-            type: string
-          - label: 创建者账号
-            name: owner_username
-            type: string
-          - label: List 链接
-            name: url
-            required: true
-            type: string
-        goType: ListSummary
-        label: Lists 列表
-        name: lists
-        required: true
-        type: array
-      - goType: int
-        label: 返回数量
-        name: count
-        required: true
-        type: number
-      - label: 下一页游标
-        name: next_cursor
-        required: true
-        type: string
-      - label: 可继续翻页
-        name: has_more
-        required: true
-        type: boolean
-    timeoutSec: 60
-  - desc: 读取指定 List 的一页推文并返回分页游标，适合在定时工作流中按推文 ID 去重。
-    id: list_timeline
-    inputs:
-      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
-        label: List 链接或 ID
-        name: list_id
-        required: true
-        type: string
-      - default: 20
-        desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
-        goType: int
-        label: 每页请求条数
-        name: limit
-        type: number
-      - desc: 每轮定时任务首次留空；同一轮继续翻页时传入 next_cursor。
-        label: 分页游标
-        name: cursor
-        type: string
-    label: 获取 List 推文
-    outputs:
-      - label: List ID
-        name: list_id
-        required: true
-        type: string
-      - fields:
-          - label: 推文 ID
-            name: id
-            required: true
-            type: string
-          - label: 正文
-            name: text
-            required: true
-            type: text
-          - label: 推文链接
-            name: url
-            required: true
-            type: string
-          - desc: 上游提供的发布时间；缺失时为空。
-            label: 发布时间
-            name: created_at
-            type: string
-          - label: 作者 ID
-            name: author_id
-            type: string
-          - label: 作者账号
-            name: author_username
-            type: string
-          - label: 回复目标 ID
-            name: reply_to_id
-            type: string
-          - goType: int
-            label: 点赞数
-            name: like_count
-            type: number
-          - goType: int
-            label: 转帖数
-            name: repost_count
-            type: number
-          - goType: int
-            label: 回复数
-            name: reply_count
-            type: number
-        goType: Post
-        label: 推文列表
-        name: posts
-        required: true
-        type: array
-      - goType: int
-        label: 返回数量
-        name: count
-        required: true
-        type: number
-      - label: 下一页游标
-        name: next_cursor
-        required: true
-        type: string
-      - label: 可继续翻页
-        name: has_more
-        required: true
-        type: boolean
-    timeoutSec: 60
-  - desc: 将指定账号加入有管理权限的 List；失败不会自动重试。
-    id: add_list_member
-    inputs:
-      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
-        label: List 链接或 ID
-        name: list_id
-        required: true
-        type: string
-      - desc: 账号名，可带 @；不要填写个人主页链接。
-        label: 用户账号
-        name: username
-        required: true
-        type: string
-    label: 添加 List 成员
-    outputs:
-      - label: List ID
-        name: list_id
-        required: true
-        type: string
-      - label: 用户 ID
-        name: user_id
-        required: true
-        type: string
-      - label: 用户账号
-        name: username
-        required: true
-        type: string
-      - desc: X 已接受操作；不代表成员此前一定不存在或存在。
-        label: 操作成功
-        name: changed
-        required: true
-        type: boolean
-    timeoutSec: 60
-  - desc: 将指定账号从有管理权限的 List 中移除；失败不会自动重试。
-    id: remove_list_member
-    inputs:
-      - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
-        label: List 链接或 ID
-        name: list_id
-        required: true
-        type: string
-      - desc: 账号名，可带 @；不要填写个人主页链接。
-        label: 用户账号
-        name: username
-        required: true
-        type: string
-    label: 移除 List 成员
-    outputs:
-      - label: List ID
-        name: list_id
-        required: true
-        type: string
-      - label: 用户 ID
-        name: user_id
-        required: true
-        type: string
-      - label: 用户账号
-        name: username
-        required: true
-        type: string
-      - desc: X 已接受操作；不代表成员此前一定不存在或存在。
-        label: 操作成功
-        name: changed
-        required: true
-        type: boolean
-    timeoutSec: 60
-  - desc: 按推文 ID 读取正文、作者与互动数量。
-    id: get_post
-    inputs:
-      - label: 推文 ID
-        name: id
-        required: true
-        type: string
-    label: 获取推文
-    outputs:
-      - fields:
-          - label: 推文 ID
-            name: id
-            required: true
-            type: string
-          - label: 正文
-            name: text
-            required: true
-            type: text
-          - label: 推文链接
-            name: url
-            required: true
-            type: string
-          - desc: 上游提供的发布时间；缺失时为空。
-            label: 发布时间
-            name: created_at
-            type: string
-          - label: 作者 ID
-            name: author_id
-            type: string
-          - label: 作者账号
-            name: author_username
-            type: string
-          - label: 回复目标 ID
-            name: reply_to_id
-            type: string
-          - goType: int
-            label: 点赞数
-            name: like_count
-            type: number
-          - goType: int
-            label: 转帖数
-            name: repost_count
-            type: number
-          - goType: int
-            label: 回复数
-            name: reply_count
-            type: number
-        goType: Post
-        label: 推文
-        name: post
-        required: true
-        type: json
-    timeoutSec: 60
-  - id: get_user
-    inputs:
-      - desc: 账号名，可带 @；不要填写个人主页链接。
-        label: 用户账号
-        name: username
-        required: true
-        type: string
-    label: 获取用户资料
-    outputs:
-      - fields:
-          - label: 用户 ID
-            name: id
-            required: true
-            type: string
-          - label: 用户账号
-            name: username
-            required: true
-            type: string
-          - label: 显示名称
-            name: name
-            type: string
-          - label: 简介
-            name: description
-            type: text
-          - goType: int
-            label: 关注者数
-            name: followers_count
-            type: number
-          - goType: int
-            label: 关注数
-            name: following_count
-            type: number
-          - label: 主页链接
-            name: url
-            required: true
-            type: string
-        goType: User
-        label: 用户资料
-        name: user
-        required: true
-        type: json
-  - desc: 使用凭证对应的账号发布文本；填写回复目标时作为回复发布。写入失败不会自动重试。
-    id: post
-    inputs:
-      - desc: 文本长度与账号发帖权限由 X 校验。
-        label: 正文
-        name: text
-        required: true
-        type: text
-      - desc: 留空发布新推文；填写推文 ID 发布回复。
-        label: 回复目标 ID
-        name: reply_to
-        type: string
-    label: 发布或回复推文
-    outputs:
-      - fields:
-          - label: 推文 ID
-            name: id
-            required: true
-            type: string
-          - label: 正文
-            name: text
-            required: true
-            type: text
-          - label: 推文链接
-            name: url
-            required: true
-            type: string
-          - desc: 上游提供的发布时间；缺失时为空。
-            label: 发布时间
-            name: created_at
-            type: string
-          - label: 作者 ID
-            name: author_id
-            type: string
-          - label: 作者账号
-            name: author_username
-            type: string
-          - label: 回复目标 ID
-            name: reply_to_id
-            type: string
-          - goType: int
-            label: 点赞数
-            name: like_count
-            type: number
-          - goType: int
-            label: 转帖数
-            name: repost_count
-            type: number
-          - goType: int
-            label: 回复数
-            name: reply_count
-            type: number
-        goType: Post
-        label: 推文
-        name: post
-        required: true
-        type: json
-    timeoutSec: 60
-  - desc: 删除当前账号有权删除的推文；操作不可撤销，失败不会自动重试。
-    id: delete_post
-    inputs:
-      - label: 推文 ID
-        name: id
-        required: true
-        type: string
-    label: 删除推文
-    outputs:
-      - label: 已删除
-        name: deleted
-        required: true
-        type: boolean
-      - label: 推文 ID
-        name: id
-        required: true
-        type: string
-    timeoutSec: 60
-  - desc: 通过一次只读时间线请求验证登录状态和网络连接，不发帖。
-    id: health_check
-    label: 凭证体检
-    outputs:
-      - label: 可用
-        name: ok
-        required: true
-        type: boolean
-      - label: 说明
-        name: message
-        type: string
-
+- desc: 按 X 搜索语法读取最新匹配推文，返回有界批次；结果可能少于请求数量。
+  id: search
+  inputs:
+  - desc: 支持 from:账号、关键词等 X 搜索语法，最多 500 个字符。
+    label: 搜索内容
+    name: query
+    required: true
+    type: string
+  - default: 20
+    desc: 1 到 100，默认 20；不提供跨次调用的分页游标。
+    goType: int
+    label: 返回条数
+    name: limit
+    type: number
+  label: 搜索推文
+  outputs:
+  - fields:
+    - label: 推文 ID
+      name: id
+      required: true
+      type: string
+    - label: 正文
+      name: text
+      required: true
+      type: text
+    - label: 推文链接
+      name: url
+      required: true
+      type: string
+    - desc: 上游提供的发布时间；缺失时为空。
+      label: 发布时间
+      name: created_at
+      type: string
+    - label: 作者 ID
+      name: author_id
+      type: string
+    - label: 作者账号
+      name: author_username
+      type: string
+    - label: 回复目标 ID
+      name: reply_to_id
+      type: string
+    - goType: int
+      label: 点赞数
+      name: like_count
+      type: number
+    - goType: int
+      label: 转帖数
+      name: repost_count
+      type: number
+    - goType: int
+      label: 回复数
+      name: reply_count
+      type: number
+    goType: Post
+    label: 推文列表
+    name: posts
+    required: true
+    type: array
+  - goType: int
+    label: 返回数量
+    name: count
+    required: true
+    type: number
+  timeoutSec: 120
+- desc: 读取指定账号最近的推文；用于定时监控时，请按推文 ID 在工作流中去重。
+  id: user_timeline
+  inputs:
+  - desc: 账号名，可带 @；不要填写个人主页链接。
+    label: 用户账号
+    name: username
+    required: true
+    type: string
+  - default: 20
+    desc: 1 到 100，默认 20；不提供跨次调用的分页游标。
+    goType: int
+    label: 返回条数
+    name: limit
+    type: number
+  label: 获取用户推文
+  outputs:
+  - fields:
+    - label: 推文 ID
+      name: id
+      required: true
+      type: string
+    - label: 正文
+      name: text
+      required: true
+      type: text
+    - label: 推文链接
+      name: url
+      required: true
+      type: string
+    - desc: 上游提供的发布时间；缺失时为空。
+      label: 发布时间
+      name: created_at
+      type: string
+    - label: 作者 ID
+      name: author_id
+      type: string
+    - label: 作者账号
+      name: author_username
+      type: string
+    - label: 回复目标 ID
+      name: reply_to_id
+      type: string
+    - goType: int
+      label: 点赞数
+      name: like_count
+      type: number
+    - goType: int
+      label: 转帖数
+      name: repost_count
+      type: number
+    - goType: int
+      label: 回复数
+      name: reply_count
+      type: number
+    goType: Post
+    label: 推文列表
+    name: posts
+    required: true
+    type: array
+  - goType: int
+    label: 返回数量
+    name: count
+    required: true
+    type: number
+  timeoutSec: 120
+- desc: 读取当前登录账号创建和关注的 Lists，排除推荐列表，返回名称、ID 和链接。
+  id: my_lists
+  inputs:
+  - default: 20
+    desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
+    goType: int
+    label: 每页请求条数
+    name: limit
+    type: number
+  - desc: 首次留空；继续翻页时传入上次返回的 next_cursor。
+    label: 分页游标
+    name: cursor
+    type: string
+  label: 获取我的 Lists
+  outputs:
+  - fields:
+    - label: List ID
+      name: id
+      required: true
+      type: string
+    - label: List 名称
+      name: name
+      required: true
+      type: string
+    - label: 简介
+      name: description
+      type: text
+    - desc: public 或 private；未知时为空。
+      label: 可见性
+      name: mode
+      type: string
+    - goType: int
+      label: 成员数
+      name: member_count
+      type: number
+    - goType: int
+      label: 订阅者数
+      name: subscriber_count
+      type: number
+    - label: 创建者 ID
+      name: owner_id
+      type: string
+    - label: 创建者账号
+      name: owner_username
+      type: string
+    - label: List 链接
+      name: url
+      required: true
+      type: string
+    goType: ListSummary
+    label: Lists 列表
+    name: lists
+    required: true
+    type: array
+  - goType: int
+    label: 返回数量
+    name: count
+    required: true
+    type: number
+  - label: 下一页游标
+    name: next_cursor
+    required: true
+    type: string
+  - label: 可继续翻页
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: 读取指定 List 的一页推文并返回分页游标，适合在定时工作流中按推文 ID 去重。
+  id: list_timeline
+  inputs:
+  - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+    label: List 链接或 ID
+    name: list_id
+    required: true
+    type: string
+  - default: 20
+    desc: 1 到 100，默认 20；返回完整一页，实际数量由 X 决定。
+    goType: int
+    label: 每页请求条数
+    name: limit
+    type: number
+  - desc: 每轮定时任务首次留空；同一轮继续翻页时传入 next_cursor。
+    label: 分页游标
+    name: cursor
+    type: string
+  label: 获取 List 推文
+  outputs:
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - fields:
+    - label: 推文 ID
+      name: id
+      required: true
+      type: string
+    - label: 正文
+      name: text
+      required: true
+      type: text
+    - label: 推文链接
+      name: url
+      required: true
+      type: string
+    - desc: 上游提供的发布时间；缺失时为空。
+      label: 发布时间
+      name: created_at
+      type: string
+    - label: 作者 ID
+      name: author_id
+      type: string
+    - label: 作者账号
+      name: author_username
+      type: string
+    - label: 回复目标 ID
+      name: reply_to_id
+      type: string
+    - goType: int
+      label: 点赞数
+      name: like_count
+      type: number
+    - goType: int
+      label: 转帖数
+      name: repost_count
+      type: number
+    - goType: int
+      label: 回复数
+      name: reply_count
+      type: number
+    goType: Post
+    label: 推文列表
+    name: posts
+    required: true
+    type: array
+  - goType: int
+    label: 返回数量
+    name: count
+    required: true
+    type: number
+  - label: 下一页游标
+    name: next_cursor
+    required: true
+    type: string
+  - label: 可继续翻页
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: 将指定账号加入有管理权限的 List；失败不会自动重试。
+  id: add_list_member
+  inputs:
+  - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+    label: List 链接或 ID
+    name: list_id
+    required: true
+    type: string
+  - desc: 账号名，可带 @；不要填写个人主页链接。
+    label: 用户账号
+    name: username
+    required: true
+    type: string
+  label: 添加 List 成员
+  outputs:
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - label: 用户 ID
+    name: user_id
+    required: true
+    type: string
+  - label: 用户账号
+    name: username
+    required: true
+    type: string
+  - desc: X 已接受操作；不代表成员此前一定不存在或存在。
+    label: 操作成功
+    name: changed
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: 将指定账号从有管理权限的 List 中移除；失败不会自动重试。
+  id: remove_list_member
+  inputs:
+  - desc: 填写数字 ID 或 https://x.com/i/lists/ID 链接。
+    label: List 链接或 ID
+    name: list_id
+    required: true
+    type: string
+  - desc: 账号名，可带 @；不要填写个人主页链接。
+    label: 用户账号
+    name: username
+    required: true
+    type: string
+  label: 移除 List 成员
+  outputs:
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - label: 用户 ID
+    name: user_id
+    required: true
+    type: string
+  - label: 用户账号
+    name: username
+    required: true
+    type: string
+  - desc: X 已接受操作；不代表成员此前一定不存在或存在。
+    label: 操作成功
+    name: changed
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: 按推文 ID 读取正文、作者与互动数量。
+  id: get_post
+  inputs:
+  - label: 推文 ID
+    name: id
+    required: true
+    type: string
+  label: 获取推文
+  outputs:
+  - fields:
+    - label: 推文 ID
+      name: id
+      required: true
+      type: string
+    - label: 正文
+      name: text
+      required: true
+      type: text
+    - label: 推文链接
+      name: url
+      required: true
+      type: string
+    - desc: 上游提供的发布时间；缺失时为空。
+      label: 发布时间
+      name: created_at
+      type: string
+    - label: 作者 ID
+      name: author_id
+      type: string
+    - label: 作者账号
+      name: author_username
+      type: string
+    - label: 回复目标 ID
+      name: reply_to_id
+      type: string
+    - goType: int
+      label: 点赞数
+      name: like_count
+      type: number
+    - goType: int
+      label: 转帖数
+      name: repost_count
+      type: number
+    - goType: int
+      label: 回复数
+      name: reply_count
+      type: number
+    goType: Post
+    label: 推文
+    name: post
+    required: true
+    type: json
+  timeoutSec: 60
+- id: get_user
+  inputs:
+  - desc: 账号名，可带 @；不要填写个人主页链接。
+    label: 用户账号
+    name: username
+    required: true
+    type: string
+  label: 获取用户资料
+  outputs:
+  - fields:
+    - label: 用户 ID
+      name: id
+      required: true
+      type: string
+    - label: 用户账号
+      name: username
+      required: true
+      type: string
+    - label: 显示名称
+      name: name
+      type: string
+    - label: 简介
+      name: description
+      type: text
+    - goType: int
+      label: 关注者数
+      name: followers_count
+      type: number
+    - goType: int
+      label: 关注数
+      name: following_count
+      type: number
+    - label: 主页链接
+      name: url
+      required: true
+      type: string
+    goType: User
+    label: 用户资料
+    name: user
+    required: true
+    type: json
+- desc: 使用凭证对应的账号发布文本；填写回复目标时作为回复发布。写入失败不会自动重试。
+  id: post
+  inputs:
+  - desc: 文本长度与账号发帖权限由 X 校验。
+    label: 正文
+    name: text
+    required: true
+    type: text
+  - desc: 留空发布新推文；填写推文 ID 发布回复。
+    label: 回复目标 ID
+    name: reply_to
+    type: string
+  label: 发布或回复推文
+  outputs:
+  - fields:
+    - label: 推文 ID
+      name: id
+      required: true
+      type: string
+    - label: 正文
+      name: text
+      required: true
+      type: text
+    - label: 推文链接
+      name: url
+      required: true
+      type: string
+    - desc: 上游提供的发布时间；缺失时为空。
+      label: 发布时间
+      name: created_at
+      type: string
+    - label: 作者 ID
+      name: author_id
+      type: string
+    - label: 作者账号
+      name: author_username
+      type: string
+    - label: 回复目标 ID
+      name: reply_to_id
+      type: string
+    - goType: int
+      label: 点赞数
+      name: like_count
+      type: number
+    - goType: int
+      label: 转帖数
+      name: repost_count
+      type: number
+    - goType: int
+      label: 回复数
+      name: reply_count
+      type: number
+    goType: Post
+    label: 推文
+    name: post
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: 删除当前账号有权删除的推文；操作不可撤销，失败不会自动重试。
+  id: delete_post
+  inputs:
+  - label: 推文 ID
+    name: id
+    required: true
+    type: string
+  label: 删除推文
+  outputs:
+  - label: 已删除
+    name: deleted
+    required: true
+    type: boolean
+  - label: 推文 ID
+    name: id
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: 通过一次只读时间线请求验证登录状态和网络连接，不发帖。
+  id: health_check
+  label: 凭证体检
+  outputs:
+  - label: 可用
+    name: ok
+    required: true
+    type: boolean
+  - label: 说明
+    name: message
+    type: string
 codegen:
-  - lang: python
-    out: sokel_gen.py
+- lang: python
+  out: sokel_gen.py
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-x-free:0.2.1@sha256:bc9c4d74c9c8a1792a002e62831bd8cf2b82b7b006e49b82894bc3a69b806fa1
+    ref: ghcr.io/sokel-dev/sokel-plugin-x-free:0.2.2@sha256:f3d40c52205dbad29fab0c89d73d45792b0e119ca25d681faf16737276513b99
