@@ -1,10 +1,11 @@
 plugin:
   name: linear
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Linear
   desc: Query Linear issues and projects and create or update issues
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Personal API key
@@ -614,4 +615,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-linear:0.1.0@sha256:41660842d8d094e404601e4b86ab067500cb9b385f239e5fe6ba36026e5cf9ee
+    ref: ghcr.io/sokel-dev/sokel-plugin-linear:0.1.1@sha256:f476e0bc9d87c93e3d5c9e47f51c94c7f051599e967276e17278321b53ffe082
