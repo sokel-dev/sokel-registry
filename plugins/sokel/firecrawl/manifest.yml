@@ -1,10 +1,11 @@
 plugin:
   name: firecrawl
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Firecrawl
   desc: Web scraping, crawling and structured extraction
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Create a key in the official service dashboard; do not enter deployment URLs.
@@ -287,4 +288,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-firecrawl:0.1.0@sha256:265c39c590b143c16bc4791ff62eb9da4a5a597b2b0e17e8cd6066f5de0f5370
+    ref: ghcr.io/sokel-dev/sokel-plugin-firecrawl:0.1.1@sha256:f4fb8e10c3d98c943e7b68ae51a9b66f1a51e4aecf320a435144e6fb14ab65c8
