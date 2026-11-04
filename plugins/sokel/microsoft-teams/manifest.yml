@@ -1,0 +1,525 @@
+plugin:
+  desc: Browse teams and chats and read or send delegated messages
+  doc: README.md
+  label: Microsoft Teams
+  name: microsoft-teams
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Global Microsoft Graph delegated token; refresh externally and replace before expiration
+    label: Delegated Microsoft Graph access token
+    name: access_token
+    required: true
+    type: secret
+operations:
+- id: health_check
+  label: Check delegated credential
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_teams
+  inputs:
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List joined teams
+  outputs:
+  - fields:
+    - label: Team ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    goType: Team
+    label: Teams
+    name: teams
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_channels
+  inputs:
+  - label: Team ID
+    name: team_id
+    required: true
+    type: string
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List team channels
+  outputs:
+  - fields:
+    - label: Channel ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    - label: Membership type
+      name: membership_type
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: Channel
+    label: Channels
+    name: channels
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_chats
+  inputs:
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List joined chats
+  outputs:
+  - fields:
+    - label: Chat ID
+      name: id
+      required: true
+      type: string
+    - label: Topic
+      name: topic
+      required: true
+      type: string
+    - label: Chat type
+      name: chat_type
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    goType: Chat
+    label: Chats
+    name: chats
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_channel_messages
+  inputs:
+  - label: Team ID
+    name: team_id
+    required: true
+    type: string
+  - label: Channel ID
+    name: channel_id
+    required: true
+    type: string
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List channel messages
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Author ID
+      name: author_id
+      required: true
+      type: string
+    - label: Author name
+      name: author_name
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Deleted at
+      name: deleted_at
+      required: true
+      type: string
+    - label: Parent message ID
+      name: reply_to_id
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Message type
+      name: message_type
+      required: true
+      type: string
+    goType: TeamsMessage
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_replies
+  inputs:
+  - label: Team ID
+    name: team_id
+    required: true
+    type: string
+  - label: Channel ID
+    name: channel_id
+    required: true
+    type: string
+  - label: Message ID
+    name: message_id
+    required: true
+    type: string
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List channel message replies
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Author ID
+      name: author_id
+      required: true
+      type: string
+    - label: Author name
+      name: author_name
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Deleted at
+      name: deleted_at
+      required: true
+      type: string
+    - label: Parent message ID
+      name: reply_to_id
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Message type
+      name: message_type
+      required: true
+      type: string
+    goType: TeamsMessage
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_chat_messages
+  inputs:
+  - label: Chat ID
+    name: chat_id
+    required: true
+    type: string
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List chat messages
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Author ID
+      name: author_id
+      required: true
+      type: string
+    - label: Author name
+      name: author_name
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Deleted at
+      name: deleted_at
+      required: true
+      type: string
+    - label: Parent message ID
+      name: reply_to_id
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Message type
+      name: message_type
+      required: true
+      type: string
+    goType: TeamsMessage
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: send_channel_message
+  inputs:
+  - label: Team ID
+    name: team_id
+    required: true
+    type: string
+  - label: Channel ID
+    name: channel_id
+    required: true
+    type: string
+  - label: Message content
+    name: content
+    required: true
+    type: string
+  - desc: text or html; defaults to text
+    label: Content type
+    name: content_type
+    type: string
+  - desc: When set, post a reply to this channel message
+    label: Parent message ID
+    name: reply_to_id
+    type: string
+  label: Send channel message or reply
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Author ID
+      name: author_id
+      required: true
+      type: string
+    - label: Author name
+      name: author_name
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Deleted at
+      name: deleted_at
+      required: true
+      type: string
+    - label: Parent message ID
+      name: reply_to_id
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Message type
+      name: message_type
+      required: true
+      type: string
+    goType: TeamsMessage
+    label: Message
+    name: message
+    required: true
+    type: json
+  timeoutSec: 60
+- id: send_chat_message
+  inputs:
+  - label: Chat ID
+    name: chat_id
+    required: true
+    type: string
+  - label: Message content
+    name: content
+    required: true
+    type: string
+  - desc: text or html; defaults to text
+    label: Content type
+    name: content_type
+    type: string
+  label: Send chat message
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Author ID
+      name: author_id
+      required: true
+      type: string
+    - label: Author name
+      name: author_name
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    - label: Deleted at
+      name: deleted_at
+      required: true
+      type: string
+    - label: Parent message ID
+      name: reply_to_id
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Message type
+      name: message_type
+      required: true
+      type: string
+    goType: TeamsMessage
+    label: Message
+    name: message
+    required: true
+    type: json
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-teams:0.1.0@sha256:8057f43d07233c5c9081ea0819d291a9d3649ae44c543ed25a49e6f3e39edf90
