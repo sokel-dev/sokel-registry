@@ -1,0 +1,372 @@
+plugin:
+  desc: Query database records, call functions and access storage
+  doc: README.md
+  label: Supabase
+  name: supabase
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: Project API key
+    name: api_key
+    required: true
+    type: secret
+  - label: User access token
+    name: access_token
+    type: secret
+operations:
+- id: select_rows
+  inputs:
+  - label: Table or view
+    name: table
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - fields:
+    - label: Column
+      name: column
+      required: true
+      type: string
+    - desc: eq, neq, gt, gte, lt, lte, like, ilike, in, is, cs, cd or ov
+      label: Operator
+      name: operator
+      required: true
+      type: string
+    - label: Filter value
+      name: value
+      required: true
+      type: string
+    goType: RowFilter
+    label: Filters
+    name: filters
+    type: array
+  - desc: PostgREST select expression; defaults to *
+    label: Selected columns
+    name: select
+    type: string
+  - desc: For example id.asc; use a stable unique order when paging
+    label: Sort expression
+    name: order
+    type: string
+  - default: 100
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - default: 0
+    goType: int
+    label: Offset
+    name: offset
+    type: number
+  label: Select rows
+  outputs:
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - goType: int
+    label: Returned row count
+    name: count
+    required: true
+    type: number
+  - goType: int
+    label: Next offset
+    name: next_offset
+    required: true
+    type: number
+  - desc: Server range and exact total when available
+    label: Content range
+    name: content_range
+    required: true
+    type: string
+  timeoutSec: 60
+- id: insert_rows
+  inputs:
+  - label: Table or view
+    name: table
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  label: Insert rows
+  outputs:
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - goType: int
+    label: Returned row count
+    name: count
+    required: true
+    type: number
+  timeoutSec: 60
+- id: upsert_rows
+  inputs:
+  - label: Table or view
+    name: table
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - desc: Comma-separated unique columns; defaults to the primary key
+    label: Unique conflict columns
+    name: on_conflict
+    type: string
+  label: Upsert rows
+  outputs:
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - goType: int
+    label: Returned row count
+    name: count
+    required: true
+    type: number
+  timeoutSec: 60
+- id: update_rows
+  inputs:
+  - label: Table or view
+    name: table
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - fields:
+    - label: Column
+      name: column
+      required: true
+      type: string
+    - desc: eq, neq, gt, gte, lt, lte, like, ilike, in, is, cs, cd or ov
+      label: Operator
+      name: operator
+      required: true
+      type: string
+    - label: Filter value
+      name: value
+      required: true
+      type: string
+    goType: RowFilter
+    label: Filters
+    name: filters
+    required: true
+    type: array
+  - desc: Column names and JSON values defined by the project database schema
+    label: Column values
+    name: values
+    opaque: true
+    required: true
+    type: json
+  label: Update matching rows
+  outputs:
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - goType: int
+    label: Returned row count
+    name: count
+    required: true
+    type: number
+  timeoutSec: 60
+- id: delete_rows
+  inputs:
+  - label: Table or view
+    name: table
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - fields:
+    - label: Column
+      name: column
+      required: true
+      type: string
+    - desc: eq, neq, gt, gte, lt, lte, like, ilike, in, is, cs, cd or ov
+      label: Operator
+      name: operator
+      required: true
+      type: string
+    - label: Filter value
+      name: value
+      required: true
+      type: string
+    goType: RowFilter
+    label: Filters
+    name: filters
+    required: true
+    type: array
+  label: Delete matching rows
+  outputs:
+  - desc: Objects with columns defined by the project database schema
+    label: Rows
+    name: rows
+    opaque: true
+    required: true
+    type: array
+  - goType: int
+    label: Returned row count
+    name: count
+    required: true
+    type: number
+  timeoutSec: 60
+- id: call_function
+  inputs:
+  - label: Function name
+    name: function
+    required: true
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  - desc: Named JSON parameters defined by the database function
+    label: Function arguments
+    name: arguments
+    opaque: true
+    type: json
+  label: Call a database function
+  outputs:
+  - desc: Serialized JSON preserves scalar, object, array and null function results
+    label: Function result JSON
+    name: result_json
+    required: true
+    type: text
+  timeoutSec: 60
+- id: list_objects
+  inputs:
+  - label: Bucket
+    name: bucket
+    required: true
+    type: string
+  - label: Folder prefix
+    name: prefix
+    type: string
+  - default: 100
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - default: 0
+    goType: int
+    label: Offset
+    name: offset
+    type: number
+  label: List storage objects
+  outputs:
+  - fields:
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Object ID
+      name: id
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    goType: StorageObject
+    label: Objects
+    name: objects
+    required: true
+    type: array
+  - goType: int
+    label: Next offset
+    name: next_offset
+    required: true
+    type: number
+  timeoutSec: 60
+- id: create_signed_url
+  inputs:
+  - label: Bucket
+    name: bucket
+    required: true
+    type: string
+  - label: Object path
+    name: path
+    required: true
+    type: string
+  - default: 3600
+    goType: int
+    label: Expiry in seconds
+    name: expires_in
+    type: number
+  label: Create a signed download URL
+  outputs:
+  - label: Signed download URL
+    name: signed_url
+    required: true
+    type: string
+  - goType: int
+    label: Expiry in seconds
+    name: expires_in
+    required: true
+    type: number
+  timeoutSec: 60
+- id: health_check
+  inputs:
+  - label: Table or view
+    name: table
+    type: string
+  - desc: Defaults to public
+    label: Exposed schema
+    name: schema
+    type: string
+  label: Check table access
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 30
+codegen:
+- lang: go
+deployment:
+  env:
+  - name: SUPABASE_URL
+    desc: Supabase project origin, for example https://your-project.supabase.co
+    required: true
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-supabase:0.1.0@sha256:ecd664d978a889db91b8ea776aecaad25bbac15ed8af6ea17722350cc729b294
