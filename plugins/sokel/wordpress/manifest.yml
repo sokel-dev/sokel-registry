@@ -1,0 +1,444 @@
+plugin:
+  desc: Read posts and categories, create drafts, update content and upload media
+  doc: README.md
+  label: WordPress
+  name: wordpress
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: Username
+    name: username
+    required: true
+    type: text
+  - label: Application password
+    name: application_password
+    required: true
+    type: secret
+operations:
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List posts
+  id: list_posts
+  inputs:
+  - label: Page number
+    name: page
+    type: string
+  - label: Search text
+    name: search
+    type: string
+  - label: Post status
+    name: status
+    options:
+    - value: publish
+    - value: draft
+    - value: pending
+    - value: private
+    - value: future
+    type: enum
+  label: List posts
+  outputs:
+  - fields:
+    - label: Post ID
+      name: id
+      required: true
+      type: string
+    - label: Post status
+      name: status
+      required: true
+      type: string
+    - label: Slug
+      name: slug
+      required: true
+      type: string
+    - label: Post URL
+      name: link
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    - label: Rendered content
+      name: content_html
+      required: true
+      type: string
+    - label: Rendered excerpt
+      name: excerpt_html
+      required: true
+      type: string
+    - label: Modified at (UTC)
+      name: modified_gmt
+      required: true
+      type: string
+    - itemType: string
+      label: Category IDs
+      name: categories
+      required: true
+      type: array
+    goType: Post
+    label: Posts
+    name: posts
+    required: true
+    type: array
+  - goType: int64
+    label: Total items
+    name: total
+    required: true
+    type: number
+  - goType: int64
+    label: Total pages
+    name: total_pages
+    required: true
+    type: number
+  - label: Next page
+    name: next_page
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get post
+  id: get_post
+  inputs:
+  - label: Post ID
+    name: post_id
+    required: true
+    type: string
+  label: Get post
+  outputs:
+  - fields:
+    - label: Post ID
+      name: id
+      required: true
+      type: string
+    - label: Post status
+      name: status
+      required: true
+      type: string
+    - label: Slug
+      name: slug
+      required: true
+      type: string
+    - label: Post URL
+      name: link
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    - label: Rendered content
+      name: content_html
+      required: true
+      type: string
+    - label: Rendered excerpt
+      name: excerpt_html
+      required: true
+      type: string
+    - label: Modified at (UTC)
+      name: modified_gmt
+      required: true
+      type: string
+    - itemType: string
+      label: Category IDs
+      name: categories
+      required: true
+      type: array
+    goType: Post
+    label: Post
+    name: post
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Create draft post
+  id: create_draft
+  inputs:
+  - label: Title
+    name: title
+    required: true
+    type: string
+  - label: Content HTML
+    name: content
+    required: true
+    type: text
+  - label: Excerpt HTML
+    name: excerpt
+    type: text
+  - itemType: string
+    label: Category IDs
+    name: categories
+    type: array
+  label: Create draft post
+  outputs:
+  - fields:
+    - label: Post ID
+      name: id
+      required: true
+      type: string
+    - label: Post status
+      name: status
+      required: true
+      type: string
+    - label: Slug
+      name: slug
+      required: true
+      type: string
+    - label: Post URL
+      name: link
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    - label: Rendered content
+      name: content_html
+      required: true
+      type: string
+    - label: Rendered excerpt
+      name: excerpt_html
+      required: true
+      type: string
+    - label: Modified at (UTC)
+      name: modified_gmt
+      required: true
+      type: string
+    - itemType: string
+      label: Category IDs
+      name: categories
+      required: true
+      type: array
+    goType: Post
+    label: Post
+    name: post
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Replace title, content and excerpt; preserve publication status and omit categories to preserve them
+  id: update_post
+  inputs:
+  - label: Post ID
+    name: post_id
+    required: true
+    type: string
+  - label: Title
+    name: title
+    required: true
+    type: string
+  - label: Content HTML
+    name: content
+    required: true
+    type: text
+  - label: Excerpt HTML
+    name: excerpt
+    type: text
+  - itemType: string
+    label: Category IDs
+    name: categories
+    type: array
+  label: Update post content
+  outputs:
+  - fields:
+    - label: Post ID
+      name: id
+      required: true
+      type: string
+    - label: Post status
+      name: status
+      required: true
+      type: string
+    - label: Slug
+      name: slug
+      required: true
+      type: string
+    - label: Post URL
+      name: link
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    - label: Rendered content
+      name: content_html
+      required: true
+      type: string
+    - label: Rendered excerpt
+      name: excerpt_html
+      required: true
+      type: string
+    - label: Modified at (UTC)
+      name: modified_gmt
+      required: true
+      type: string
+    - itemType: string
+      label: Category IDs
+      name: categories
+      required: true
+      type: array
+    goType: Post
+    label: Post
+    name: post
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List categories
+  id: list_categories
+  inputs:
+  - label: Page number
+    name: page
+    type: string
+  - label: Search text
+    name: search
+    type: string
+  label: List categories
+  outputs:
+  - fields:
+    - label: Category ID
+      name: id
+      required: true
+      type: string
+    - label: Category name
+      name: name
+      required: true
+      type: string
+    - label: Slug
+      name: slug
+      required: true
+      type: string
+    - label: Parent category ID
+      name: parent_id
+      required: true
+      type: string
+    - goType: int64
+      label: Published post count
+      name: count
+      required: true
+      type: number
+    goType: Category
+    label: Categories
+    name: categories
+    required: true
+    type: array
+  - goType: int64
+    label: Total items
+    name: total
+    required: true
+    type: number
+  - goType: int64
+    label: Total pages
+    name: total_pages
+    required: true
+    type: number
+  - label: Next page
+    name: next_page
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List media
+  id: list_media
+  inputs:
+  - label: Page number
+    name: page
+    type: string
+  - label: Search text
+    name: search
+    type: string
+  label: List media
+  outputs:
+  - fields:
+    - label: Media ID
+      name: id
+      required: true
+      type: string
+    - label: Media URL
+      name: source_url
+      required: true
+      type: string
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    - label: Alternative text
+      name: alt_text
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    goType: Media
+    label: Media items
+    name: media
+    required: true
+    type: array
+  - goType: int64
+    label: Total items
+    name: total
+    required: true
+    type: number
+  - goType: int64
+    label: Total pages
+    name: total_pages
+    required: true
+    type: number
+  - label: Next page
+    name: next_page
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Upload media
+  id: upload_media
+  inputs:
+  - label: Platform file
+    name: file
+    required: true
+    type: file
+  - label: Alternative text
+    name: alt_text
+    type: string
+  label: Upload media
+  outputs:
+  - fields:
+    - label: Media ID
+      name: id
+      required: true
+      type: string
+    - label: Media URL
+      name: source_url
+      required: true
+      type: string
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    - label: Alternative text
+      name: alt_text
+      required: true
+      type: string
+    - label: Rendered title
+      name: title_html
+      required: true
+      type: string
+    goType: Media
+    label: Media item
+    name: media
+    required: true
+    type: json
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-wordpress:0.1.0@sha256:a0896ff528aff34a74c5da7593a51518700d8a8e947b2901965ee72d76f9374e
