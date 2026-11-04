@@ -1,10 +1,11 @@
 plugin:
   name: google-sheets
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Google Sheets
   desc: Read, write and watch spreadsheet rows
   doc: README.md
+  icon: icon.svg
 credential:
   auth:
     kind: oauth
@@ -256,4 +257,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-google-sheets:0.1.0@sha256:7544e0e336506815953213b6112efdfd2f2b698e1968d080fb9ec763041c31a1
+    ref: ghcr.io/sokel-dev/sokel-plugin-google-sheets:0.1.1@sha256:1d76b767edfba430fb30c863623be7c784a66ddff946af18c930927eb3b6705e
