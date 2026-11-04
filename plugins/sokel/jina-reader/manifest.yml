@@ -1,10 +1,11 @@
 plugin:
   name: jina-reader
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Jina Reader
   desc: Convert pages into content and structured metadata
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Create a key in the official service dashboard; do not enter deployment URLs.
@@ -88,4 +89,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-jina-reader:0.1.0@sha256:8f8edd2b0f659f27ce5a4664013a1c1620daa3e42189be59f9fd1f481d3659ec
+    ref: ghcr.io/sokel-dev/sokel-plugin-jina-reader:0.1.1@sha256:f9421581815df7f80aaae496f16dc267fdff402e810117dddc5960bd76505169
