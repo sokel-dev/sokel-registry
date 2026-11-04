@@ -1,10 +1,11 @@
 plugin:
   name: meilisearch
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Meilisearch
   desc: Index and search documents and inspect asynchronous tasks on a self-hosted Meilisearch service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Optional for an unprotected self-hosted instance. Use a key with permissions for the requested operations.
@@ -359,7 +360,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-meilisearch:0.1.0@sha256:14fb5ec9eb5ba40627f99000d365a388b429e3c4c83a9beced71d17d1fa2e254
+    ref: ghcr.io/sokel-dev/sokel-plugin-meilisearch:0.1.1@sha256:aab5ce5c75b103ca4389532c6f5c049714cca6f08f241c8ea7f6f033b48d676e
   env:
   - name: SOKEL_MEILISEARCH_URL
     desc: HTTP(S) URL of your Meilisearch service; internal hosts and reverse-proxy path prefixes are supported. No public fallback.
