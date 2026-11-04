@@ -1,0 +1,465 @@
+plugin:
+  desc: Browse, search, upload small files and explicitly track drive changes
+  doc: README.md
+  label: Microsoft OneDrive
+  name: microsoft-onedrive
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Obtain and refresh externally; include User.Read for health checks
+    label: Delegated access token
+    name: access_token
+    required: true
+    type: secret
+operations:
+- desc: Check delegated credentials
+  id: health_check
+  label: Check delegated credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get drive
+  id: get_drive
+  inputs:
+  - desc: Omit to get the signed-in user default drive
+    label: Drive ID
+    name: drive_id
+    type: string
+  label: Get drive
+  outputs:
+  - fields:
+    - label: Drive ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Drive type
+      name: drive_type
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: Drive
+    label: Drive
+    name: drive
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List folder items
+  id: list_items
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - desc: Omit to use the drive root
+    label: Parent item ID
+    name: parent_id
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List folder items
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Items
+    name: items
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get item
+  id: get_item
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Item ID
+    name: item_id
+    required: true
+    type: string
+  label: Get item
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Item
+    name: item
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Search drive items
+  id: search_items
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Search query
+    name: query
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: Search drive items
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Items
+    name: items
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Upload up to 4 MiB; an existing file with the same name is replaced
+  id: upload_file
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - desc: Omit to use the drive root
+    label: Parent item ID
+    name: parent_id
+    type: string
+  - label: Platform file
+    name: file
+    required: true
+    type: file
+  - label: Existing ETag
+    name: if_match
+    type: string
+  label: Upload a small file
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Item
+    name: item
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Read drive changes
+  id: delta
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Next or delta URL
+    name: continuation_url
+    type: string
+  label: Read drive changes
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Items
+    name: items
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  - label: Delta checkpoint URL
+    name: delta_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get temporary download information
+  id: get_download_info
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Item ID
+    name: item_id
+    required: true
+    type: string
+  label: Get temporary download information
+  outputs:
+  - fields:
+    - label: Item ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Size is known
+      name: size_known
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Last modified time
+      name: last_modified
+      required: true
+      type: string
+    - label: Folder
+      name: is_folder
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    - label: MIME type
+      name: mime_type
+      required: true
+      type: string
+    goType: DriveItem
+    label: Item
+    name: item
+    required: true
+    type: json
+  - desc: Sensitive short-lived URL; do not send the Graph bearer token to this URL
+    label: Temporary download URL
+    name: download_url
+    required: true
+    type: string
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-onedrive:0.1.0@sha256:7907939105e745f8e1865cb465dfe7ea1dcc3c8b946ed1795c22dc717cd38aea
