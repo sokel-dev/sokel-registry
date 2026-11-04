@@ -1,10 +1,11 @@
 plugin:
   name: ntfy
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: ntfy
   desc: Publish and poll notifications through your own ntfy server
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Optional ntfy token for protected topics. The service address is configured with SOKEL_NTFY_URL.
@@ -224,7 +225,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-ntfy:0.1.0@sha256:4da154e4f4b114d8d6a3439b202563efa882198c44aab02fe56fe83ef011f282
+    ref: ghcr.io/sokel-dev/sokel-plugin-ntfy:0.1.1@sha256:261d575887091d9a91c91eb30eb914ce9afff1995e4a84f26004e332c7b2cbad
   env:
   - name: SOKEL_NTFY_URL
     desc: HTTP(S) URL of your ntfy service; internal hosts and reverse-proxy path prefixes are supported. No public fallback.
