@@ -1,10 +1,11 @@
 plugin:
   name: apify
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Apify
   desc: Asynchronous Actor runs and paginated dataset access
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Create a token in the Apify console. Deployment URLs belong in environment configuration.
@@ -323,4 +324,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-apify:0.1.0@sha256:633c54cd4b1290c42d35d1f3185b522a77fcda698aca189d2f907901faf94c46
+    ref: ghcr.io/sokel-dev/sokel-plugin-apify:0.1.1@sha256:11dd5f4c875f56d5116bfd4e0fb33c7bf2c3eb929e151c63457e8ce2d3d2fbaa
