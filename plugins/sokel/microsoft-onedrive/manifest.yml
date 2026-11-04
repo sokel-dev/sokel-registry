@@ -4,7 +4,8 @@ plugin:
   label: Microsoft OneDrive
   name: microsoft-onedrive
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Obtain and refresh externally; include User.Read for health checks
@@ -462,4 +463,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-onedrive:0.1.0@sha256:7907939105e745f8e1865cb465dfe7ea1dcc3c8b946ed1795c22dc717cd38aea
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-onedrive:0.1.1@sha256:f593dc8db4cb463f26325788c3256bba387c45ed2be18785ab21a26008b33449
