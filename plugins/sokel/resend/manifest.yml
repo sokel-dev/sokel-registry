@@ -1,10 +1,11 @@
 plugin:
   name: resend
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Resend
   desc: Send and inspect transactional email, received mail and domain configuration
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use a Resend API key. Sending-only keys cannot read emails or domains; those operations require full access.
@@ -599,4 +600,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-resend:0.1.0@sha256:892c9b3167f89d657f8a2210b1dc3f7ad9879e2a17ae00e6d8f1f30e26fe398d
+    ref: ghcr.io/sokel-dev/sokel-plugin-resend:0.1.1@sha256:5090f858d1b6e93c8df3f6811b4f2b085af64b3c53e56fed8436fd2736174807
