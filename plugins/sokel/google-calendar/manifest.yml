@@ -1,10 +1,11 @@
 plugin:
   name: google-calendar
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Google Calendar
   desc: Manage calendar events, query availability and watch changes
   doc: README.md
+  icon: icon.svg
 credential:
   auth:
     kind: oauth
@@ -637,4 +638,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-google-calendar:0.1.0@sha256:f399fc0b68892bc142ce68131b609abcfa8c3b68493afd2f32dc46bb01f6abe3
+    ref: ghcr.io/sokel-dev/sokel-plugin-google-calendar:0.1.1@sha256:1aec8d84a6319920296c278f5f5b55c8a20cde42db7445e975e80d9589e20907

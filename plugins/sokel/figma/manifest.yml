@@ -1,10 +1,11 @@
 plugin:
   name: figma
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Figma
   desc: Read design metadata, render images and manage comments
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Personal access token
@@ -415,4 +416,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-figma:0.1.0@sha256:e2eacca2acb9581c16c03cb0a0dfe9fc29e0ae7cb9b21f28bad057ca8bbcb315
+    ref: ghcr.io/sokel-dev/sokel-plugin-figma:0.1.1@sha256:aa6135776c87b28b9d1cad46c5d4feb92b949c0905f77b18443776975d9d15da

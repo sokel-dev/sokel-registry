@@ -1,10 +1,11 @@
 plugin:
   name: brevo
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Brevo
   desc: Manage contacts and lists and explicitly send transactional email
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Brevo API v3 key; SMTP passwords are not API keys
@@ -361,4 +362,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-brevo:0.1.0@sha256:230cbc46ea7d6f43815087e10ef1e20fd709e3ed80225d7e82940ff1a06eb39e
+    ref: ghcr.io/sokel-dev/sokel-plugin-brevo:0.1.1@sha256:e7e2f880e74234dc6fe437cf6be3f57166941944597f0d2f3e8ac73d710feda5
