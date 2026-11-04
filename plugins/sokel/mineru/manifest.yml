@@ -1,10 +1,11 @@
 plugin:
   name: mineru
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: MinerU
   desc: Asynchronous document parsing, batches and structured result links
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Create a key in the official service dashboard; do not enter deployment URLs.
@@ -252,4 +253,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-mineru:0.1.0@sha256:d2d595e3164c79067583bcec84408b852f374f1aa02a4c534e9a3e0d1f10306e
+    ref: ghcr.io/sokel-dev/sokel-plugin-mineru:0.1.1@sha256:7648bab1b5a381af5fb09c61a7b1fe781ce41b3b2707e1d9b2cb01d0e90b8ab4
