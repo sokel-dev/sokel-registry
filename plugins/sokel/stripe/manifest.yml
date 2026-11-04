@@ -4,7 +4,8 @@ plugin:
   label: Stripe
   name: stripe
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - label: Secret or restricted API key
@@ -548,4 +549,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-stripe:0.1.0@sha256:16709d3a785839d2a7e8014494f6ded81351ebbc118662b1817b2ede6336894c
+    ref: ghcr.io/sokel-dev/sokel-plugin-stripe:0.1.1@sha256:f9b64a91590507b42d25a5664ebcb01ded0ea2a256a66586fded4ab4294dde38
