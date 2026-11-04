@@ -1,10 +1,11 @@
 plugin:
   name: google-drive
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Google Drive
   desc: Search, transfer and watch Google Drive files
   doc: README.md
+  icon: icon.svg
 credential:
   auth:
     kind: oauth
@@ -196,4 +197,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-google-drive:0.1.0@sha256:f9977e24ae0ea705d412f881e6aff35db6efc936ff8ea6e0bc272baf1eea62da
+    ref: ghcr.io/sokel-dev/sokel-plugin-google-drive:0.1.1@sha256:2eb3370ac232a33220774951ec2316589a37659d98d80d737880837ce5fd7665
