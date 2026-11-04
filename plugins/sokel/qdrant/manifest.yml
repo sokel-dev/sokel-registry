@@ -1,10 +1,11 @@
 plugin:
   name: qdrant
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Qdrant
   desc: Manage dense-vector collections, points and similarity queries on a self-hosted Qdrant service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Optional for an unprotected self-hosted instance. Use a key with permissions for the requested operations.
@@ -306,7 +307,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-qdrant:0.1.0@sha256:e30b5ca3939559868a8879c6733b609689a624db6e8ebd1cbc08d8ff913416bd
+    ref: ghcr.io/sokel-dev/sokel-plugin-qdrant:0.1.1@sha256:8a981ad422da58ebad9a9679a0a9980ff7219bd881c15e8c7964d043f93e1d18
   env:
   - name: SOKEL_QDRANT_URL
     desc: HTTP(S) URL of your Qdrant service; internal hosts and reverse-proxy path prefixes are supported. No public fallback.
