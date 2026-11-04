@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -190,6 +191,53 @@ func TestIcons(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(out, "plugins/acme/foo/icon.svg")); err != nil {
 		t.Error("the icon is published with the entry")
+	}
+
+	notice := "Source: https://example.com/brand.svg\nCopyright Example. MIT License.\n"
+	noticePath := filepath.Join(root, "plugins/acme/foo/icon.svg.license")
+	mustWrite(t, noticePath, notice)
+	licensedOut := filepath.Join(t.TempDir(), "out")
+	if err := runSite(root, licensedOut); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ = os.ReadFile(filepath.Join(licensedOut, "index.json"))
+	_ = json.Unmarshal(raw, &idx)
+	if !strings.Contains(strings.Join(idx.Plugins[0].Files, ","), "icon.svg.license") {
+		t.Error("icon attribution must be included in downloadable entry files")
+	}
+	if raw, err := os.ReadFile(filepath.Join(licensedOut, "plugins/acme/foo/icon.svg.license")); err != nil || string(raw) != notice {
+		t.Errorf("icon attribution must be published without changes: %v", err)
+	}
+	if err := os.Remove(noticePath); err != nil {
+		t.Fatal(err)
+	}
+	for _, withLicense := range []bool{false, true} {
+		t.Run(fmt.Sprintf("parent_symlink_license_%t", withLicense), func(t *testing.T) {
+			root := fixture(t, map[string]string{"acme/foo": "1.0.0"}, "")
+			setIcon(t, root, "assets/icon.svg")
+			outside := t.TempDir()
+			mustWrite(t, filepath.Join(outside, "icon.svg"), `<svg viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></svg>`)
+			if withLicense {
+				mustWrite(t, filepath.Join(outside, "icon.svg.license"), "outside entry")
+			}
+			if err := os.Symlink(outside, filepath.Join(root, "plugins/acme/foo/assets")); err != nil {
+				t.Fatal(err)
+			}
+			if err := runSite(root, filepath.Join(t.TempDir(), "out")); err == nil || !strings.Contains(err.Error(), "inside its plugin entry") {
+				t.Errorf("parent symlinks must not publish external icons or attribution: %v", err)
+			}
+		})
+	}
+	external := filepath.Join(t.TempDir(), "private.txt")
+	mustWrite(t, external, "not an icon license")
+	if err := os.Symlink(external, noticePath); err != nil {
+		t.Fatal(err)
+	}
+	if err := runSite(root, filepath.Join(t.TempDir(), "out")); err == nil || !strings.Contains(err.Error(), "icon license") {
+		t.Errorf("a symlink license must not publish files outside the entry: %v", err)
+	}
+	if err := os.Remove(noticePath); err != nil {
+		t.Fatal(err)
 	}
 
 	mustWrite(t, filepath.Join(root, "plugins/acme/foo/icon.svg"), `<svg viewBox="0 0 24 24" onload="alert(1)"/>`)

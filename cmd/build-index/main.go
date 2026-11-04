@@ -223,11 +223,46 @@ func one(root, dir, org, name string) (*entry, *sokelgen.Manifest, error) {
 				return nil, nil, fmt.Errorf("%s/%s: %w", org, name, err)
 			}
 		} else {
+			if err := iconAssetInsideEntry(dir, icon); err != nil {
+				return nil, nil, fmt.Errorf("%s/%s: icon: %w", org, name, err)
+			}
 			files = append(files, filepath.ToSlash(filepath.Clean(icon)))
+			// Keep attribution beside redistributed artwork, including in downloaded entries.
+			// A sidecar is optional for existing icons, but must never follow a symlink.
+			notice := filepath.ToSlash(filepath.Clean(icon)) + ".license"
+			if info, err := os.Lstat(filepath.Join(dir, notice)); err == nil {
+				if !info.Mode().IsRegular() || info.Size() > 64<<10 {
+					return nil, nil, fmt.Errorf("%s/%s: icon license must be a regular file of at most 64 KB", org, name)
+				}
+				if err := iconAssetInsideEntry(dir, notice); err != nil {
+					return nil, nil, fmt.Errorf("%s/%s: icon license: %w", org, name, err)
+				}
+				files = append(files, notice)
+			} else if !os.IsNotExist(err) {
+				return nil, nil, fmt.Errorf("%s/%s: reading icon license: %w", org, name, err)
+			}
 		}
 	}
 	ie.Manifest, ie.Files = filepath.ToSlash(rel), files
 	return ie, m, nil
+}
+
+// Resolving the entire path also detects parent-directory symlinks; checking
+// only the final file would let an entry publish files from outside its root.
+func iconAssetInsideEntry(dir, name string) error {
+	root, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return err
+	}
+	asset, err := filepath.EvalSymlinks(filepath.Join(dir, name))
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(root, asset)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return fmt.Errorf("asset %q must stay inside its plugin entry", name)
+	}
+	return nil
 }
 
 // Security advisory validation.
