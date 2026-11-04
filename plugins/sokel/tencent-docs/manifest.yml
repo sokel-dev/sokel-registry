@@ -4,7 +4,8 @@ plugin:
   label: Tencent Docs
   name: tencent-docs
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.png
 credential:
   fields:
   - label: Access token
@@ -336,4 +337,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-tencent-docs:0.1.0@sha256:791d91f175fe8bd127ee2ba5dcaedbce6ade01c6b70cbde77afc84ba472bc152
+    ref: ghcr.io/sokel-dev/sokel-plugin-tencent-docs:0.1.1@sha256:32ba77397eb50569257d56e17f29b8bfce47870c36b43206160ae02983e5968b
