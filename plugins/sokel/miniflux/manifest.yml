@@ -1,10 +1,11 @@
 plugin:
   name: miniflux
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Miniflux
   desc: Manage subscriptions, stored articles and reading state on a self-hosted Miniflux service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Create a per-application key in your own Miniflux settings. The service address is configured with SOKEL_MINIFLUX_URL.
@@ -306,7 +307,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-miniflux:0.1.0@sha256:b0553072a9fa16a39d80c7275bdc188b6a72810dd1531f3ce01e212f89b1e38c
+    ref: ghcr.io/sokel-dev/sokel-plugin-miniflux:0.1.1@sha256:8176bcc72e2ffdf8d4ba6027f0c3b31157208ac28ef01885a296df7cbad6b63a
   env:
   - name: SOKEL_MINIFLUX_URL
     desc: HTTP(S) installation root for your self-hosted Miniflux service.
