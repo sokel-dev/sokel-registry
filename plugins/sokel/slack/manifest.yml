@@ -1,0 +1,232 @@
+plugin:
+  desc: Channel messages, threads, files and new-message polling
+  doc: README.md
+  label: Slack collaboration
+  name: slack
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Enter a Slack bot token; OAuth authorization is not performed automatically
+    label: Access token
+    name: token
+    required: true
+    type: secret
+  - desc: Polls new ordinary messages in one channel; excludes thread replies, edits and deletions
+    label: Watched channel ID
+    name: watch_channel
+    type: text
+events_common:
+- channel
+- ts
+events:
+- fields:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: Message timestamp
+    name: ts
+    required: true
+    type: string
+  - label: Message text
+    name: text
+    required: true
+    type: text
+  - label: User ID
+    name: user
+    required: true
+    type: string
+  id: message_received
+  label: New message received
+operations:
+- id: health_check
+  label: Check credentials
+  outputs:
+  - label: Credential valid
+    name: ok
+    required: true
+    type: boolean
+  - label: Workspace ID
+    name: team_id
+    required: true
+    type: string
+  - label: Current user ID
+    name: user_id
+    required: true
+    type: string
+  - label: Status message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- id: slack_history
+  inputs:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: Pagination cursor
+    name: cursor
+    type: string
+  - label: Oldest timestamp
+    name: oldest
+    type: string
+  - label: Latest timestamp
+    name: latest
+    type: string
+  label: Read channel history
+  outputs:
+  - fields:
+    - label: Message timestamp
+      name: ts
+      required: true
+      type: string
+    - label: Message text
+      name: text
+      required: true
+      type: text
+    - label: User ID
+      name: user
+      type: string
+    - label: Bot ID
+      name: bot_id
+      type: string
+    - label: Message type
+      name: type
+      type: string
+    - label: Message subtype
+      name: subtype
+      type: string
+    - label: Thread timestamp
+      name: thread_ts
+      type: string
+    goType: Message
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next cursor
+    name: next_cursor
+    required: true
+    type: string
+  - label: Has more
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+- id: slack_replies
+  inputs:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: Pagination cursor
+    name: cursor
+    type: string
+  - label: Oldest timestamp
+    name: oldest
+    type: string
+  - label: Latest timestamp
+    name: latest
+    type: string
+  - label: Message timestamp
+    name: ts
+    required: true
+    type: string
+  label: Read thread replies
+  outputs:
+  - fields:
+    - label: Message timestamp
+      name: ts
+      required: true
+      type: string
+    - label: Message text
+      name: text
+      required: true
+      type: text
+    - label: User ID
+      name: user
+      type: string
+    - label: Bot ID
+      name: bot_id
+      type: string
+    - label: Message type
+      name: type
+      type: string
+    - label: Message subtype
+      name: subtype
+      type: string
+    - label: Thread timestamp
+      name: thread_ts
+      type: string
+    goType: Message
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next cursor
+    name: next_cursor
+    required: true
+    type: string
+  - label: Has more
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+- id: slack_send
+  inputs:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: Message text
+    name: text
+    required: true
+    type: text
+  - label: Thread timestamp
+    name: thread_ts
+    type: string
+  label: Send message
+  outputs:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: Message timestamp
+    name: ts
+    required: true
+    type: string
+  timeoutSec: 60
+- id: slack_upload
+  inputs:
+  - label: Channel ID
+    name: channel
+    required: true
+    type: string
+  - label: File
+    name: file
+    required: true
+    type: file
+  - label: File title
+    name: title
+    type: string
+  - label: Initial comment
+    name: initial_comment
+    type: text
+  - label: Thread timestamp
+    name: thread_ts
+    type: string
+  label: Upload file
+  outputs:
+  - label: File ID
+    name: file_id
+    required: true
+    type: string
+  timeoutSec: 180
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-slack:0.1.0@sha256:9409e58e5b08ad224ace4ae037f23ec20c5216f13fb1d9819b8632fb7499b0eb
