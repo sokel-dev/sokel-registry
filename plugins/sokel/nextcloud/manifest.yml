@@ -1,10 +1,11 @@
 plugin:
   name: nextcloud
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Nextcloud
   desc: Read, upload, download and organize files on a self-hosted Nextcloud service
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use the canonical Nextcloud user ID shown for WebDAV, not a display name or email alias.
@@ -220,7 +221,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-nextcloud:0.1.0@sha256:b0dcff094e603a3b860fd836079b8f3b71e8235646a429f7eeb61e85e2f89692
+    ref: ghcr.io/sokel-dev/sokel-plugin-nextcloud:0.1.1@sha256:10c99de5397a36b9ac363e1714c666366a4c2d0927436cc6daaebf8b0e21d409
   env:
   - name: SOKEL_NEXTCLOUD_URL
     desc: HTTP(S) installation root for your self-hosted Nextcloud service.
