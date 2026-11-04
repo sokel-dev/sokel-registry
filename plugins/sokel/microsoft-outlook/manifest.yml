@@ -1,0 +1,453 @@
+plugin:
+  desc: Read and send mail, download attachments and manage calendar events
+  doc: README.md
+  label: Microsoft Outlook
+  name: microsoft-outlook
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Global Microsoft Graph delegated token; refresh externally and replace before expiration
+    label: Delegated Microsoft Graph access token
+    name: access_token
+    required: true
+    type: secret
+operations:
+- id: health_check
+  label: Check delegated credential
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_messages
+  inputs:
+  - desc: Defaults to the whole mailbox; for example inbox or sentitems
+    label: Folder ID or well-known name
+    name: folder_id
+    type: string
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  - desc: Optional Microsoft Graph mail $filter expression; no $search in this version
+    label: OData filter
+    name: filter
+    type: string
+  label: List mail messages
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Subject
+      name: subject
+      required: true
+      type: string
+    - label: Sender address
+      name: sender
+      required: true
+      type: string
+    - itemType: string
+      label: To addresses
+      name: to
+      required: true
+      type: array
+    - label: Received at
+      name: received_at
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Body preview
+      name: body_preview
+      required: true
+      type: string
+    - label: Read
+      name: is_read
+      required: true
+      type: boolean
+    - label: Has attachments
+      name: has_attachments
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Internet message ID
+      name: internet_message_id
+      required: true
+      type: string
+    goType: MailMessage
+    label: Messages
+    name: messages
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: get_message
+  inputs:
+  - label: Message ID
+    name: message_id
+    required: true
+    type: string
+  label: Get mail message
+  outputs:
+  - fields:
+    - label: Message ID
+      name: id
+      required: true
+      type: string
+    - label: Subject
+      name: subject
+      required: true
+      type: string
+    - label: Sender address
+      name: sender
+      required: true
+      type: string
+    - itemType: string
+      label: To addresses
+      name: to
+      required: true
+      type: array
+    - label: Received at
+      name: received_at
+      required: true
+      type: string
+    - label: Body
+      name: body
+      required: true
+      type: string
+    - label: Body type
+      name: body_type
+      required: true
+      type: string
+    - label: Body preview
+      name: body_preview
+      required: true
+      type: string
+    - label: Read
+      name: is_read
+      required: true
+      type: boolean
+    - label: Has attachments
+      name: has_attachments
+      required: true
+      type: boolean
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Internet message ID
+      name: internet_message_id
+      required: true
+      type: string
+    goType: MailMessage
+    label: Message
+    name: message
+    required: true
+    type: json
+  timeoutSec: 60
+- id: send_mail
+  inputs:
+  - itemType: string
+    label: To addresses
+    name: to
+    required: true
+    type: array
+  - label: Subject
+    name: subject
+    required: true
+    type: string
+  - label: Body
+    name: body
+    required: true
+    type: string
+  - desc: text or html; defaults to text
+    label: Body type
+    name: body_type
+    type: string
+  - itemType: string
+    label: CC addresses
+    name: cc
+    type: array
+  - itemType: string
+    label: BCC addresses
+    name: bcc
+    type: array
+  label: Send mail
+  outputs:
+  - label: Accepted for delivery
+    name: accepted
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- id: list_attachments
+  inputs:
+  - label: Message ID
+    name: message_id
+    required: true
+    type: string
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List mail attachments
+  outputs:
+  - fields:
+    - label: Attachment ID
+      name: id
+      required: true
+      type: string
+    - label: File name
+      name: name
+      required: true
+      type: string
+    - label: Content type
+      name: content_type
+      required: true
+      type: string
+    - goType: int
+      label: Size in bytes
+      name: size
+      required: true
+      type: number
+    - label: Inline
+      name: is_inline
+      required: true
+      type: boolean
+    - label: Attachment type
+      name: attachment_type
+      required: true
+      type: string
+    goType: MailAttachment
+    label: Attachments
+    name: attachments
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: download_attachment
+  inputs:
+  - label: Message ID
+    name: message_id
+    required: true
+    type: string
+  - label: Attachment ID
+    name: attachment_id
+    required: true
+    type: string
+  label: Download a file attachment
+  outputs:
+  - label: Downloaded file
+    name: file
+    required: true
+    type: file
+  timeoutSec: 60
+- id: calendar_view
+  inputs:
+  - desc: RFC3339 with explicit timezone offset
+    label: Start time
+    name: start
+    required: true
+    type: string
+  - desc: RFC3339 with explicit timezone offset; later than start
+    label: End time
+    name: end
+    required: true
+    type: string
+  - desc: Defaults to the signed-in user calendar
+    label: Calendar ID
+    name: calendar_id
+    type: string
+  - default: 50
+    goType: int
+    label: Page size
+    name: limit
+    type: number
+  - desc: Use the exact next_link returned by the previous call; keep resource inputs unchanged
+    label: Next-page URL
+    name: next_link
+    type: string
+  label: List calendar occurrences
+  outputs:
+  - fields:
+    - label: Event ID
+      name: id
+      required: true
+      type: string
+    - label: Subject
+      name: subject
+      required: true
+      type: string
+    - label: Body preview
+      name: body_preview
+      required: true
+      type: string
+    - label: Start time
+      name: start
+      required: true
+      type: string
+    - label: Start timezone
+      name: start_timezone
+      required: true
+      type: string
+    - label: End time
+      name: end
+      required: true
+      type: string
+    - label: End timezone
+      name: end_timezone
+      required: true
+      type: string
+    - label: Location
+      name: location
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Cancelled
+      name: is_cancelled
+      required: true
+      type: boolean
+    - label: All day
+      name: is_all_day
+      required: true
+      type: boolean
+    goType: CalendarEvent
+    label: Events
+    name: events
+    required: true
+    type: array
+  - label: Next-page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- id: create_event
+  inputs:
+  - label: Subject
+    name: subject
+    required: true
+    type: string
+  - desc: RFC3339 with explicit timezone offset
+    label: Start time
+    name: start
+    required: true
+    type: string
+  - desc: RFC3339 with explicit timezone offset; later than start
+    label: End time
+    name: end
+    required: true
+    type: string
+  - label: Calendar ID
+    name: calendar_id
+    type: string
+  - label: Body
+    name: body
+    type: string
+  - desc: text or html; defaults to text
+    label: Body type
+    name: body_type
+    type: string
+  - label: Location
+    name: location
+    type: string
+  - itemType: string
+    label: Required attendee addresses
+    name: attendees
+    type: array
+  - desc: Optional stable client ID for Graph duplicate-request handling
+    label: Transaction ID
+    name: transaction_id
+    type: string
+  label: Create calendar event
+  outputs:
+  - fields:
+    - label: Event ID
+      name: id
+      required: true
+      type: string
+    - label: Subject
+      name: subject
+      required: true
+      type: string
+    - label: Body preview
+      name: body_preview
+      required: true
+      type: string
+    - label: Start time
+      name: start
+      required: true
+      type: string
+    - label: Start timezone
+      name: start_timezone
+      required: true
+      type: string
+    - label: End time
+      name: end
+      required: true
+      type: string
+    - label: End timezone
+      name: end_timezone
+      required: true
+      type: string
+    - label: Location
+      name: location
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - label: Cancelled
+      name: is_cancelled
+      required: true
+      type: boolean
+    - label: All day
+      name: is_all_day
+      required: true
+      type: boolean
+    goType: CalendarEvent
+    label: Event
+    name: event
+    required: true
+    type: json
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-outlook:0.1.0@sha256:16bd3de3dfd0539ab35f5c677b96911b448f2c090270be4b70b0dfa0a6612807
