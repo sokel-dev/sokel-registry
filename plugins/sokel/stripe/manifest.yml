@@ -1,0 +1,551 @@
+plugin:
+  desc: Read customers, subscriptions and payment intents; verify signed webhook events
+  doc: README.md
+  label: Stripe
+  name: stripe
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: Secret or restricted API key
+    name: api_key
+    required: true
+    type: secret
+  - label: Webhook signing secret
+    name: webhook_secret
+    type: secret
+events_common:
+- event_id
+- event_type
+- created
+- livemode
+- account_id
+events:
+- fields:
+  - label: Event ID
+    name: event_id
+    required: true
+    type: string
+  - label: Event type
+    name: event_type
+    required: true
+    type: string
+  - goType: int64
+    label: Event timestamp
+    name: created
+    required: true
+    type: number
+  - label: Live mode
+    name: livemode
+    required: true
+    type: boolean
+  - label: Connected account ID
+    name: account_id
+    required: true
+    type: string
+  - fields:
+    - label: Customer ID
+      name: id
+      required: true
+      type: string
+    - label: Customer name
+      name: name
+      required: true
+      type: string
+    - label: Email address
+      name: email
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    goType: Customer
+    label: Customer
+    name: customer
+    required: true
+    type: json
+  id: customer_changed
+  label: Customer event
+- fields:
+  - label: Event ID
+    name: event_id
+    required: true
+    type: string
+  - label: Event type
+    name: event_type
+    required: true
+    type: string
+  - goType: int64
+    label: Event timestamp
+    name: created
+    required: true
+    type: number
+  - label: Live mode
+    name: livemode
+    required: true
+    type: boolean
+  - label: Connected account ID
+    name: account_id
+    required: true
+    type: string
+  - fields:
+    - label: Subscription ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Subscription status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Cancels at period end
+      name: cancel_at_period_end
+      required: true
+      type: boolean
+    goType: Subscription
+    label: Subscription
+    name: subscription
+    required: true
+    type: json
+  id: subscription_changed
+  label: Subscription event
+- fields:
+  - label: Event ID
+    name: event_id
+    required: true
+    type: string
+  - label: Event type
+    name: event_type
+    required: true
+    type: string
+  - goType: int64
+    label: Event timestamp
+    name: created
+    required: true
+    type: number
+  - label: Live mode
+    name: livemode
+    required: true
+    type: boolean
+  - label: Connected account ID
+    name: account_id
+    required: true
+    type: string
+  - fields:
+    - label: PaymentIntent ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Payment status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Amount in smallest currency unit
+      name: amount
+      required: true
+      type: number
+    - goType: int64
+      label: Amount received
+      name: amount_received
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    goType: PaymentIntent
+    label: PaymentIntent
+    name: payment_intent
+    required: true
+    type: json
+  id: payment_intent_changed
+  label: PaymentIntent event
+operations:
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List customers
+  id: list_customers
+  inputs:
+  - label: Starting after ID
+    name: starting_after
+    type: string
+  - label: Email address
+    name: email
+    type: string
+  label: List customers
+  outputs:
+  - fields:
+    - label: Customer ID
+      name: id
+      required: true
+      type: string
+    - label: Customer name
+      name: name
+      required: true
+      type: string
+    - label: Email address
+      name: email
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    goType: Customer
+    label: Customers
+    name: customers
+    required: true
+    type: array
+  - label: More results available
+    name: has_more
+    required: true
+    type: boolean
+  - label: Next starting-after ID
+    name: next_starting_after
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get customer
+  id: get_customer
+  inputs:
+  - label: Customer ID
+    name: id
+    required: true
+    type: string
+  label: Get customer
+  outputs:
+  - fields:
+    - label: Customer ID
+      name: id
+      required: true
+      type: string
+    - label: Customer name
+      name: name
+      required: true
+      type: string
+    - label: Email address
+      name: email
+      required: true
+      type: string
+    - label: Description
+      name: description
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Deleted
+      name: deleted
+      required: true
+      type: boolean
+    goType: Customer
+    label: Customer
+    name: customer
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List subscriptions
+  id: list_subscriptions
+  inputs:
+  - label: Starting after ID
+    name: starting_after
+    type: string
+  - label: Customer ID
+    name: customer
+    type: string
+  - label: Subscription status
+    name: status
+    options:
+    - value: all
+    - value: active
+    - value: past_due
+    - value: unpaid
+    - value: canceled
+    - value: incomplete
+    - value: incomplete_expired
+    - value: trialing
+    - value: paused
+    type: enum
+  label: List subscriptions
+  outputs:
+  - fields:
+    - label: Subscription ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Subscription status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Cancels at period end
+      name: cancel_at_period_end
+      required: true
+      type: boolean
+    goType: Subscription
+    label: Subscriptions
+    name: subscriptions
+    required: true
+    type: array
+  - label: More results available
+    name: has_more
+    required: true
+    type: boolean
+  - label: Next starting-after ID
+    name: next_starting_after
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get subscription
+  id: get_subscription
+  inputs:
+  - label: Subscription ID
+    name: id
+    required: true
+    type: string
+  label: Get subscription
+  outputs:
+  - fields:
+    - label: Subscription ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Subscription status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    - label: Cancels at period end
+      name: cancel_at_period_end
+      required: true
+      type: boolean
+    goType: Subscription
+    label: Subscription
+    name: subscription
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List payment intents
+  id: list_payment_intents
+  inputs:
+  - label: Starting after ID
+    name: starting_after
+    type: string
+  - label: Customer ID
+    name: customer
+    type: string
+  label: List payment intents
+  outputs:
+  - fields:
+    - label: PaymentIntent ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Payment status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Amount in smallest currency unit
+      name: amount
+      required: true
+      type: number
+    - goType: int64
+      label: Amount received
+      name: amount_received
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    goType: PaymentIntent
+    label: Payment intents
+    name: payment_intents
+    required: true
+    type: array
+  - label: More results available
+    name: has_more
+    required: true
+    type: boolean
+  - label: Next starting-after ID
+    name: next_starting_after
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get payment intent
+  id: get_payment_intent
+  inputs:
+  - label: PaymentIntent ID
+    name: id
+    required: true
+    type: string
+  label: Get payment intent
+  outputs:
+  - fields:
+    - label: PaymentIntent ID
+      name: id
+      required: true
+      type: string
+    - label: Customer ID
+      name: customer
+      required: true
+      type: string
+    - label: Payment status
+      name: status
+      required: true
+      type: string
+    - label: Currency
+      name: currency
+      required: true
+      type: string
+    - goType: int64
+      label: Amount in smallest currency unit
+      name: amount
+      required: true
+      type: number
+    - goType: int64
+      label: Amount received
+      name: amount_received
+      required: true
+      type: number
+    - goType: int64
+      label: Created timestamp
+      name: created
+      required: true
+      type: number
+    - label: Live mode
+      name: livemode
+      required: true
+      type: boolean
+    goType: PaymentIntent
+    label: PaymentIntent
+    name: payment_intent
+    required: true
+    type: json
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-stripe:0.1.0@sha256:16709d3a785839d2a7e8014494f6ded81351ebbc118662b1817b2ede6336894c
