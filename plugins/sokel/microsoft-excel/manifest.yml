@@ -1,0 +1,378 @@
+plugin:
+  desc: Read and edit business workbooks with explicit sessions, ranges and table rows
+  doc: README.md
+  label: Microsoft Excel 365
+  name: microsoft-excel
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Obtain and refresh externally; include User.Read for health checks
+    label: Delegated access token
+    name: access_token
+    required: true
+    type: secret
+operations:
+- desc: Check delegated credentials
+  id: health_check
+  label: Check delegated credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Create workbook session
+  id: create_session
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - label: Persist changes
+    name: persist_changes
+    required: true
+    type: boolean
+  label: Create workbook session
+  outputs:
+  - label: Workbook session ID
+    name: session_id
+    required: true
+    type: string
+  - label: Persist changes
+    name: persist_changes
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: Close workbook session
+  id: close_session
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - label: Workbook session ID
+    name: session_id
+    required: true
+    type: string
+  label: Close workbook session
+  outputs:
+  - label: Closed
+    name: closed
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: List worksheets
+  id: list_worksheets
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List worksheets
+  outputs:
+  - fields:
+    - label: Worksheet ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - goType: int64
+      label: Worksheet position
+      name: position
+      required: true
+      type: number
+    - label: Visibility
+      name: visibility
+      required: true
+      type: string
+    goType: Worksheet
+    label: Worksheets
+    name: worksheets
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List workbook tables
+  id: list_tables
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List workbook tables
+  outputs:
+  - fields:
+    - label: Table ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Shows headers
+      name: show_headers
+      required: true
+      type: boolean
+    goType: Table
+    label: Tables
+    name: tables
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Read range
+  id: get_range
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Worksheet ID or name
+    name: worksheet_id
+    required: true
+    type: string
+  - label: A1 range
+    name: address
+    required: true
+    type: string
+  label: Read range
+  outputs:
+  - fields:
+    - label: Resolved address
+      name: address
+      required: true
+      type: string
+    - goType: int64
+      label: Row count
+      name: row_count
+      required: true
+      type: number
+    - goType: int64
+      label: Column count
+      name: column_count
+      required: true
+      type: number
+    - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+      label: Cell value matrix
+      name: values
+      opaque: true
+      required: true
+      type: array
+    goType: CellRange
+    label: Range
+    name: range
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Write range values
+  id: update_range
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Worksheet ID or name
+    name: worksheet_id
+    required: true
+    type: string
+  - label: A1 range
+    name: address
+    required: true
+    type: string
+  - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+    label: Cell value matrix
+    name: values
+    opaque: true
+    required: true
+    type: array
+  label: Write range values
+  outputs:
+  - fields:
+    - label: Resolved address
+      name: address
+      required: true
+      type: string
+    - goType: int64
+      label: Row count
+      name: row_count
+      required: true
+      type: number
+    - goType: int64
+      label: Column count
+      name: column_count
+      required: true
+      type: number
+    - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+      label: Cell value matrix
+      name: values
+      opaque: true
+      required: true
+      type: array
+    goType: CellRange
+    label: Range
+    name: range
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Append table rows
+  id: append_rows
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Table ID or name
+    name: table_id
+    required: true
+    type: string
+  - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+    label: Cell value matrix
+    name: values
+    opaque: true
+    required: true
+    type: array
+  label: Append table rows
+  outputs:
+  - fields:
+    - goType: int64
+      label: Row index
+      name: index
+      required: true
+      type: number
+    - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+      label: Cell value matrix
+      name: values
+      opaque: true
+      required: true
+      type: array
+    goType: TableRow
+    label: Added rows
+    name: row
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List table rows
+  id: list_rows
+  inputs:
+  - label: Drive ID
+    name: drive_id
+    required: true
+    type: string
+  - label: Workbook item ID
+    name: workbook_id
+    required: true
+    type: string
+  - desc: Use the ID returned by create_session; omit for sessionless persisted calls
+    label: Workbook session ID
+    name: session_id
+    type: string
+  - label: Table ID or name
+    name: table_id
+    required: true
+    type: string
+  - label: Row offset
+    name: skip
+    type: string
+  label: List table rows
+  outputs:
+  - fields:
+    - goType: int64
+      label: Row index
+      name: index
+      required: true
+      type: number
+    - desc: Rows contain string, number, boolean or null cells; workbook columns define their meaning
+      label: Cell value matrix
+      name: values
+      opaque: true
+      required: true
+      type: array
+    goType: TableRow
+    label: Rows
+    name: rows
+    required: true
+    type: array
+  - label: Next row offset
+    name: next_skip
+    required: true
+    type: string
+  - label: More rows may be available
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-excel:0.1.0@sha256:9193ca64420d5b5256f41c957437ee2108af00aed4fdbde320f9ed3f65165f98
