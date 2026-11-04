@@ -4,7 +4,8 @@ plugin:
   label: Google Docs
   name: google-docs
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   auth:
     kind: oauth
@@ -211,4 +212,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-google-docs:0.1.0@sha256:b1fca987d4bd24951be45d2dea81b8850028dfb9f7d09239d527d460dfa89b5f
+    ref: ghcr.io/sokel-dev/sokel-plugin-google-docs:0.1.1@sha256:2e50b798c6f052939b7a39de4793b9adb72728a10b37ffd3a413821da566635b
