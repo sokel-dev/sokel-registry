@@ -1,10 +1,11 @@
 plugin:
   name: todoist
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Sokel for Todoist
   desc: Manage Todoist projects and tasks; not created by, affiliated with, or supported by Todoist
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Personal API token
@@ -609,4 +610,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-todoist:0.1.0@sha256:e75befa054507d3a48c9d67dc55c75ee3e35f0d751dfc687bea9cdd3f65eb10c
+    ref: ghcr.io/sokel-dev/sokel-plugin-todoist:0.1.1@sha256:ac538473f15e413ee2b985bc59b774eaf2fd8c80e382c0676e1e684f69bd206a
