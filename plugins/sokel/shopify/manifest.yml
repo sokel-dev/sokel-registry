@@ -1,10 +1,11 @@
 plugin:
   name: shopify
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Shopify
   desc: Read shop, products, orders and inventory items and update product details
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use the shop name before .myshopify.com, without a URL
@@ -396,4 +397,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-shopify:0.1.0@sha256:a57bd3dbdd494002da34e8fe5b86a1cb449f6ed7ef3f0662fb524b126d6fce29
+    ref: ghcr.io/sokel-dev/sokel-plugin-shopify:0.1.1@sha256:64ef20e464f276ca017cfa8aecd365db55c73a522446bf8e6ddaafc4206b7ba8
