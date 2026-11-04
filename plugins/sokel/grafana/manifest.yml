@@ -1,10 +1,11 @@
 plugin:
   name: grafana
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Grafana
   desc: Inspect dashboards and safe data source summaries, and read or create annotations on self-hosted Grafana.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Service account token
@@ -291,7 +292,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-grafana:0.1.0@sha256:a62ed2ffce91975e7fcd0994def1e77e8865365a79ca1c92e505182822823c7a
+    ref: ghcr.io/sokel-dev/sokel-plugin-grafana:0.1.1@sha256:32060812de32461189d102579917622f875a795c409eef2feed39f697f256a4b
   env:
   - name: SOKEL_GRAFANA_URL
     desc: Required self-hosted Grafana site root, including any reverse-proxy path prefix; HTTP and HTTPS are supported.
