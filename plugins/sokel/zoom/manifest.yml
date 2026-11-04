@@ -1,10 +1,11 @@
 plugin:
   name: zoom
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Zoom
   desc: Read users and schedule or update Zoom meetings
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: OAuth access token
@@ -418,4 +419,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-zoom:0.1.0@sha256:162fb00f77fbf962eaac26a86e3075424e8cf9757b0dd255d20b4889723056ff
+    ref: ghcr.io/sokel-dev/sokel-plugin-zoom:0.1.1@sha256:41f77b526ee556e88cb5d2db0debb7688c796c7bcbfc2caf7319498415eb48cc
