@@ -4,7 +4,8 @@ plugin:
   label: Slack collaboration
   name: slack
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Enter a Slack bot token; OAuth authorization is not performed automatically
@@ -229,4 +230,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-slack:0.1.0@sha256:9409e58e5b08ad224ace4ae037f23ec20c5216f13fb1d9819b8632fb7499b0eb
+    ref: ghcr.io/sokel-dev/sokel-plugin-slack:0.1.1@sha256:ac4bfea2537384012f5c2d8844ed26cbee12cc12f83ba646190cb5adcd9df466
