@@ -4,7 +4,8 @@ plugin:
   label: Microsoft Outlook
   name: microsoft-outlook
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Global Microsoft Graph delegated token; refresh externally and replace before expiration
@@ -450,4 +451,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-outlook:0.1.0@sha256:16bd3de3dfd0539ab35f5c677b96911b448f2c090270be4b70b0dfa0a6612807
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-outlook:0.1.1@sha256:8affbf4e9df7681aa5014e62610be3f148a76111e2fc46e2b79150e6bf8b9b5a
