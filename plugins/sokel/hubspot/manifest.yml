@@ -4,7 +4,8 @@ plugin:
   label: HubSpot CRM
   name: hubspot
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - label: Private-app access token
@@ -389,4 +390,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-hubspot:0.1.0@sha256:e93200c80be2d8284afbd46c5a3c95dc1f58409b57d9af9530fe3c4a6a18c93d
+    ref: ghcr.io/sokel-dev/sokel-plugin-hubspot:0.1.1@sha256:113680b2c1c43df50834bf8cb9f2928392a890e718453b48253e87f079261957
