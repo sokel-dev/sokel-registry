@@ -1,0 +1,158 @@
+plugin:
+  desc: DingTalk
+  doc: README.md
+  label: DingTalk
+  name: dingtalk
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - label: App key
+    name: app_key
+    required: true
+    type: text
+  - label: App secret
+    name: app_secret
+    required: true
+    type: secret
+  - label: Robot code
+    name: robot_code
+    required: true
+    type: text
+events:
+- fields:
+  - label: Message ID
+    name: message_id
+    required: true
+    type: string
+  - label: Conversation ID
+    name: conversation_id
+    required: true
+    type: string
+  - label: Conversation type
+    name: conversation_type
+    type: string
+  - label: Sender ID
+    name: sender_id
+    type: string
+  - label: Sender staff ID
+    name: sender_user_id
+    type: string
+  - label: Sender name
+    name: sender_name
+    type: string
+  - label: Message type
+    name: message_type
+    type: string
+  - label: Message body
+    name: text
+    type: string
+  - itemType: string
+    label: Download codes
+    name: download_codes
+    type: array
+  - goType: int
+    label: Creation timestamp
+    name: created_at
+    type: number
+  id: message
+  label: Robot message received
+operations:
+- desc: Send group message
+  id: group_message_send
+  inputs:
+  - label: Conversation ID
+    name: conversation_id
+    required: true
+    type: string
+  - default: text
+    label: Message type
+    name: message_type
+    options:
+    - value: text
+    - value: markdown
+    type: enum
+  - label: Message body
+    name: text
+    required: true
+    type: string
+  - label: Message title
+    name: title
+    type: string
+  label: Send group message
+  outputs:
+  - label: Delivery receipt
+    name: process_query_key
+    required: true
+    type: string
+  timeoutSec: 30
+- desc: Send direct messages
+  id: direct_message_send
+  inputs:
+  - itemType: string
+    label: User IDs
+    name: user_ids
+    required: true
+    type: array
+  - default: text
+    label: Message type
+    name: message_type
+    options:
+    - value: text
+    - value: markdown
+    type: enum
+  - label: Message body
+    name: text
+    required: true
+    type: string
+  - label: Message title
+    name: title
+    type: string
+  label: Send direct messages
+  outputs:
+  - label: Delivery receipt
+    name: process_query_key
+    required: true
+    type: string
+  - itemType: string
+    label: Invalid user IDs
+    name: invalid_user_ids
+    type: array
+  - itemType: string
+    label: Rate-limited user IDs
+    name: rate_limited_user_ids
+    type: array
+  timeoutSec: 30
+- desc: Get message attachment URL
+  id: message_file_url
+  inputs:
+  - label: Download code
+    name: download_code
+    required: true
+    type: string
+  label: Get message attachment URL
+  outputs:
+  - label: Temporary download URL
+    name: download_url
+    required: true
+    type: string
+  timeoutSec: 30
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Usable
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 30
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-dingtalk:0.1.0@sha256:09fbecfdf8af988c12544ea9d73ed9b44ccc9ded6b4be31a3af1b378686d2c96
