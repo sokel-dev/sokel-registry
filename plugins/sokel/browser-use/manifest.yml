@@ -1,0 +1,377 @@
+plugin:
+  desc: Run and inspect asynchronous Browser Use V4 agents
+  doc: README.md
+  label: Browser Use Cloud
+  name: browser-use
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Browser Use Cloud project API key; sent only to api.browser-use.com
+    label: API key
+    name: api_key
+    required: true
+    type: secret
+operations:
+- desc: Check credentials
+  id: health_check
+  label: Check credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Start asynchronous browser work that can incur charges and change external websites
+  id: create_run
+  inputs:
+  - label: Task
+    name: task
+    required: true
+    type: string
+  - desc: Positive service-side run cap; usage and external actions may already occur before cancellation
+    label: Run cost cap in USD
+    name: max_cost_usd
+    required: true
+    type: number
+  - desc: Omit to use the service default; supported models depend on the project
+    label: Model
+    name: model
+    type: string
+  - label: Session ID
+    name: session_id
+    type: string
+  - label: Workspace ID
+    name: workspace_id
+    type: string
+  - desc: Arbitrary JSON Schema object defining structured output; validated by Browser Use
+    label: Output JSON Schema
+    name: output_schema
+    opaque: true
+    type: json
+  label: Create cloud run
+  outputs:
+  - fields:
+    - label: Run ID
+      name: id
+      required: true
+      type: string
+    - label: Session ID
+      name: session_id
+      required: true
+      type: string
+    - label: Workspace ID
+      name: workspace_id
+      required: true
+      type: string
+    - label: Status
+      name: status
+      required: true
+      type: string
+    - label: Model
+      name: model
+      required: true
+      type: string
+    goType: RunReceipt
+    label: Created run
+    name: run
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Get run and result
+  id: get_run
+  inputs:
+  - label: Run ID
+    name: run_id
+    required: true
+    type: string
+  label: Get run and result
+  outputs:
+  - fields:
+    - label: Run ID
+      name: id
+      required: true
+      type: string
+    - label: Session ID
+      name: session_id
+      required: true
+      type: string
+    - label: Workspace ID
+      name: workspace_id
+      required: true
+      type: string
+    - label: Status
+      name: status
+      required: true
+      type: string
+    - label: Terminal
+      name: terminal
+      required: true
+      type: boolean
+    - label: Model
+      name: model
+      required: true
+      type: string
+    - label: Result text
+      name: result
+      required: true
+      type: string
+    - label: Run error
+      name: error
+      required: true
+      type: string
+    - desc: Serialized arbitrary JSON; null when no structured output is available
+      label: Structured output JSON
+      name: output_json
+      required: true
+      type: string
+    - label: Reported total cost in USD
+      name: total_cost_usd
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    goType: Run
+    label: Run
+    name: run
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Get run status
+  id: get_run_status
+  inputs:
+  - label: Run ID
+    name: run_id
+    required: true
+    type: string
+  label: Get run status
+  outputs:
+  - label: Status
+    name: status
+    required: true
+    type: string
+  - label: Terminal
+    name: terminal
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: List runs
+  id: list_runs
+  inputs:
+  - goType: int64
+    label: Page size
+    name: limit
+    type: number
+  - label: Page cursor
+    name: cursor
+    type: string
+  - label: Session ID
+    name: session_id
+    type: string
+  label: List runs
+  outputs:
+  - fields:
+    - label: Run ID
+      name: id
+      required: true
+      type: string
+    - label: Session ID
+      name: session_id
+      required: true
+      type: string
+    - label: Workspace ID
+      name: workspace_id
+      required: true
+      type: string
+    - label: Status
+      name: status
+      required: true
+      type: string
+    - label: Terminal
+      name: terminal
+      required: true
+      type: boolean
+    - label: Model
+      name: model
+      required: true
+      type: string
+    - label: Result text
+      name: result
+      required: true
+      type: string
+    - label: Run error
+      name: error
+      required: true
+      type: string
+    - desc: Serialized arbitrary JSON; null when no structured output is available
+      label: Structured output JSON
+      name: output_json
+      required: true
+      type: string
+    - label: Reported total cost in USD
+      name: total_cost_usd
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    goType: Run
+    label: Runs
+    name: runs
+    required: true
+    type: array
+  - label: Next page cursor
+    name: next_cursor
+    required: true
+    type: string
+  - label: More pages available
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+- desc: Request cancellation; completed external actions are not rolled back
+  id: cancel_run
+  inputs:
+  - label: Run ID
+    name: run_id
+    required: true
+    type: string
+  label: Cancel run
+  outputs:
+  - fields:
+    - label: Run ID
+      name: id
+      required: true
+      type: string
+    - label: Session ID
+      name: session_id
+      required: true
+      type: string
+    - label: Workspace ID
+      name: workspace_id
+      required: true
+      type: string
+    - label: Status
+      name: status
+      required: true
+      type: string
+    - label: Terminal
+      name: terminal
+      required: true
+      type: boolean
+    - label: Model
+      name: model
+      required: true
+      type: string
+    - label: Result text
+      name: result
+      required: true
+      type: string
+    - label: Run error
+      name: error
+      required: true
+      type: string
+    - desc: Serialized arbitrary JSON; null when no structured output is available
+      label: Structured output JSON
+      name: output_json
+      required: true
+      type: string
+    - label: Reported total cost in USD
+      name: total_cost_usd
+      required: true
+      type: string
+    - label: Created at
+      name: created_at
+      required: true
+      type: string
+    - label: Updated at
+      name: updated_at
+      required: true
+      type: string
+    goType: Run
+    label: Run
+    name: run
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List run events
+  id: list_run_events
+  inputs:
+  - label: Run ID
+    name: run_id
+    required: true
+    type: string
+  - goType: int64
+    label: After event ID
+    name: after
+    type: number
+  - goType: int64
+    label: Page size
+    name: limit
+    type: number
+  - label: Include output events
+    name: include_output
+    required: true
+    type: boolean
+  label: List run events
+  outputs:
+  - fields:
+    - label: Run ID
+      name: run_id
+      required: true
+      type: string
+    - goType: int64
+      label: Event ID
+      name: id
+      required: true
+      type: number
+    - label: Timestamp
+      name: timestamp
+      required: true
+      type: string
+    - label: Event type
+      name: type
+      required: true
+      type: string
+    - desc: Event-specific JSON object whose fields vary by event type
+      label: Event data
+      name: data
+      opaque: true
+      required: true
+      type: json
+    goType: RunEvent
+    label: Events
+    name: events
+    required: true
+    type: array
+  - goType: int64
+    label: Next event cursor
+    name: next_after
+    required: true
+    type: number
+  - label: More pages available
+    name: has_more
+    required: true
+    type: boolean
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-browser-use:0.1.0@sha256:59bab9c48b39b2921eb7600bea2c6079322865fa480e016c8085151b003bb4bf
