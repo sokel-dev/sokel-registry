@@ -1,10 +1,11 @@
 plugin:
   name: salesforce
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Salesforce
   desc: Query Salesforce metadata and records and create, update or upsert records
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Use the HTTPS instance_url from Salesforce OAuth; only official Salesforce instance domains are accepted
@@ -261,4 +262,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-salesforce:0.1.0@sha256:b9e0dc12d528904c76162fa3087d9dad439c4c7e5745b0ff1652c6a91ad9b529
+    ref: ghcr.io/sokel-dev/sokel-plugin-salesforce:0.1.1@sha256:810b601c25e1596c977d9728d026a4533c5c552888a49b9c8e8e4f60ce0e7d2f
