@@ -1,0 +1,359 @@
+plugin:
+  desc: Base schemas, record operations and change polling
+  doc: README.md
+  label: Airtable tables
+  name: airtable
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Requires data.records:read/write and schema.bases:read, with access to the target base
+    label: Personal access token
+    name: token
+    required: true
+    type: secret
+  - label: Watched base ID
+    name: watch_base
+    type: text
+  - desc: The first complete scan establishes a baseline; maximum 500 records; detects additions and content changes only
+    label: Watched table ID
+    name: watch_table
+    type: text
+events_common:
+- base_id
+- table_id
+events:
+- fields:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - label: Change type
+    name: change
+    required: true
+    type: string
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - label: Created time
+      name: createdTime
+      required: true
+      type: string
+    - desc: Column names and value types are defined by the user’s table schema
+      label: Field values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: Record
+    label: Record
+    name: record
+    required: true
+    type: json
+  id: record_changed
+  label: Record changed
+operations:
+- id: health_check
+  label: Check credentials
+  outputs:
+  - label: Credential valid
+    name: ok
+    required: true
+    type: boolean
+  - label: Status message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- id: airtable_bases
+  inputs:
+  - label: Pagination cursor
+    name: offset
+    type: string
+  label: List bases
+  outputs:
+  - fields:
+    - label: Base ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Permission level
+      name: permissionLevel
+      required: true
+      type: string
+    goType: Base
+    label: Bases
+    name: bases
+    required: true
+    type: array
+  - label: Next cursor
+    name: offset
+    required: true
+    type: string
+  timeoutSec: 60
+- id: airtable_tables
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  label: Get table schemas
+  outputs:
+  - fields:
+    - label: Table ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Primary field ID
+      name: primaryFieldId
+      required: true
+      type: string
+    - fields:
+      - label: Field ID
+        name: id
+        required: true
+        type: string
+      - label: Name
+        name: name
+        required: true
+        type: string
+      - label: Field type
+        name: type
+        required: true
+        type: string
+      - desc: Each field type has its own options structure
+        label: Field options
+        name: options
+        opaque: true
+        type: json
+      goType: TableField
+      label: Fields
+      name: fields
+      required: true
+      type: array
+    goType: Table
+    label: Tables
+    name: tables
+    required: true
+    type: array
+  timeoutSec: 60
+- id: airtable_records
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - label: Pagination cursor
+    name: offset
+    type: string
+  - label: View name or ID
+    name: view
+    type: string
+  - label: Filter formula
+    name: filter_formula
+    type: text
+  - itemType: string
+    label: Returned fields
+    name: fields
+    type: array
+  label: List records
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - label: Created time
+      name: createdTime
+      required: true
+      type: string
+    - desc: Column names and value types are defined by the user’s table schema
+      label: Field values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: Record
+    label: Records
+    name: records
+    required: true
+    type: array
+  - label: Next cursor
+    name: offset
+    required: true
+    type: string
+  timeoutSec: 60
+- id: airtable_get
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - label: Record ID
+    name: record_id
+    required: true
+    type: string
+  label: Get record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - label: Created time
+      name: createdTime
+      required: true
+      type: string
+    - desc: Column names and value types are defined by the user’s table schema
+      label: Field values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: Record
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- id: airtable_create
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - desc: Column names and value types are defined by the user’s table schema
+    label: Field values
+    name: fields
+    opaque: true
+    required: true
+    type: json
+  - label: Allow type conversion
+    name: typecast
+    type: boolean
+  label: Create record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - label: Created time
+      name: createdTime
+      required: true
+      type: string
+    - desc: Column names and value types are defined by the user’s table schema
+      label: Field values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: Record
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- id: airtable_update
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - label: Record ID
+    name: record_id
+    required: true
+    type: string
+  - desc: Column names and value types are defined by the user’s table schema
+    label: Field values
+    name: fields
+    opaque: true
+    required: true
+    type: json
+  - label: Allow type conversion
+    name: typecast
+    type: boolean
+  label: Update record
+  outputs:
+  - fields:
+    - label: Record ID
+      name: id
+      required: true
+      type: string
+    - label: Created time
+      name: createdTime
+      required: true
+      type: string
+    - desc: Column names and value types are defined by the user’s table schema
+      label: Field values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: Record
+    label: Record
+    name: record
+    required: true
+    type: json
+  timeoutSec: 60
+- id: airtable_delete
+  inputs:
+  - label: Base ID
+    name: base_id
+    required: true
+    type: string
+  - label: Table ID
+    name: table_id
+    required: true
+    type: string
+  - label: Record ID
+    name: record_id
+    required: true
+    type: string
+  label: Delete record
+  outputs:
+  - label: Record ID
+    name: id
+    required: true
+    type: string
+  - label: Deleted
+    name: deleted
+    required: true
+    type: boolean
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-airtable:0.1.0@sha256:79144fdd09163172b366167ead7052ff2e72259483ae9381f7db670e6b81b9a5
