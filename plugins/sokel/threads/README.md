@@ -7,11 +7,11 @@
 1. 到 [Meta 开发者后台](https://developers.facebook.com/apps) 建一个 App，产品里加 **Threads API**；
 2. Threads API 设置里把回调地址填成平台的：
    `https://<你的平台域名>/api/v1/credentials/oauth/callback`，
-   与环境变量 `SOKEL_THREADS_OAUTH_REDIRECT_URL` **一字不差**；
+   与环境变量 `THREADS_OAUTH_REDIRECT_URL` **一字不差**；
 3. 平台管理员配好：
    ```
-   SOKEL_THREADS_OAUTH_CLIENT_ID / SOKEL_THREADS_OAUTH_CLIENT_SECRET
-   SOKEL_THREADS_OAUTH_REDIRECT_URL / SOKEL_THREADS_OAUTH_PROXY（连不上时填）
+   THREADS_OAUTH_CLIENT_ID / THREADS_OAUTH_CLIENT_SECRET
+   THREADS_OAUTH_REDIRECT_URL / THREADS_OAUTH_PROXY（连不上时填）
    ```
 4. 建凭证 → 点「授权」，作用域是 `threads_basic threads_content_publish`；
 5. 点「测试」——它会查账号并**顺带告诉你 24 小时内还能发几条**。
