@@ -4,7 +4,8 @@ plugin:
   label: WPS365 Cloud Documents
   name: wps
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: WPS365 application or user token; obtain and refresh outside this plugin
@@ -368,4 +369,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-wps:0.1.0@sha256:b07558197735b26839ae59fa94e511ef38bfc93d9fa8a0086d412a33e683c8a8
+    ref: ghcr.io/sokel-dev/sokel-plugin-wps:0.1.1@sha256:100d7b506c417d09b6360c2bd775b259d9b9ed53399e5e02338beb87a9594db4
