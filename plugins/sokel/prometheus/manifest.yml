@@ -1,10 +1,11 @@
 plugin:
   name: prometheus
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Prometheus
   desc: Query metrics, inspect label metadata and read active alerts from a self-hosted Prometheus server.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Optional HTTP Basic username. Use either Basic authentication or a bearer token.
@@ -290,7 +291,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-prometheus:0.1.0@sha256:e6196294f67df38f5ee97362b4b91a4e9b73e29896bac84dabd7711ebd11da6e
+    ref: ghcr.io/sokel-dev/sokel-plugin-prometheus:0.1.1@sha256:9be77a3127cfdbf62904c8a7fa6e9b58027a6c2e138474294a432fe1a0a8af4e
   env:
   - name: SOKEL_PROMETHEUS_URL
     desc: Required self-hosted Prometheus installation root, including any reverse-proxy path prefix; HTTP and HTTPS are supported.
