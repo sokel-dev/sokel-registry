@@ -4,7 +4,8 @@ plugin:
   label: Microsoft Teams
   name: microsoft-teams
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
+  icon: icon.svg
 credential:
   fields:
   - desc: Global Microsoft Graph delegated token; refresh externally and replace before expiration
@@ -522,4 +523,4 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-teams:0.1.0@sha256:8057f43d07233c5c9081ea0819d291a9d3649ae44c543ed25a49e6f3e39edf90
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-teams:0.1.1@sha256:7b33cd9e52af1d184f1958f27c55d73fb65cf74a646326c6d4097a1fef8bf50d
