@@ -1,10 +1,11 @@
 plugin:
   name: bookstack
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: BookStack
   desc: Read, search and maintain knowledge pages on a self-hosted BookStack instance.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Token ID
@@ -642,7 +643,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-bookstack:0.1.0@sha256:d1be4828a3dc060caa9b3c68312610df0904b1554694e4b95fe67dfd13a072e6
+    ref: ghcr.io/sokel-dev/sokel-plugin-bookstack:0.1.1@sha256:5c008d7fb5178a9b40d11d3dce4d4888c64dc9ab6477dac4e6699e7659dec820
   env:
   - name: SOKEL_BOOKSTACK_URL
     desc: Required self-hosted BookStack site root, including any reverse-proxy path prefix; HTTP and HTTPS are supported.
