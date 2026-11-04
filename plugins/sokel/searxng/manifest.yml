@@ -1,10 +1,11 @@
 plugin:
   name: searxng
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: SearXNG
   desc: Search the web through a self-hosted SearXNG instance
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Optional HTTP Basic authentication at your reverse proxy; SearXNG has no API key requirement.
@@ -194,7 +195,7 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-searxng:0.1.0@sha256:6b8c99d1ef2354dd3b1264730224be8cf3eef251aef66e3df46c33542eb691a7
+    ref: ghcr.io/sokel-dev/sokel-plugin-searxng:0.1.1@sha256:9aa12c45e1a351328f52583326b9cc3caae4d130976ed4f8dc04c8ecc81c23f4
   env:
   - name: SOKEL_SEARXNG_URL
     desc: HTTP(S) URL of your SearXNG service; internal hosts and reverse-proxy path prefixes are supported. No public fallback.
