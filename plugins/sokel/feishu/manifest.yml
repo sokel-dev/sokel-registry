@@ -4,8 +4,7 @@ plugin:
   label: 飞书
   name: feishu
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 开放平台「开发者后台 → 凭证与基础信息」里的 App ID（cli_ 开头）

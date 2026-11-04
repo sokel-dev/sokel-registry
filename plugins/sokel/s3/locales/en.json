@@ -49,5 +49,7 @@
   "说明": "Description",
   "读出对象": "Read object",
   "链接": "Link",
-  "链接类型": "Link type"
+  "链接类型": "Link type",
+  "http://127.0.0.1:9000（AWS 官方留空）": "http://127.0.0.1:9000 (leave blank for AWS)",
+  "https://cdn.example.com（公开桶/CDN；留空则用限时签名链接）": "https://cdn.example.com (public bucket/CDN; leave blank to use an expiring signed URL)"
 }

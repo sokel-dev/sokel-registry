@@ -4,8 +4,7 @@ plugin:
   label: Kubernetes
   name: kubernetes
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 整份 YAML 粘进来（ACK 用 aliyun 插件的「导出 kubeconfig」一键取；自建集群 ~/.kube/config）。它就是进集群的钥匙，只在插件内部使用

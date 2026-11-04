@@ -4,8 +4,7 @@ plugin:
   label: 微信 ClawBot
   name: wechat-claw
   org: sokel
-  version: v1.0.2
-
+  version: v1.0.3
 credential:
   auth:
     kind: qr

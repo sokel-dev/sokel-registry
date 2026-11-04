@@ -54,5 +54,7 @@
   "读出对象": "Get object",
   "走七牛的 S3 兼容网关，与「S3 兼容对象存储」是同一份实现。": "Goes through Qiniu's S3-compatible gateway and shares the same implementation as \"S3-compatible object storage\".",
   "链接": "Link",
-  "链接类型": "Link type"
+  "链接类型": "Link type",
+  "https://cdn.example.com（空间绑定的域名）": "https://cdn.example.com (the domain bound to the bucket)",
+  "留空 = 按上面的区域自动推导": "Leave blank to derive the endpoint from the region above"
 }

@@ -4,8 +4,7 @@ plugin:
   label: 阿里云
   name: aliyun
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: RAM 控制台创建的 AccessKey（建议专建一个最小权限的 RAM 用户，策略样例见使用说明）

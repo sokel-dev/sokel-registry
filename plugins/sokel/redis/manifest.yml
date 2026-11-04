@@ -4,8 +4,7 @@ plugin:
   label: Redis
   name: redis
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: host:port，如 redis.internal:6379。**插件进程要能连到它**——云托管实例记得放行来源 IP

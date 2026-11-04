@@ -18,7 +18,7 @@ deployment:
     note: 平台部署套件已内置同款容器承接本插件，通常无需部署；此命令用于在别的机器上再起一个出站副本（横向扩容/就近出网）。
     targets:
         - kind: container
-          ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-base-plugins:latest
+          ref: registry.cn-hangzhou.aliyuncs.com/wisburg/sokel-base-plugins@sha256:11c2c1b9760e0dd23e787a3b9eae337b295a44b0f1c9f175e5b2b677aead1047
 implements:
     - capability: websearch
       operations:
@@ -103,4 +103,4 @@ plugin:
     label: Brave 搜索
     name: search-brave
     org: sokel
-    version: v1.0.0
+    version: v1.0.1

@@ -4,8 +4,7 @@ plugin:
   label: Claude Code
   name: claude-code
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: '**留空也能跑**：那样就用插件那台机器上 CC 自己的登录态（订阅制常见）。填了则这次调用走这把 key 的额度——多个空间/团队各自分账、要审计时用它。两种都是合法部署，插件不替你选'

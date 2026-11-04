@@ -146,5 +146,6 @@
   "音频 → 文本": "Audio → text",
   "音频秒数": "Audio seconds",
   "额外 body": "Extra body",
-  "风格指令": "Style instruction"
+  "风格指令": "Style instruction",
+  "该厂商的 OpenAI 兼容地址": "The provider's OpenAI-compatible endpoint"
 }

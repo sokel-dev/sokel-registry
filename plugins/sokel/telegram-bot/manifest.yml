@@ -4,8 +4,7 @@ plugin:
   label: Telegram Bot
   name: telegram-bot
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: '@BotFather 创建 bot 后给的 token（123456:ABC…）'

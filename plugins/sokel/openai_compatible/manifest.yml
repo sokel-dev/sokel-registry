@@ -1035,4 +1035,4 @@ plugin:
     label: OpenAI 兼容网关
     name: openai_compatible
     org: sokel
-    version: v1.0.0
+    version: v1.0.1

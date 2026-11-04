@@ -4,8 +4,7 @@ plugin:
   label: GitHub
   name: github
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: GitHub Enterprise Server 填根地址（如 https://github.example.com，**不用带 /api/v3**，插件会补）；留空 = github.com

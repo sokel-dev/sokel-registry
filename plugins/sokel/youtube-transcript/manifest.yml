@@ -4,8 +4,7 @@ plugin:
   label: YouTube 字幕
   name: youtube-transcript
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 形如 `http://user:pass@host:port` 或 `socks5://host:1080`。**部署在机房/云主机上时基本是必需的**：YouTube 会用 429 或「确认你不是机器人」挡掉数据中心 IP，住宅代理是目前唯一稳定的解法

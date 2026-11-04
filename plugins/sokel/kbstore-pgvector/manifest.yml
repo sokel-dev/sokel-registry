@@ -687,4 +687,4 @@ plugin:
   label: 知识库存储（pgvector）
   name: kbstore-pgvector
   org: sokel
-  version: v0.2.2
+  version: v0.2.3

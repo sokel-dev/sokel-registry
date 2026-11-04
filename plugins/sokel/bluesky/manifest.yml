@@ -4,8 +4,7 @@ plugin:
   label: Bluesky
   name: bluesky
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 完整 handle（如 acme.bsky.social）或邮箱

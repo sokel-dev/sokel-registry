@@ -4,8 +4,7 @@ plugin:
   label: Mastodon
   name: mastodon
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 你的账号所在实例，如 https://mastodon.social 或 https://m.cmx.im

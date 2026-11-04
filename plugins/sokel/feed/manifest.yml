@@ -4,8 +4,7 @@ plugin:
   label: Feed 订阅
   name: feed
   org: sokel
-  version: v1.0.1
-
+  version: v1.0.2
 credential:
   fields:
     - desc: 插件默认自己去首页取匿名令牌；被风控挡住时，把浏览器里的整条 Cookie 粘进来

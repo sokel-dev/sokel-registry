@@ -19,5 +19,7 @@
   "语言": "Language",
   "说明": "Description",
   "部分上游会给一段现成答案（Tavily / DuckDuckGo 摘要）；没有则为空——不拿第一条结果冒充": "Some upstreams return a ready-made answer (Tavily / DuckDuckGo snippet); empty if none — we don't fake it with the first result",
-  "默认 8，上限 20（Google 单次最多 10 条）": "Default 8, max 20 (Google returns at most 10 per request)"
+  "默认 8，上限 20（Google 单次最多 10 条）": "Default 8, max 20 (Google returns at most 10 per request)",
+  "http://127.0.0.1:7890（平台与该上游不通时填）": "http://127.0.0.1:7890 (set when the platform cannot reach this upstream service directly)",
+  "在 serper.dev 注册即得": "Register at serper.dev to obtain a key"
 }
