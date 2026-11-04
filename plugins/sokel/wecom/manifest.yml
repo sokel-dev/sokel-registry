@@ -4,7 +4,7 @@ plugin:
   label: 企业微信
   name: wecom
   org: sokel
-  version: v0.3.1-docs.1
+  version: v0.3.2
 credential:
   fields:
   - help: 企业微信管理后台 → 我的企业 → 企业信息 → 企业 ID
@@ -1124,7 +1124,7 @@ codegen:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-wecom:0.3.0@sha256:64c1554a20adf308356c8b0b8e90f4dd64a2e4cfe7f32220fe549fbccee26391
+    ref: ghcr.io/sokel-dev/sokel-plugin-wecom:0.3.2@sha256:5bd23f7015e068a5fb10404990ae27da8eeed39a9b4e139054885e6709df5980
   env:
   - name: SOKEL_DATA_DIR
     default: /var/lib/sokel/wecom
