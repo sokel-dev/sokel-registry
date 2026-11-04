@@ -1,0 +1,360 @@
+plugin:
+  desc: Discover sites and lists, inspect columns and read or write list item fields
+  doc: README.md
+  label: Microsoft SharePoint
+  name: microsoft-sharepoint
+  org: sokel
+  version: v0.1.0
+credential:
+  fields:
+  - desc: Obtain and refresh externally; include User.Read for health checks
+    label: Delegated access token
+    name: access_token
+    required: true
+    type: secret
+operations:
+- desc: Check delegated credentials
+  id: health_check
+  label: Check delegated credentials
+  outputs:
+  - label: Available
+    name: ok
+    required: true
+    type: boolean
+  - label: Message
+    name: message
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Search sites
+  id: search_sites
+  inputs:
+  - label: Search query
+    name: query
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: Search sites
+  outputs:
+  - fields:
+    - label: Site ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Display name
+      name: display_name
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: Site
+    label: Sites
+    name: sites
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Get site
+  id: get_site
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  label: Get site
+  outputs:
+  - fields:
+    - label: Site ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Display name
+      name: display_name
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: Site
+    label: Site
+    name: site
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: List site drives
+  id: list_drives
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List site drives
+  outputs:
+  - fields:
+    - label: Drive ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Drive type
+      name: drive_type
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: Drive
+    label: Drives
+    name: drives
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List site lists
+  id: list_lists
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List site lists
+  outputs:
+  - fields:
+    - label: List ID
+      name: id
+      required: true
+      type: string
+    - label: Name
+      name: name
+      required: true
+      type: string
+    - label: Display name
+      name: display_name
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    goType: SPList
+    label: Lists
+    name: lists
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List column definitions
+  id: list_columns
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List column definitions
+  outputs:
+  - fields:
+    - label: Column ID
+      name: id
+      required: true
+      type: string
+    - label: Internal column name
+      name: name
+      required: true
+      type: string
+    - label: Display name
+      name: display_name
+      required: true
+      type: string
+    - label: Column kind
+      name: kind
+      required: true
+      type: string
+    - label: Required
+      name: required
+      required: true
+      type: boolean
+    - label: Read only
+      name: read_only
+      required: true
+      type: boolean
+    goType: Column
+    label: Columns
+    name: columns
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: List list items
+  id: list_items
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - label: Continuation URL
+    name: next_link
+    type: string
+  label: List list items
+  outputs:
+  - fields:
+    - label: List item ID
+      name: id
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - desc: Column names and value types are defined by each SharePoint list
+      label: Column values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: ListItem
+    label: List items
+    name: items
+    required: true
+    type: array
+  - label: Next page URL
+    name: next_link
+    required: true
+    type: string
+  timeoutSec: 60
+- desc: Create list item
+  id: create_item
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - desc: Column names and value types are defined by each SharePoint list
+    label: Column values
+    name: fields
+    opaque: true
+    required: true
+    type: json
+  label: Create list item
+  outputs:
+  - fields:
+    - label: List item ID
+      name: id
+      required: true
+      type: string
+    - label: ETag
+      name: etag
+      required: true
+      type: string
+    - label: Web URL
+      name: web_url
+      required: true
+      type: string
+    - desc: Column names and value types are defined by each SharePoint list
+      label: Column values
+      name: fields
+      opaque: true
+      required: true
+      type: json
+    goType: ListItem
+    label: List item
+    name: item
+    required: true
+    type: json
+  timeoutSec: 60
+- desc: Update list item fields
+  id: update_fields
+  inputs:
+  - label: Site ID
+    name: site_id
+    required: true
+    type: string
+  - label: List ID
+    name: list_id
+    required: true
+    type: string
+  - label: List item ID
+    name: item_id
+    required: true
+    type: string
+  - desc: Column names and value types are defined by each SharePoint list
+    label: Column values
+    name: fields
+    opaque: true
+    required: true
+    type: json
+  - label: Existing ETag
+    name: if_match
+    type: string
+  label: Update list item fields
+  outputs:
+  - label: List item ID
+    name: item_id
+    required: true
+    type: string
+  - desc: Column names and value types are defined by each SharePoint list
+    label: Column values
+    name: fields
+    opaque: true
+    required: true
+    type: json
+  timeoutSec: 60
+codegen:
+- lang: go
+deployment:
+  targets:
+  - kind: container
+    ref: ghcr.io/sokel-dev/sokel-plugin-microsoft-sharepoint:0.1.0@sha256:9db8ab51c9b6bd818af378536d6512a11b86e99edba01956be5baec8580aa73c
