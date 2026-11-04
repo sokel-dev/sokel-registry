@@ -1,10 +1,11 @@
 plugin:
   name: apache-tika
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Apache Tika
   desc: Extract document text, metadata and embedded content with a self-hosted Apache Tika 4.2 service
   doc: README.md
+  icon: icon.png
 credential:
   fields:
   - desc: Optional HTTP Basic authentication for the configured service or its reverse proxy.
@@ -120,4 +121,4 @@ deployment:
     required: true
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-apache-tika:0.1.0@sha256:b4a3c0f2f3a116aff5eff4e651d94347e3c713434a6c3b1cd5011f5f9207090b
+    ref: ghcr.io/sokel-dev/sokel-plugin-apache-tika:0.1.1@sha256:99f18e2e91e0abc8d2b0b859a21ff1efc1614415024adca2ce4bfc67681ff3f8

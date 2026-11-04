@@ -1,10 +1,11 @@
 plugin:
   name: clickup
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: ClickUp
   desc: Discover workspaces and manage tasks and comments.
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - label: Personal API token
@@ -542,4 +543,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-clickup:0.1.0@sha256:a04499c102b3de10f49387b1f16a1a4d0885858e197bba6f5c2a31f36ec79204
+    ref: ghcr.io/sokel-dev/sokel-plugin-clickup:0.1.1@sha256:e92ead414c72ff2f167197480cc34813400d1f6c9120d7748bc0db7afa061b22
