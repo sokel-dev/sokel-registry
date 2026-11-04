@@ -1,10 +1,11 @@
 plugin:
   name: mailchimp
   org: sokel
-  version: v0.1.0
+  version: v0.1.1
   label: Mailchimp
   desc: Read audiences, members, tags and campaigns; explicitly upsert contacts
   doc: README.md
+  icon: icon.svg
 credential:
   fields:
   - desc: Marketing API key including its data-center suffix, for example -us6
@@ -465,4 +466,4 @@ operations:
 deployment:
   targets:
   - kind: container
-    ref: ghcr.io/sokel-dev/sokel-plugin-mailchimp:0.1.0@sha256:522c7886e7a80d860a37a4ecd4f530bb48eced4840d0e84df700470340150451
+    ref: ghcr.io/sokel-dev/sokel-plugin-mailchimp:0.1.1@sha256:47af0c46c16d54b631260fd01bea907d21978e8bb8d067f124f6865e28652bf3
