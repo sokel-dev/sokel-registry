@@ -82,3 +82,26 @@ func TestOfficialPluginTranslations(t *testing.T) {
 		t.Fatal("no official plugin manifests were checked")
 	}
 }
+
+// DeepSeek ships English application operations alongside legacy Chinese model slots.
+// Both directions must cover descriptions and nested fields, not only top-level labels.
+func TestDeepSeekApplicationChineseTranslations(t *testing.T) {
+	m, err := sokelgen.LoadManifest(filepath.Join("..", "..", "plugins", "sokel", "deepseek", "manifest.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	technical := map[string]bool{"DeepSeek": true, "API Key": true, "Base URL": true, "sk-...": true, "JSON Schema": true, "MIME": true, "Markdown": true, "top_p": true, "user / assistant / tool": true, "image / audio / video / document": true, "auto / none / required / function": true, "off / low / medium / high": true, "text / json_object / json_schema": true, "vendor default when empty | reasoning_effort | enable_thinking | thinking | deepseek | thinking_type": true, "text / title / list / quote / code / formula / table / image / audio / video / file / header / footer / page_number。": true}
+	doc, err := m.DocMarkdown()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for text := range m.TranslatableStrings() {
+		if text == doc || technical[text] || strings.ContainsFunc(text, func(r rune) bool { return unicode.Is(unicode.Han, r) }) {
+			continue
+		}
+		translated := m.Locales["zh-CN"][text]
+		if translated == "" || !strings.ContainsFunc(translated, func(r rune) bool { return unicode.Is(unicode.Han, r) }) {
+			t.Errorf("missing Chinese display text: %s", text)
+		}
+	}
+}
